@@ -16,5 +16,5 @@ func TestDomainParse(t *testing.T) {
 
 	fmt.Println()
 
-	fmt.Println(DomainParse("https://www.google.com"))
+	fmt.Println(Parse("https://www.google.com"))
 }

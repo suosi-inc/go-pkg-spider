@@ -14,12 +14,10 @@ type Domain struct {
 	ICANN                  bool
 }
 
-func Parse(d string) (*Domain, error) {
-	if fun.Blank(d) {
+func Parse(domain string) (*Domain, error) {
+	if fun.Blank(domain) {
 		return nil, errors.New("domain is blank")
 	}
-
-	domain := strings.TrimSpace(d)
 
 	// etld+1
 	etld1, err := publicsuffix.EffectiveTLDPlusOne(domain)
@@ -47,12 +45,12 @@ func Parse(d string) (*Domain, error) {
 }
 
 func ParseFromUrl(urlStr string) (*Domain, error) {
-	url, err := url.Parse(urlStr)
+	u, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, errors.New("url parse error")
 	}
 
-	d := url.Hostname()
+	d := u.Hostname()
 
 	return Parse(d)
 }
