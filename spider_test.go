@@ -1,6 +1,10 @@
 package spider
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/x-funs/go-fun"
+)
 
 func TestTopDomain(t *testing.T) {
 	t.Log(TopDomain("hi.chinanews.com"))
@@ -81,4 +85,17 @@ func TestTopDomainUrl(t *testing.T) {
 	t.Log(TopDomainFromUrl("https://www.google.com"))
 	t.Log(TopDomainFromUrl("https://hi.baidu.com/news"))
 	t.Log(TopDomainFromUrl("//hi.baidu.com/news"))
+}
+
+func TestGetCharset(t *testing.T) {
+	urlStr := "http://www.changzhou.gov.cn/"
+
+	resp, _ := HttpGetResp(urlStr, nil, 10000)
+
+	charset := CharsetDetect(resp.Body, resp.Headers)
+
+	s, _ := ToUtf8(resp.Body, charset)
+
+	t.Log(charset)
+	t.Log(fun.BytesToString(s))
 }
