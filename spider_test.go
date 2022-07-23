@@ -1,9 +1,13 @@
 package spider
 
 import (
+	"io"
+	"log"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/x-funs/go-fun"
+	"github.com/suosi-inc/go-pkg-spider/detect"
 )
 
 func TestTopDomain(t *testing.T) {
@@ -87,15 +91,16 @@ func TestTopDomainUrl(t *testing.T) {
 	t.Log(TopDomainFromUrl("//hi.baidu.com/news"))
 }
 
-func TestGetCharset(t *testing.T) {
-	urlStr := "http://www.changzhou.gov.cn/"
+func BenchmarkTest(b *testing.B) {
+	f, err := os.Open(filepath.Join("test/html", "sohu.com.html"))
+	if err != nil {
+		log.Println("open file error:", err)
+	}
+	defer f.Close()
 
-	resp, _ := HttpGetResp(urlStr, nil, 10000)
-
-	charset := CharsetDetect(resp.Body, resp.Headers)
-
-	s, _ := ToUtf8(resp.Body, charset)
-
-	t.Log(charset)
-	t.Log(fun.BytesToString(s))
+	input, _ := io.ReadAll(f)
+	log.Println("size:", len(input))
+	for i := 0; i < b.N; i++ {
+		detect.GuessHtmlCharsetLang(input)
+	}
 }

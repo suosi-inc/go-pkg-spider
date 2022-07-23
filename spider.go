@@ -1,9 +1,6 @@
 package spider
 
 import (
-	"net/http"
-
-	"github.com/suosi-inc/go-pkg-spider/detect"
 	"github.com/suosi-inc/go-pkg-spider/domain"
 )
 
@@ -22,23 +19,5 @@ func TopDomainFromUrl(urlStr string) string {
 		return d.Domain + "." + d.TLD
 	}
 
-	return ""
-}
-
-func CharsetDetect(body []byte, headers *http.Header) string {
-	c := detect.CharsetFromHeader(headers)
-	if c != "" {
-		return c
-	}
-
-	c = detect.CharsetFromHeader(headers)
-	if c != "" {
-		return c
-	}
-
-	return c
-}
-
-func LangDetect(body []byte) string {
 	return ""
 }
