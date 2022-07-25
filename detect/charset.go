@@ -15,20 +15,37 @@ const (
 	RegexMetaHtml5Pattern = "(?i)<meta\\s+charset\\s*=\\s*[\"']?([a-z][_\\-0-9a-z]*)[^>]*>"
 )
 
+const (
+	CharsetPosHeader = "header"
+	CharsetPosHtml   = "html"
+	CharsetPosGuess  = "guess"
+)
+
+type CharsetRes struct {
+	Charset    string
+	CharsetPos string
+}
+
 // Charset 解析 HTTP body、http.Header 中的 charset
-func Charset(body []byte, headers *http.Header) string {
+func Charset(h []byte, headers *http.Header) CharsetRes {
+	var res CharsetRes
 	var c string
+
 	c = CharsetFromHeader(headers)
 	if c != "" {
-		return c
+		res.Charset = c
+		res.CharsetPos = CharsetPosHeader
+		return res
 	}
 
-	c = CharsetFromBody(body)
+	c = CharsetFromHtml(h)
 	if c != "" {
-		return c
+		res.Charset = c
+		res.CharsetPos = CharsetPosHtml
+		return res
 	}
 
-	return c
+	return res
 }
 
 // CharsetFromHeader 解析 HTTP header 中的 charset
@@ -44,22 +61,22 @@ func CharsetFromHeader(headers *http.Header) string {
 		}
 	}
 
-	return formatCharset(charset)
+	return convertCharset(charset)
 }
 
-// CharsetFromBody 解析 HTTP body 中的 charset
-func CharsetFromBody(body []byte) string {
+// CharsetFromHtml 解析 Html 中的 charset
+func CharsetFromHtml(h []byte) string {
 	var charset string
 
-	if len(body) >= 0 {
-		// 监测是否是 UTF-8
-		valid := utf8.Valid(body)
+	if len(h) >= 0 {
+		// 检测是否是 UTF-8
+		valid := utf8.Valid(h)
 		if valid {
 			return "utf-8"
 		}
 
-		// 监测 HTML 标签
-		html := fun.String(body)
+		// 检测 HTML 标签
+		html := fun.String(h)
 		matches := regexp.MustCompile(RegexMetaPattern).FindStringSubmatch(html)
 		if len(matches) > 1 {
 			matches = regexp.MustCompile(RegexCharsetPattern).FindStringSubmatch(matches[1])
@@ -76,20 +93,32 @@ func CharsetFromBody(body []byte) string {
 		}
 	}
 
-	return formatCharset(charset)
+	return convertCharset(charset)
 }
 
-// formatCharset 格式化 charset
-func formatCharset(charset string) string {
+// convertCharset 格式化 charset
+func convertCharset(charset string) string {
 	c := strings.ToLower(strings.TrimSpace(charset))
 
 	if c != "" {
-		if c == "utf8" {
+		// alias utf8, utf-16..
+		if strings.HasPrefix(c, "utf") {
 			return "utf-8"
 		}
 
+		// alias gb2312 gb18030..
 		if strings.HasPrefix(c, "gb") {
-			return "gb18030"
+			return "gbk"
+		}
+
+		// alias big5-hkscs..
+		if strings.HasPrefix(c, "big5") {
+			return "big5"
+		}
+
+		// alias shift-jis..
+		if strings.HasPrefix(c, "shift") {
+			return "shift_jis"
 		}
 	}
 

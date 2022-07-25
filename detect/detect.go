@@ -9,36 +9,46 @@ import (
 )
 
 // CharsetLang 解析 HTTP body、http.Header 中的编码和语言, 如果未解析成功则尝试进行猜测
-func CharsetLang(body []byte, headers *http.Header) (string, string) {
-	var charset string
-	var lang string
+func CharsetLang(body []byte, headers *http.Header) (CharsetRes, LangRes) {
+	var charsetRes CharsetRes
+	var langRes LangRes
 
 	var guessCharset string
 	var guessLang string
 
-	// 根据 Content-Type、Body Html 标签探测编码和语言
-	// charset = Charset(body, headers)
-	lang = Lang(body, charset)
+	// 根据 Content-Type、Body Html 标签探测编码
+	charsetRes = Charset(body, headers)
 
 	// 未识别到 charset 则使用 guess
-	if charset == "" {
+	if charsetRes.Charset == "" {
 		guessCharset, guessLang = GuessHtmlCharsetLang(body)
-		charset = guessCharset
 
-		if (lang == "" || lang == "en") && guessLang != "" {
-			lang = guessLang
+		if guessCharset != "" {
+			charsetRes.Charset = guessCharset
+			charsetRes.CharsetPos = CharsetPosGuess
+		}
+
+		if guessLang != "" {
+			langRes.Lang = guessLang
+			langRes.LangPos = LangPosGuess
 		}
 
 	} else {
-		// if strings.HasPrefix(charset, "iso-8859-") || strings.HasPrefix(charset, "windows-") {
-		if lang == "" || lang == "en" {
-			guessCharset, guessLang = GuessHtmlCharsetLang(body)
-			charset = guessCharset
-			// }
+		if strings.HasPrefix(charsetRes.Charset, "iso") || strings.HasPrefix(charsetRes.Charset, "windows") {
+			_, guessLang = GuessHtmlCharsetLang(body)
+			if guessLang != "" {
+				langRes.Lang = guessLang
+				langRes.LangPos = LangPosGuess
+			}
 		}
 	}
 
-	return charset, lang
+	// 探测语言
+	if langRes.Lang == "" {
+		langRes = Lang(body, charsetRes.Charset)
+	}
+
+	return charsetRes, langRes
 }
 
 // GuessHtmlCharsetLang 根据 HTTP body 猜测编码和语言 (benchmark 3ms)

@@ -69,10 +69,10 @@ type HttpResp struct {
 	Body []byte
 
 	// 语言 (en/zh/...)
-	Lang string
+	Lang detect.LangRes
 
 	// 字符集
-	Charset string
+	Charset detect.CharsetRes
 
 	// ContentLength (字节数)
 	ContentLength int64
@@ -252,15 +252,14 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 	} else {
 		// 编码语言探测与转换
 		if r == nil || r.DisableCharsetLang {
-			charset, lang := detect.CharsetLang(body, httpResp.Headers)
+			charsetRes, langRes := detect.CharsetLang(body, httpResp.Headers)
 
-			httpResp.Lang = lang
-			if charset != "" {
-				httpResp.Charset = charset
-				body, err := fun.ToUtf8(body, charset)
+			httpResp.Lang = langRes
+			if charsetRes.Charset != "" {
+				httpResp.Charset = charsetRes
+				body, err := fun.ToUtf8(body, charsetRes.Charset)
 				if err != nil {
-					return httpResp, errors.New("CharsetLang detect error")
-
+					return httpResp, errors.New("Charset ToUtf8  error")
 				} else {
 					httpResp.Body = body
 				}

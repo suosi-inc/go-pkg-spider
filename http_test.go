@@ -15,13 +15,13 @@ func TestHttpGet(t *testing.T) {
 	// GB2312,zh
 	// urlStr = "http://www.changzhou.gov.cn/"
 	// Shift_JIS
-	// urlStr = "https://chiba-shinbun.co.jp"
+	urlStr = "https://chiba-shinbun.co.jp"
 	// UTF-8,en
 	// urlStr = "https://english.news.cn/"
 	// UTF-8,ja
 	// urlStr = "https://jp.news.cn/"
 	// utf-8,ru
-	urlStr = "http://government.ru/"
+	// urlStr = "http://government.ru/"
 
 	resp, err := HttpGetResp(urlStr, nil, 10000)
 
