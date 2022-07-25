@@ -126,16 +126,6 @@ func LangFromUtf8Body(doc *goquery.Document) string {
 	text = fun.SubString(text, 0, BodyChunkSize)
 	textCount := utf8.RuneCountInString(text)
 
-	// 英语占比很高
-	englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
-	english := englishRegexp.FindAllString(text, -1)
-	englishCount := len(english)
-	englishRate := float64(englishCount) / float64(textCount)
-	if englishRate > 0.8 {
-		lang = "en"
-		return lang
-	}
-
 	// 是否包含汉字
 	hanRegex := regexp.MustCompile(`\p{Han}`)
 	han := hanRegex.FindAllString(text, -1)
@@ -157,9 +147,16 @@ func LangFromUtf8Body(doc *goquery.Document) string {
 			lang = "zh"
 			return lang
 		}
-	} else if englishRate > 0.8 {
-		lang = "en"
-		return lang
+	} else {
+		// 英语 (因为有拉丁语系，所以不准确)
+		englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
+		english := englishRegexp.FindAllString(text, -1)
+		englishCount := len(english)
+		englishRate := float64(englishCount) / float64(textCount)
+		if englishRate > 0.8 {
+			lang = "en"
+			return lang
+		}
 	}
 
 	return lang

@@ -15,13 +15,12 @@ import (
 )
 
 const (
-	HttpDefaultTimeOut          = 10000
-	HttpDefaultUserAgent        = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
-	HttpDefaultMaxContentLength = 10 * 1024 * 1024
+	HttpDefaultTimeOut        = 10000
+	HttpDefaultUserAgent      = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+	HttpDefaultAcceptEncoding = "gzip, deflate"
 )
 
 var (
-	// refer: https://www.iana.org/assignments/media-types/media-types.xhtml
 	textContentTypes = []string{
 		"text/html",
 		"text/xml",
@@ -38,6 +37,9 @@ type HttpReq struct {
 
 	// 请求头
 	Headers map[string]string
+
+	// 字符集，仅当禁用自动探测时进行转码
+	Charset string
 
 	// 禁止
 	DisableCharsetLang bool
@@ -87,7 +89,6 @@ type HttpResp struct {
 // HttpDefaultTransport 默认全局使用的 http.Transport
 var HttpDefaultTransport = &http.Transport{
 	DialContext:           (&net.Dialer{Timeout: time.Second}).DialContext,
-	ForceAttemptHTTP2:     true,
 	DisableKeepAlives:     true,
 	IdleConnTimeout:       60 * time.Second,
 	TLSHandshakeTimeout:   10 * time.Second,
@@ -122,7 +123,7 @@ func HttpGet(urlStr string, args ...any) ([]byte, error) {
 
 	}
 
-	return nil, errors.New("HttpGet params error")
+	return nil, errors.New("http get params error")
 }
 
 // HttpGetDo Http Get 请求, 参数为请求地址, HttpReq, 超时时间(毫秒)
@@ -179,6 +180,9 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		}
 	}
 
+	// 默认请求头
+	req.Header.Set("Accept-Encoding", HttpDefaultAcceptEncoding)
+
 	// 处理请求头
 	headers := make(map[string]string)
 	if r != nil && r.UserAgent != "" {
@@ -205,6 +209,7 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		Headers:       nil,
 	}
 
+	// Do
 	resp, err := client.Do(req)
 	if err != nil {
 		return httpResp, err
@@ -232,26 +237,27 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		if resp.ContentLength != -1 {
 			if resp.ContentLength > r.MaxContentLength {
 				httpResp.Success = false
-				return httpResp, errors.New("ContentLength > MaxContentLength ")
+				return httpResp, errors.New("contentLength > maxContentLength ")
 			}
 			body, err = ioutil.ReadAll(resp.Body)
 		} else {
-
+			// 读取到最大长度
 			body, err = ioutil.ReadAll(io.LimitReader(resp.Body, r.MaxContentLength))
 		}
 	} else {
 		body, err = ioutil.ReadAll(resp.Body)
 	}
 
+	// Close Body
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(resp.Body)
 
+	// 编码语言探测与自动转码
 	if err != nil {
 		return httpResp, err
 	} else {
-		// 编码语言探测与转换
-		if r == nil || r.DisableCharsetLang {
+		if r == nil || !r.DisableCharsetLang {
 			charsetRes, langRes := detect.CharsetLang(body, httpResp.Headers)
 
 			httpResp.Lang = langRes
@@ -259,15 +265,21 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 				httpResp.Charset = charsetRes
 				body, err := fun.ToUtf8(body, charsetRes.Charset)
 				if err != nil {
-					return httpResp, errors.New("Charset ToUtf8  error")
+					return httpResp, errors.New("charset detect to utf-8 error")
 				} else {
 					httpResp.Body = body
 				}
 			}
+		} else if r.Charset != "" {
+			body, err := fun.ToUtf8(body, r.Charset)
+			if err != nil {
+				return httpResp, errors.New("charset req to utf-8  error")
+			} else {
+				httpResp.Body = body
+			}
 		} else {
 			httpResp.Body = body
 		}
-
 	}
 
 	return httpResp, nil
@@ -296,7 +308,7 @@ func validContentType(r *HttpReq, headers *http.Header) (bool, error) {
 			if valid {
 				return valid, nil
 			} else {
-				return valid, errors.New("Content-Type ForceTextContentType invalid")
+				return valid, errors.New("content-type ForceTextContentType invalid")
 			}
 		}
 
@@ -312,7 +324,7 @@ func validContentType(r *HttpReq, headers *http.Header) (bool, error) {
 			if valid {
 				return valid, nil
 			} else {
-				return valid, errors.New("Content-Type AllowedContentTypes invalid")
+				return valid, errors.New("content-type AllowedContentTypes invalid")
 			}
 		}
 	}

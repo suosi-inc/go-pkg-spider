@@ -34,9 +34,9 @@ func TestCharsetLang(t *testing.T) {
 	// utf-8,zh-CN (中文)
 	// urlStr = "http://www.qq.com"
 	// utf-8,无 (中文)
-	// urlStr = "https://www.163.com/news/article/HD4PT9KO000189FH.html"
+	urlStr = "https://www.163.com/news/article/HD4PT9KO000189FH.html"
 	// utf-8,无 (英语)
-	urlStr = "https://www.bbc.com"
+	// urlStr = "https://www.bbc.com"
 
 	resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
 
@@ -69,7 +69,7 @@ func BenchmarkLangFromUtf8Body(b *testing.B) {
 	var urlStr string
 
 	// utf-8,无 (中文)
-	urlStr = "http://www.163.com"
+	urlStr = "https://www.163.com"
 
 	resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
 

@@ -23,7 +23,42 @@ func TestHttpGet(t *testing.T) {
 	// utf-8,ru
 	// urlStr = "http://government.ru/"
 
-	resp, err := HttpGetResp(urlStr, nil, 10000)
+	req := &HttpReq{
+		ForceTextContentType: true,
+	}
+	resp, err := HttpGetResp(urlStr, req, 10000)
+
+	t.Log(err)
+	t.Log(resp.Charset)
+	t.Log(resp.Lang)
+	t.Log(fun.String(resp.Body))
+}
+
+func TestHttpGetContentType(t *testing.T) {
+	var urlStr string
+
+	urlStr = "https://www.qq.com"
+
+	req := &HttpReq{
+		ForceTextContentType: true,
+	}
+	resp, err := HttpGetResp(urlStr, req, 10000)
+
+	t.Log(err)
+	t.Log(resp.Charset)
+	t.Log(resp.Lang)
+	t.Log(fun.String(resp.Body))
+}
+
+func TestHttpGetContentLength(t *testing.T) {
+	var urlStr string
+
+	urlStr = "http://www.qq.com"
+
+	req := &HttpReq{
+		MaxContentLength: 1000,
+	}
+	resp, err := HttpGetResp(urlStr, req, 10000)
 
 	t.Log(err)
 	t.Log(resp.Charset)
