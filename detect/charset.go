@@ -26,7 +26,7 @@ type CharsetRes struct {
 	CharsetPos string
 }
 
-// Charset 解析 HTTP body、http.Header 中的 charset
+// Charset 解析 HTTP body、http.Header 中的 charset, 准确性高
 func Charset(h []byte, headers *http.Header) CharsetRes {
 	var res CharsetRes
 	var c string
@@ -77,18 +77,20 @@ func CharsetFromHtml(h []byte) string {
 
 		// 检测 HTML 标签
 		html := fun.String(h)
-		matches := regexp.MustCompile(RegexMetaPattern).FindStringSubmatch(html)
+
+		// 优先判断 HTML5 标签
+		matches := regexp.MustCompile(RegexMetaHtml5Pattern).FindStringSubmatch(html)
 		if len(matches) > 1 {
-			matches = regexp.MustCompile(RegexCharsetPattern).FindStringSubmatch(matches[1])
-			if len(matches) > 1 {
-				charset = matches[1]
-			}
+			charset = matches[1]
 		}
 
 		if charset == "" {
-			matches = regexp.MustCompile(RegexMetaHtml5Pattern).FindStringSubmatch(html)
+			matches = regexp.MustCompile(RegexMetaPattern).FindStringSubmatch(html)
 			if len(matches) > 1 {
-				charset = matches[1]
+				matches = regexp.MustCompile(RegexCharsetPattern).FindStringSubmatch(matches[1])
+				if len(matches) > 1 {
+					charset = matches[1]
+				}
 			}
 		}
 	}

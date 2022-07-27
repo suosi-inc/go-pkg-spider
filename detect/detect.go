@@ -9,7 +9,7 @@ import (
 )
 
 // CharsetLang 解析 HTTP body、http.Header 中的编码和语言, 如果未解析成功则尝试进行猜测
-func CharsetLang(body []byte, headers *http.Header) (CharsetRes, LangRes) {
+func CharsetLang(body []byte, headers *http.Header, host string) (CharsetRes, LangRes) {
 	var charsetRes CharsetRes
 	var langRes LangRes
 
@@ -33,6 +33,7 @@ func CharsetLang(body []byte, headers *http.Header) (CharsetRes, LangRes) {
 			langRes.LangPos = LangPosGuess
 		}
 
+		// guess 在特定编码下，具有一定的语言识别能力
 	} else {
 		if strings.HasPrefix(charsetRes.Charset, "iso") || strings.HasPrefix(charsetRes.Charset, "windows") {
 			_, guessLang = GuessHtmlCharsetLang(body)
@@ -45,7 +46,7 @@ func CharsetLang(body []byte, headers *http.Header) (CharsetRes, LangRes) {
 
 	// 探测语言
 	if langRes.Lang == "" {
-		langRes = Lang(body, charsetRes.Charset)
+		langRes = Lang(body, charsetRes.Charset, host)
 	}
 
 	return charsetRes, langRes

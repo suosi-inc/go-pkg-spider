@@ -12,10 +12,11 @@ const (
 
 func TestHttpGet(t *testing.T) {
 	var urlStr string
+	urlStr = "http://www.163.com"
 	// GB2312,zh
 	// urlStr = "http://www.changzhou.gov.cn/"
 	// Shift_JIS
-	urlStr = "https://chiba-shinbun.co.jp"
+	// urlStr = "https://chiba-shinbun.co.jp"
 	// UTF-8,en
 	// urlStr = "https://english.news.cn/"
 	// UTF-8,ja
@@ -53,15 +54,21 @@ func TestHttpGetContentType(t *testing.T) {
 func TestHttpGetContentLength(t *testing.T) {
 	var urlStr string
 
-	urlStr = "http://www.qq.com"
+	// urlStr = "https://mirrors.163.com/mysql/Downloads/MySQL-8.0/mysql-8.0.27-macos11-x86_64.tar"
+	urlStr = "http://www.163.com"
 
 	req := &HttpReq{
 		MaxContentLength: 1000,
+		Headers: map[string]string{
+			"Accept-Encoding": "",
+		},
 	}
 	resp, err := HttpGetResp(urlStr, req, 10000)
 
 	t.Log(err)
 	t.Log(resp.Charset)
 	t.Log(resp.Lang)
+	t.Log(resp.ContentLength)
+	t.Log(resp.Headers)
 	t.Log(fun.String(resp.Body))
 }

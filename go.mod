@@ -4,8 +4,9 @@ go 1.18
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
-	github.com/suosi-inc/chardet v0.0.0-20120816061221-3af4cd4741ca
-	github.com/x-funs/go-fun v0.30.0
+	github.com/pemistahl/lingua-go v1.0.5
+	github.com/suosi-inc/chardet v0.1.0
+	github.com/x-funs/go-fun v0.34.0
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129
 )
 

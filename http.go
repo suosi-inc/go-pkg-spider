@@ -1,6 +1,8 @@
 package spider
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"crypto/tls"
 	"errors"
 	"io"
@@ -38,10 +40,7 @@ type HttpReq struct {
 	// 请求头
 	Headers map[string]string
 
-	// 字符集，仅当禁用自动探测时进行转码
-	Charset string
-
-	// 禁止
+	// 禁止自动探测字符集和语言
 	DisableCharsetLang bool
 
 	// 强制 ContentType 为文本类型
@@ -180,9 +179,6 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		}
 	}
 
-	// 默认请求头
-	req.Header.Set("Accept-Encoding", HttpDefaultAcceptEncoding)
-
 	// 处理请求头
 	headers := make(map[string]string)
 	if r != nil && r.UserAgent != "" {
@@ -193,8 +189,12 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		if _, exist := headers["User-Agent"]; !exist {
 			headers["User-Agent"] = HttpDefaultUserAgent
 		}
+		if _, exist := headers["Accept-Encoding"]; !exist {
+			headers["Accept-Encoding"] = HttpDefaultAcceptEncoding
+		}
 	} else {
 		headers["User-Agent"] = HttpDefaultUserAgent
+		headers["Accept-Encoding"] = HttpDefaultAcceptEncoding
 	}
 	for k, v := range headers {
 		req.Header.Set(k, v)
@@ -214,6 +214,7 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 	if err != nil {
 		return httpResp, err
 	}
+	defer resp.Body.Close()
 
 	// 状态码
 	httpResp.StatusCode = resp.StatusCode
@@ -224,56 +225,62 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 	}
 
 	httpResp.Headers = &resp.Header
-
-	// ContentType 限制
-	if _, err := validContentType(r, httpResp.Headers); err != nil {
-		return httpResp, err
-	}
-
-	// ContentLength 限制，并限制 Body 读取
-	var body []byte
 	httpResp.ContentLength = resp.ContentLength
+
+	// http.Transport 定义了当请求头不包含 Accept-Encoding 或为空时, 默认会发送 Accept-Encoding=gzip
+	// 它会自动判断服务端是否是gzip 然后在接受响应时自动 uncompress, 并会自动移除响应头中的 Content-Encoding、Content-Length
+	// 为了获取 Content-Length, 我们需要手动设置不为空的 Accept-Encoding (默认是 HttpDefaultAcceptEncoding), 并且手动 uncompress
+	var body []byte
+	var reader io.ReadCloser
+	switch strings.ToLower(resp.Header.Get("Content-Encoding")) {
+	case "gzip":
+		reader, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			httpResp.Success = false
+			return httpResp, errors.New("gzip NewReader error")
+		}
+	case "deflate":
+		reader = flate.NewReader(resp.Body)
+	default:
+		reader = resp.Body
+	}
+	defer reader.Close()
+
+	// ContentLength 限制
 	if r != nil && r.MaxContentLength > 0 {
 		if resp.ContentLength != -1 {
 			if resp.ContentLength > r.MaxContentLength {
 				httpResp.Success = false
 				return httpResp, errors.New("contentLength > maxContentLength ")
 			}
-			body, err = ioutil.ReadAll(resp.Body)
+			body, err = ioutil.ReadAll(reader)
 		} else {
-			// 读取到最大长度
-			body, err = ioutil.ReadAll(io.LimitReader(resp.Body, r.MaxContentLength))
+			// 只读取到最大长度
+			httpResp.Success = false
+			body, err = ioutil.ReadAll(io.LimitReader(reader, r.MaxContentLength))
 		}
 	} else {
-		body, err = ioutil.ReadAll(resp.Body)
+		body, err = ioutil.ReadAll(reader)
 	}
-
-	// Close Body
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(resp.Body)
 
 	// 编码语言探测与自动转码
 	if err != nil {
+		httpResp.Success = false
 		return httpResp, err
 	} else {
+		// 默认会自动进行编码和语种探测，除非手动禁用
 		if r == nil || !r.DisableCharsetLang {
-			charsetRes, langRes := detect.CharsetLang(body, httpResp.Headers)
-
+			charsetRes, langRes := detect.CharsetLang(body, httpResp.Headers, resp.Request.URL.Hostname())
 			httpResp.Lang = langRes
-			if charsetRes.Charset != "" {
-				httpResp.Charset = charsetRes
-				body, err := fun.ToUtf8(body, charsetRes.Charset)
+			httpResp.Charset = charsetRes
+
+			if charsetRes.Charset != "" && charsetRes.Charset != "utf-8" {
+				utf8Body, err := fun.ToUtf8(body, charsetRes.Charset)
 				if err != nil {
 					return httpResp, errors.New("charset detect to utf-8 error")
 				} else {
-					httpResp.Body = body
+					httpResp.Body = utf8Body
 				}
-			}
-		} else if r.Charset != "" {
-			body, err := fun.ToUtf8(body, r.Charset)
-			if err != nil {
-				return httpResp, errors.New("charset req to utf-8  error")
 			} else {
 				httpResp.Body = body
 			}
@@ -283,51 +290,4 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 	}
 
 	return httpResp, nil
-}
-
-func validContentType(r *HttpReq, headers *http.Header) (bool, error) {
-	if r == nil {
-		return true, nil
-	}
-
-	if r.ForceTextContentType || len(r.AllowedContentTypes) > 0 {
-		valid := false
-
-		ct := strings.TrimSpace(strings.ToLower(headers.Get("Content-Type")))
-
-		// Text Content-Type
-		if r.ForceTextContentType {
-
-			for _, t := range textContentTypes {
-				if strings.HasPrefix(ct, t) {
-					valid = true
-					break
-				}
-			}
-
-			if valid {
-				return valid, nil
-			} else {
-				return valid, errors.New("content-type ForceTextContentType invalid")
-			}
-		}
-
-		// Custom Content-Type
-		if len(r.AllowedContentTypes) > 0 {
-			for _, t := range r.AllowedContentTypes {
-				if strings.HasPrefix(ct, t) {
-					valid = true
-					break
-				}
-			}
-
-			if valid {
-				return valid, nil
-			} else {
-				return valid, errors.New("content-type AllowedContentTypes invalid")
-			}
-		}
-	}
-
-	return true, nil
 }

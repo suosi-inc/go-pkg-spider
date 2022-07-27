@@ -7,26 +7,61 @@ import (
 	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/pemistahl/lingua-go"
 	"github.com/x-funs/go-fun"
 )
 
 var (
+	CharsetLangMaps = map[string]string{
+		"gbk":         "zh",
+		"big5":        "zh",
+		"iso-2022-cn": "zh",
+		"shift_jis":   "ja",
+		"koi8-r":      "ru",
+		"euc-jp":      "ja",
+		"euc-kr":      "ko",
+		"iso-2022-jp": "ja",
+		"iso-2022-kr": "ko",
+	}
+
+	LangZhMaps = map[string]string{
+		"zh": "中文",
+		"en": "英语",
+		"ja": "日语",
+		"ru": "俄语",
+		"ko": "韩语",
+		"ar": "阿拉伯语",
+		"hi": "印地语",
+		"th": "泰语",
+		"vi": "越南语",
+		"de": "德语",
+		"fr": "法语",
+		"it": "意大利语",
+		"es": "西班牙语",
+		"pt": "葡萄牙语",
+		"id": "印尼语",
+	}
+
 	metaLangSelectors = []string{
 		"meta[http-equiv=content-language]",
 		"meta[name=lang]",
 	}
 
-	langMaps = map[string]string{
-		"gbk":         "zh", // 中文
-		"big5":        "zh", // 中文
-		"iso-2022-cn": "zh", // 中文
-		"shift_jis":   "ja", // 日语
-		"koi8-r":      "ru", // 俄语
-		"koi8-u":      "ua", // 乌克兰语
-		"euc-jp":      "ja", // 日语
-		"euc-kr":      "ko", // 韩语
-		"iso-2022-jp": "ja", // 日语
-		"iso-2022-kr": "ko", // 韩语
+	linguaLanguages = []lingua.Language{
+		lingua.Arabic,
+		lingua.Russian,
+		lingua.Hindi,
+		lingua.Vietnamese,
+		lingua.Thai,
+	}
+
+	linguaMaps = map[string]string{
+		"arabic":     "ar",
+		"russian":    "ru",
+		"hindi":      "hi",
+		"vietnamese": "vi",
+		"thai":       "th",
+		"french":     "fr",
 	}
 )
 
@@ -34,8 +69,10 @@ const (
 	LangPosCharset = "charset"
 	LangPosHtml    = "html"
 	LangPosBody    = "body"
+	LangPosLingua  = "lingua"
 	LangPosGuess   = "guess"
-	BodyChunkSize  = 2048
+	LangPosHost    = "host"
+	BodyChunkSize  = 1024
 )
 
 type LangRes struct {
@@ -43,36 +80,35 @@ type LangRes struct {
 	LangPos string
 }
 
-func Lang(h []byte, charset string) LangRes {
+func Lang(h []byte, charset string, host string) LangRes {
 	var res LangRes
 	var lang string
 
-	// 如果存在 charset 对照表，则直接返回
+	// 如果存在特定语言的 charset 对照表，则直接返回
 	if charset != "" {
-		if _, exist := langMaps[charset]; exist {
-			res.Lang = langMaps[charset]
+		if _, exist := CharsetLangMaps[charset]; exist {
+			res.Lang = CharsetLangMaps[charset]
 			res.LangPos = LangPosCharset
 			return res
 		}
 	}
 
-	// 解析 Html
+	// 解析 Html 语言属性，当不为空或 en 时可信度高，直接返回
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(h))
 	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
 	lang = LangFromHtml(doc)
-	if lang != "" {
+	if lang != "" && lang != "en" {
 		res.Lang = lang
 		res.LangPos = LangPosHtml
 		return res
 	}
 
-	// 当 utf-8 编码时，lang 为空或 en 不可信，进行少量语种的最后检测
+	// 当 utf-8 编码时，lang 为空或 en 不可信，进行基于内容域名的语种的检测
 	if charset == "utf-8" && (lang == "" || lang == "en") {
-		bodyLang := LangFromUtf8Body(doc)
+		bodyLang, pos := LangFromUtf8Body(doc, host)
 		if bodyLang != "" {
 			res.Lang = bodyLang
-			res.LangPos = LangPosBody
-			return res
+			res.LangPos = pos
 		}
 	}
 
@@ -101,7 +137,7 @@ func LangFromHtml(doc *goquery.Document) string {
 	return lang
 }
 
-func LangFromUtf8Body(doc *goquery.Document) string {
+func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	var lang string
 	var text string
 
@@ -118,8 +154,8 @@ func LangFromUtf8Body(doc *goquery.Document) string {
 	// 去除换行、空格、符号
 	text = strings.ReplaceAll(text, "\n", "")
 	text = strings.ReplaceAll(text, "\t", "")
-	text = strings.ReplaceAll(text, " ", "")
-	m := regexp.MustCompile(`[\pP\pS\pZ]`)
+	text = strings.ReplaceAll(text, "  ", "")
+	m := regexp.MustCompile(`[\pP\pS]`)
 	text = m.ReplaceAllString(text, "")
 
 	// 最大截取 BodyChunkSize 个字符
@@ -133,7 +169,7 @@ func LangFromUtf8Body(doc *goquery.Document) string {
 	hanRate := float64(hanCount) / float64(textCount)
 
 	// 汉字比例
-	if hanRate >= 0.2 {
+	if hanRate >= 0.3 {
 		jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
 		ja := jaRegex.FindAllString(text, -1)
 		jaCount := len(ja)
@@ -142,21 +178,78 @@ func LangFromUtf8Body(doc *goquery.Document) string {
 		// 日语占比
 		if jaRate > 0.1 {
 			lang = "ja"
-			return lang
-		} else {
-			lang = "zh"
-			return lang
+			return lang, LangPosBody
 		}
-	} else {
-		// 英语 (因为有拉丁语系，所以不准确)
-		englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
-		english := englishRegexp.FindAllString(text, -1)
-		englishCount := len(english)
-		englishRate := float64(englishCount) / float64(textCount)
-		if englishRate > 0.8 {
-			lang = "en"
-			return lang
+
+		lang = "zh"
+		return lang, LangPosBody
+	}
+
+	// 英语占比很高，但可能是拉丁语系，进行域名后缀再判定
+	englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
+	english := englishRegexp.FindAllString(text, -1)
+	englishCount := len(english)
+	englishRate := float64(englishCount) / float64(textCount)
+	if englishRate > 0.8 {
+		hostLang := langFromHost(host)
+		if hostLang != "" {
+			return hostLang, LangPosHost
 		}
+
+		lang = "en"
+		return lang, LangPosBody
+	}
+
+	// 韩语占比很高
+	koRegex := regexp.MustCompile(`\p{Hangul}`)
+	ko := koRegex.FindAllString(text, -1)
+	koCount := len(ko)
+	koRate := float64(koCount) / float64(textCount)
+	if koRate > 0.3 {
+		lang = "ko"
+		return lang, LangPosBody
+	}
+
+	// 不是英、中、韩、日，尝试小语种域名特征
+	lang = langFromHost(host)
+	if lang != "" {
+		return lang, LangPosHost
+	}
+
+	// 域名没有特征，最后使用 lingua 分析指定小语种
+	detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLanguages...).Build()
+	if language, exists := detector.DetectLanguageOf(text); exists {
+
+		key := strings.ToLower(language.String())
+		linguaLang := linguaMaps[key]
+		return linguaLang, LangPosLingua
+	}
+
+	return lang, ""
+}
+
+func langFromHost(host string) string {
+	var lang string
+
+	host = strings.ToLower(host)
+	if strings.HasSuffix(host, ".fr") {
+		lang = "fr"
+	} else if strings.HasSuffix(host, ".de") {
+		lang = "de"
+	} else if strings.HasSuffix(host, ".it") {
+		lang = "it"
+	} else if strings.HasSuffix(host, ".es") {
+		lang = "es"
+	} else if strings.HasSuffix(host, ".pt") {
+		lang = "pt"
+	} else if strings.HasSuffix(host, ".in") {
+		lang = "in"
+	} else if strings.HasSuffix(host, ".vn") {
+		lang = "vi"
+	} else if strings.HasSuffix(host, ".mm") {
+		lang = "my"
+	} else if strings.HasSuffix(host, ".th") {
+		lang = "th"
 	}
 
 	return lang

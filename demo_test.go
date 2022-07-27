@@ -3,9 +3,12 @@ package spider
 import (
 	"bytes"
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/pemistahl/lingua-go"
 	"github.com/x-funs/go-fun"
 )
 
@@ -20,6 +23,61 @@ func TestGoquery(t *testing.T) {
 	text = fun.RemoveSign(text)
 
 	fmt.Println(text)
+}
+
+func TestLingua(t *testing.T) {
+
+	var urlStrs = []string{
+		"https://www.163.com",
+		// "https://english.news.cn",
+		// "https://jp.news.cn",
+		// "https://kr.news.cn",
+		// "https://arabic.news.cn",
+		// "https://www.bbc.com",
+		// "http://government.ru",
+		// "https://french.news.cn",
+		// "https://www.gouvernement.fr",
+		// "http://live.siammedia.org/",
+		// "http://hanoimoi.com.vn",
+		// "https://www.commerce.gov.mm",
+		// "https://www.rrdmyanmar.gov.mm",
+	}
+
+	for _, urlStr := range urlStrs {
+		resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
+
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+
+		text := doc.Find("a").Text()
+		text = strings.ReplaceAll(text, "\n", "")
+		text = strings.ReplaceAll(text, "\t", "")
+		text = strings.ReplaceAll(text, "  ", "")
+		m := regexp.MustCompile(`[\pP\pS]`)
+		text = m.ReplaceAllString(text, "")
+
+		text = fun.SubString(text, 0, 1024)
+
+		start := fun.Timestamp(true)
+		languages := []lingua.Language{
+			lingua.Korean,  // 韩语
+			lingua.Arabic,  // 阿拉伯语
+			lingua.Russian, // 俄语
+			// lingua.Hindi,   // 印地语
+			lingua.English, // 英语
+		}
+		detector := lingua.NewLanguageDetectorBuilder().
+			FromLanguages(languages...).
+			Build()
+
+		if language, exists := detector.DetectLanguageOf(text); exists {
+			t.Log(urlStr)
+			t.Log(text)
+			t.Log(language.IsoCode639_1())
+			fmt.Println(fun.Timestamp(true) - start)
+		}
+	}
+
 }
 
 func BenchmarkHttpDo(b *testing.B) {
