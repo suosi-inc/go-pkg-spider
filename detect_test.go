@@ -1,4 +1,4 @@
-package detect
+package spider
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/suosi-inc/go-pkg-spider/detect"
 	"github.com/x-funs/go-fun"
 )
 
@@ -20,20 +21,20 @@ func TestRegex(t *testing.T) {
 
 func TestCharsetLang(t *testing.T) {
 	var urlStrs = []string{
-		// "https://www.163.com",
-		// "https://english.news.cn",
+		"https://www.163.com",
+		"https://english.news.cn",
 		"https://jp.news.cn",
-		// "https://kr.news.cn",
-		// "https://arabic.news.cn",
-		// "https://www.bbc.com",
-		// "http://government.ru",
-		// "https://french.news.cn",
-		// "https://www.gouvernement.fr",
-		// "http://live.siammedia.org/",
-		// "http://hanoimoi.com.vn",
-		// "https://www.commerce.gov.mm",
-		// "https://sanmarg.in/",
-		// "https://www.rrdmyanmar.gov.mm",
+		"https://kr.news.cn",
+		"https://arabic.news.cn",
+		"https://www.bbc.com",
+		"http://government.ru",
+		"https://french.news.cn",
+		"https://www.gouvernement.fr",
+		"http://live.siammedia.org/",
+		"http://hanoimoi.com.vn",
+		"https://www.commerce.gov.mm",
+		"https://sanmarg.in/",
+		"https://www.rrdmyanmar.gov.mm",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -76,7 +77,7 @@ func TestLangFromUtf8Body(t *testing.T) {
 		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
 
 		start := fun.Timestamp(true)
-		lang, pos := LangFromUtf8Body(doc, u.Hostname())
+		lang, pos := detect.LangFromUtf8Body(doc, u.Hostname())
 		t.Log(urlStr)
 		t.Log(lang)
 		t.Log(pos)

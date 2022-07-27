@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/suosi-inc/go-pkg-spider/detect"
 )
 
 func TestTopDomain(t *testing.T) {
@@ -101,6 +99,6 @@ func BenchmarkTest(b *testing.B) {
 	input, _ := io.ReadAll(f)
 	log.Println("size:", len(input))
 	for i := 0; i < b.N; i++ {
-		detect.GuessHtmlCharsetLang(input)
+		CharsetLangGuess(input)
 	}
 }

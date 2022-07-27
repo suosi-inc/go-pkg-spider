@@ -10,6 +10,21 @@ const (
 	TestUrl = "http://localhost:8080"
 )
 
+func TestHttpGetPublic(t *testing.T) {
+	var urlStr string
+
+	urlStr = "http://www.163.com"
+	// urlStr = "http://www.qq.com"
+
+	resp, err := HttpGetResp(urlStr, nil, 10000)
+
+	t.Log(err)
+	t.Log(resp.Success)
+	t.Log(resp.StatusCode)
+	t.Log(resp.Headers)
+	t.Log(fun.String(resp.Body))
+}
+
 func TestHttpGet(t *testing.T) {
 	var urlStr string
 	urlStr = "http://www.163.com"
@@ -55,15 +70,12 @@ func TestHttpGetContentLength(t *testing.T) {
 	var urlStr string
 
 	// urlStr = "https://mirrors.163.com/mysql/Downloads/MySQL-8.0/mysql-8.0.27-macos11-x86_64.tar"
-	urlStr = "http://www.163.com"
+	urlStr = "http://www.qq.com"
 
-	req := &HttpReq{
-		MaxContentLength: 1000,
-		Headers: map[string]string{
-			"Accept-Encoding": "",
-		},
-	}
-	resp, err := HttpGetResp(urlStr, req, 10000)
+	// req := &HttpReq{
+	// 	ForceTextContentType: true,
+	// }
+	resp, err := HttpGetResp(urlStr, nil, 10000)
 
 	t.Log(err)
 	t.Log(resp.Charset)

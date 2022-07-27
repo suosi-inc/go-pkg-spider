@@ -60,11 +60,11 @@ func TestLingua(t *testing.T) {
 
 		start := fun.Timestamp(true)
 		languages := []lingua.Language{
-			lingua.Korean,  // 韩语
-			lingua.Arabic,  // 阿拉伯语
-			lingua.Russian, // 俄语
-			// lingua.Hindi,   // 印地语
-			lingua.English, // 英语
+			lingua.Arabic,
+			lingua.Russian,
+			lingua.Hindi,
+			lingua.Vietnamese,
+			lingua.Thai,
 		}
 		detector := lingua.NewLanguageDetectorBuilder().
 			FromLanguages(languages...).
@@ -78,10 +78,4 @@ func TestLingua(t *testing.T) {
 		}
 	}
 
-}
-
-func BenchmarkHttpDo(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		HttpGet("https://jp.news.cn/index.htm")
-	}
 }
