@@ -3,7 +3,6 @@ package spider
 import (
 	"bytes"
 	"net/url"
-	"regexp"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -11,20 +10,15 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-func TestRegex(t *testing.T) {
-	str := ",.!，，D_NAME。！；‘’”“《》**dfs#%^&()-+我1431221     中国123漢字かどうかのjavaを<決定>$¥"
-	r := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
-	s := r.FindAllString(str, -1)
-	t.Log(str)
-	t.Log(s)
-}
-
 func TestCharsetLang(t *testing.T) {
 	var urlStrs = []string{
+		"http://suosi.com.cn",
 		"https://www.163.com",
 		"https://english.news.cn",
 		"https://jp.news.cn",
 		"https://kr.news.cn",
+		"https://www.donga.com/",
+		"http://www.koreatimes.com/",
 		"https://arabic.news.cn",
 		"https://www.bbc.com",
 		"http://government.ru",
@@ -38,12 +32,13 @@ func TestCharsetLang(t *testing.T) {
 	}
 
 	for _, urlStr := range urlStrs {
-		resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
+		resp, _ := fun.HttpGetResp(urlStr, nil, 30000)
 
 		u, _ := url.Parse(urlStr)
 
 		start := fun.Timestamp(true)
-		charset, lang := CharsetLang(resp.Body, resp.Headers, u.Hostname())
+		charset := DetectCharset(resp.Body, resp.Headers)
+		lang := DetectLang(resp.Body, charset.Charset, u.Hostname())
 		t.Log(urlStr)
 		t.Log(charset)
 		t.Log(lang)
@@ -70,7 +65,7 @@ func TestLangFromUtf8Body(t *testing.T) {
 	}
 
 	for _, urlStr := range urlStrs {
-		resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
+		resp, _ := fun.HttpGetResp(urlStr, nil, 30000)
 		u, _ := url.Parse(urlStr)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
@@ -101,7 +96,7 @@ func BenchmarkCharsetLang(b *testing.B) {
 	// // 重制定时器
 	// b.ResetTimer()
 	// for i := 0; i < b.N; i++ {
-	// 	_, _ = CharsetLang(resp.Body, resp.Headers)
+	// 	_, _ = DetectCharset(resp.Body, resp.Headers)
 	// }
 }
 

@@ -99,6 +99,6 @@ func BenchmarkTest(b *testing.B) {
 	input, _ := io.ReadAll(f)
 	log.Println("size:", len(input))
 	for i := 0; i < b.N; i++ {
-		CharsetLangGuess(input)
+		DetectCharsetGuess(input)
 	}
 }

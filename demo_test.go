@@ -25,6 +25,14 @@ func TestGoquery(t *testing.T) {
 	fmt.Println(text)
 }
 
+func TestRegex(t *testing.T) {
+	str := ",.!，，D_NAME。！；‘’”“《》**dfs#%^&()-+我1431221     中国123漢字かどうかのjavaを<決定>$¥"
+	r := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
+	s := r.FindAllString(str, -1)
+	t.Log(str)
+	t.Log(s)
+}
+
 func TestLingua(t *testing.T) {
 
 	var urlStrs = []string{

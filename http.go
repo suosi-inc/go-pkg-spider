@@ -19,6 +19,7 @@ const (
 
 var (
 	textContentTypes = []string{
+		"text/plain",
 		"text/html",
 		"text/xml",
 		"application/xml",
@@ -31,8 +32,11 @@ var (
 type HttpReq struct {
 	*fun.HttpReq
 
-	// 禁止自动探测字符集和语言
-	DisableCharsetLang bool
+	// 禁止自动探测字符集和转换字符集
+	DisableCharset bool
+
+	// 禁止自动探测语种
+	DisableLang bool
 
 	// 强制 ContentType 为文本类型
 	ForceTextContentType bool
@@ -124,12 +128,19 @@ func HttpDo(req *http.Request, r *HttpReq, timeout int) ([]byte, error) {
 // HttpDoResp Http 请求, 参数为 http.Request, HttpReq, 超时时间(毫秒)
 // 返回 HttpResp, 错误信息
 func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
-	if r == nil || r.HttpReq == nil || r.HttpReq.Transport == nil {
+	// 处理 Transport
+	if r == nil {
 		r = &HttpReq{
 			HttpReq: &fun.HttpReq{
 				Transport: HttpDefaultTransport,
 			},
 		}
+	} else if r.HttpReq == nil {
+		r.HttpReq = &fun.HttpReq{
+			Transport: HttpDefaultTransport,
+		}
+	} else if r.HttpReq.Transport == nil {
+		r.HttpReq.Transport = HttpDefaultTransport
 	}
 
 	// 强制文本类型
@@ -137,46 +148,39 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		r.AllowedContentTypes = textContentTypes
 	}
 
-	resp, err := fun.HttpDoResp(req, r.HttpReq, timeout)
-
 	// HttpResp
 	var lang detect.LangRes
 	var charset detect.CharsetRes
 	httpResp := &HttpResp{
-		HttpResp: resp,
-		Lang:     lang,
-		Charset:  charset,
+		Lang:    lang,
+		Charset: charset,
 	}
 
+	resp, err := fun.HttpDoResp(req, r.HttpReq, timeout)
+	httpResp.HttpResp = resp
 	if err != nil {
 		return httpResp, err
 	}
 
-	body := httpResp.Body
-	// 编码语言探测与自动转码
-	if err != nil {
-		httpResp.Success = false
-		return httpResp, err
-	} else {
-		// 默认会自动进行编码和语种探测，除非手动禁用
-		if r == nil || !r.DisableCharsetLang {
-			charsetRes, langRes := CharsetLang(body, httpResp.Headers, req.URL.Hostname())
-			httpResp.Lang = langRes
-			httpResp.Charset = charsetRes
+	// 默认会自动进行探测编码和转码，除非手动禁用
+	if r == nil || !r.DisableCharset {
+		charsetRes := DetectCharset(httpResp.Body, httpResp.Headers)
+		httpResp.Charset = charsetRes
 
-			if charsetRes.Charset != "" && charsetRes.Charset != "utf-8" {
-				utf8Body, err := fun.ToUtf8(body, charsetRes.Charset)
-				if err != nil {
-					return httpResp, errors.New("charset detect to utf-8 error")
-				} else {
-					httpResp.Body = utf8Body
-				}
+		if charsetRes.Charset != "" && charsetRes.Charset != "utf-8" {
+			utf8Body, err := fun.ToUtf8(httpResp.Body, charsetRes.Charset)
+			if err != nil {
+				return httpResp, errors.New("charset detect to utf-8 error")
 			} else {
-				httpResp.Body = body
+				httpResp.Body = utf8Body
 			}
-		} else {
-			httpResp.Body = body
 		}
+	}
+
+	// 默认会自动进行语种探测
+	if r == nil || !r.DisableLang {
+		langRes := DetectLang(httpResp.Body, httpResp.Charset.Charset, req.URL.Hostname())
+		httpResp.Lang = langRes
 	}
 
 	return httpResp, nil

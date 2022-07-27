@@ -53,6 +53,7 @@ var (
 		lingua.Hindi,
 		lingua.Vietnamese,
 		lingua.Thai,
+		lingua.Korean,
 	}
 
 	linguaMaps = map[string]string{
@@ -62,6 +63,7 @@ var (
 		"vietnamese": "vi",
 		"thai":       "th",
 		"french":     "fr",
+		"korean":     "ko",
 	}
 )
 
@@ -70,7 +72,6 @@ const (
 	LangPosHtml    = "html"
 	LangPosBody    = "body"
 	LangPosLingua  = "lingua"
-	LangPosGuess   = "guess"
 	LangPosHost    = "host"
 	BodyChunkSize  = 1024
 )
@@ -103,7 +104,7 @@ func Lang(h []byte, charset string, host string) LangRes {
 		return res
 	}
 
-	// 当 utf-8 编码时，lang 为空或 en 不可信，进行基于内容域名的语种的检测
+	// 当 utf-8 编码时，lang 为空或 en 不可信，进行基于内容、域名的语种的检测
 	if charset == "utf-8" && (lang == "" || lang == "en") {
 		bodyLang, pos := LangFromUtf8Body(doc, host)
 		if bodyLang != "" {
@@ -141,17 +142,17 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	var lang string
 	var text string
 
-	// 获取网页中最多 128 个 a 标签，如果没有 a 标签，则获取 body
+	// 获取网页中最多 128 个 a 标签，如果没有 a 标签或过少，则获取 body
 	aTag := doc.Find("a")
 	aTagSize := aTag.Size()
-	if aTagSize >= 10 {
+	if aTagSize >= 16 {
 		sliceMax := fun.Min(aTagSize, 128)
 		text = aTag.Slice(0, sliceMax).Text()
 	} else {
 		text = doc.Find("body").Text()
 	}
 
-	// 去除换行、空格、符号
+	// 去除换行、符号(为了保留语义只替换多余的空格)
 	text = strings.ReplaceAll(text, "\n", "")
 	text = strings.ReplaceAll(text, "\t", "")
 	text = strings.ReplaceAll(text, "  ", "")
@@ -165,52 +166,48 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	// 是否包含汉字
 	hanRegex := regexp.MustCompile(`\p{Han}`)
 	han := hanRegex.FindAllString(text, -1)
-	hanCount := len(han)
-	hanRate := float64(hanCount) / float64(textCount)
+	if han != nil {
+		hanCount := len(han)
+		hanRate := float64(hanCount) / float64(textCount)
 
-	// 汉字比例
-	if hanRate >= 0.3 {
-		jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
-		ja := jaRegex.FindAllString(text, -1)
-		jaCount := len(ja)
-		jaRate := float64(jaCount) / float64(hanCount)
+		// 汉字比例
+		if hanRate >= 0.3 {
+			jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
+			ja := jaRegex.FindAllString(text, -1)
+			if ja != nil {
+				jaCount := len(ja)
+				jaRate := float64(jaCount) / float64(hanCount)
 
-		// 日语占比
-		if jaRate > 0.1 {
-			lang = "ja"
+				// 日语占比
+				if jaRate > 0.1 {
+					lang = "ja"
+					return lang, LangPosBody
+				}
+			}
+
+			lang = "zh"
 			return lang, LangPosBody
 		}
-
-		lang = "zh"
-		return lang, LangPosBody
 	}
 
-	// 英语占比很高，但可能是拉丁语系，进行域名后缀再判定
+	// 英语占比很高, 不一定是英语, 可能是拉丁语系, 妥协的办法进行域名后缀再判定(不一定准确)
 	englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
 	english := englishRegexp.FindAllString(text, -1)
-	englishCount := len(english)
-	englishRate := float64(englishCount) / float64(textCount)
-	if englishRate > 0.8 {
-		hostLang := langFromHost(host)
-		if hostLang != "" {
-			return hostLang, LangPosHost
+	if english != nil {
+		englishCount := len(english)
+		englishRate := float64(englishCount) / float64(textCount)
+		if englishRate > 0.7 {
+			hostLang := langFromHost(host)
+			if hostLang != "" {
+				return hostLang, LangPosHost
+			}
+
+			lang = "en"
+			return lang, LangPosBody
 		}
-
-		lang = "en"
-		return lang, LangPosBody
 	}
 
-	// 韩语占比很高
-	koRegex := regexp.MustCompile(`\p{Hangul}`)
-	ko := koRegex.FindAllString(text, -1)
-	koCount := len(ko)
-	koRate := float64(koCount) / float64(textCount)
-	if koRate > 0.3 {
-		lang = "ko"
-		return lang, LangPosBody
-	}
-
-	// 不是英、中、韩、日，尝试小语种域名特征
+	// 不是英、中、日，尝试小语种的域名特征
 	lang = langFromHost(host)
 	if lang != "" {
 		return lang, LangPosHost
