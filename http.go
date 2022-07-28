@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/suosi-inc/go-pkg-spider/detect"
 	"github.com/x-funs/go-fun"
 )
 
@@ -46,7 +45,7 @@ type HttpResp struct {
 	*fun.HttpResp
 
 	// 字符集
-	Charset detect.CharsetRes
+	Charset CharsetRes
 }
 
 // HttpDefaultTransport 默认全局使用的 http.Transport
@@ -146,7 +145,7 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 	}
 
 	// HttpResp
-	var charset detect.CharsetRes
+	var charset CharsetRes
 	httpResp := &HttpResp{
 		Charset: charset,
 	}
@@ -159,7 +158,7 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 
 	// 默认会自动进行探测编码和转码，除非手动禁用
 	if r == nil || !r.DisableCharset {
-		charsetRes := DetectCharset(httpResp.Body, httpResp.Headers)
+		charsetRes := Charset(httpResp.Body, httpResp.Headers)
 		httpResp.Charset = charsetRes
 
 		if charsetRes.Charset != "" && charsetRes.Charset != "utf-8" {

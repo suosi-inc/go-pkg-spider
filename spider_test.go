@@ -1,104 +1,131 @@
 package spider
 
 import (
-	"io"
-	"log"
-	"os"
-	"path/filepath"
+	"bytes"
+	"fmt"
+	"net/url"
+	"regexp"
+	"strings"
 	"testing"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/pemistahl/lingua-go"
+	"github.com/x-funs/go-fun"
 )
 
-func TestTopDomain(t *testing.T) {
-	t.Log(TopDomain("hi.chinanews.com"))
-	t.Log(TopDomain("a.wh.cn"))
-	t.Log(TopDomain("siat.ac.cn"))
-	t.Log(TopDomain("abc.spring.io"))
-	t.Log(TopDomain("abc.spring.ai"))
-	t.Log(TopDomain("www.china-embassy.or.jp"))
-	t.Log(TopDomain("whszdj.wh.cn"))
-	t.Log(TopDomain("gk.wh.cn"))
-	t.Log(TopDomain("xwxc.mwr.cn"))
-	t.Log(TopDomain("legismac.safp.gov.mo"))
-	t.Log(TopDomain("dezhou.rcsd.cn"))
-	t.Log(TopDomain("www.gov.cn"))
-	t.Log(TopDomain("scopsr.gov.cn"))
+func TestCharsetLang(t *testing.T) {
+	var urlStrs = []string{
+		"http://suosi.com.cn",
+		"https://www.163.com",
+		"https://english.news.cn",
+		"https://jp.news.cn",
+		"https://kr.news.cn",
+		"https://www.donga.com/",
+		"http://www.koreatimes.com/",
+		"https://arabic.news.cn",
+		"https://www.bbc.com",
+		"http://government.ru",
+		"https://french.news.cn",
+		"https://www.gouvernement.fr",
+		"http://live.siammedia.org/",
+		"http://hanoimoi.com.vn",
+		"https://www.commerce.gov.mm",
+		"https://sanmarg.in/",
+		"https://www.rrdmyanmar.gov.mm",
+	}
+
+	for _, urlStr := range urlStrs {
+		resp, _ := fun.HttpGetResp(urlStr, nil, 30000)
+
+		u, _ := url.Parse(urlStr)
+
+		start := fun.Timestamp(true)
+		charset := Charset(resp.Body, resp.Headers)
+		t.Log(urlStr)
+		t.Log(charset)
+
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+		lang := Lang(doc, charset.Charset, u.Hostname())
+		t.Log(lang)
+
+		t.Log(fun.Timestamp(true) - start)
+	}
+
 }
 
-func TestTopDomain2(t *testing.T) {
-	domains := []string{
-		"spartanswire.usatoday.com",
-		"badgerswire.usatoday.com",
-		"wolverineswire.usatoday.com",
-		"volswire.usatoday.com",
-		"buckeyeswire.usatoday.com",
-		"ugawire.usatoday.com",
-		"guce.yahoo.com",
-		"pageviewer.yomiuri.co.jp",
-		"partner.buy.yahoo.com",
-		"tw.edit.yahoo.com",
-		"tw.security.yahoo.com",
-		"tw.knowledge.yahoo.com",
-		"travel.m.pchome.com.tw",
-		"blogs.reuters.com",
-		"reuters.com",
-		"tw.money.yahoo.com",
-		"tw.mobile.yahoo.com",
-		"asia.adspecs.yahoo.com",
-		"learngerman.dw.com",
-		"conference.udn.com",
-		"mediadirectory.economist.com",
-		"eventsregistration.economist.com",
-		"eventscustom.economist.com",
-		"technologyforchange.economist.com",
-		"sustainabilityregistration.economist.com",
-		"learn-french.lemonde.fr",
-		"jungeleute.sueddeutsche.de",
-		"jetzt.sueddeutsche.de",
-		"coupons.cnn.com",
-		"www.cnn.com",
-		"www.khmer.voanews.com",
-		"www.burmese.voanews.com",
-		"www.tigrigna.voanews.com",
-		"nkpos.nikkei.co.jp",
-		"nvs.nikkei.co.jp",
-		"simonglazin.dailymail.co.uk",
-		"adweb.nikkei.co.jp",
-		"broganblog.dailymail.co.uk",
-		"pclub.nikkei.co.jp",
-		"araward.nikkei.co.jp",
-		"blend.nikkei.co.jp",
-		"esf.nikkei.co.jp",
-		"hoshiaward.nikkei.co.jp",
-		"marketing.nikkei.com",
-		"www.now.com",
-		"jp.wsj.com",
-		"subscribenow.economist.com",
-		"sportsawards.usatoday.com",
-		"cooking.nytimes.com",
-	}
+func TestGoquery(t *testing.T) {
+	body, _ := HttpGet("https://jp.news.cn/index.htm")
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(body))
 
-	for _, domain := range domains {
-		t.Log(TopDomain(domain))
-	}
+	// lang, exist := doc.Find("html").Attr("id")
+
+	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+	text := doc.Find("body").Text()
+	text = fun.RemoveSign(text)
+
+	fmt.Println(text)
 }
 
-func TestTopDomainUrl(t *testing.T) {
-	t.Log(TopDomainFromUrl("  "))
-	t.Log(TopDomainFromUrl("https://www.google.com"))
-	t.Log(TopDomainFromUrl("https://hi.baidu.com/news"))
-	t.Log(TopDomainFromUrl("//hi.baidu.com/news"))
+func TestRegex(t *testing.T) {
+	str := ",.!，，D_NAME。！；‘’”“《》**dfs#%^&()-+我1431221     中国123漢字かどうかのjavaを<決定>$¥"
+	r := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
+	s := r.FindAllString(str, -1)
+	t.Log(str)
+	t.Log(s)
 }
 
-func BenchmarkTest(b *testing.B) {
-	f, err := os.Open(filepath.Join("test/html", "sohu.com.html"))
-	if err != nil {
-		log.Println("open file error:", err)
-	}
-	defer f.Close()
+func TestLingua(t *testing.T) {
 
-	input, _ := io.ReadAll(f)
-	log.Println("size:", len(input))
-	for i := 0; i < b.N; i++ {
-		DetectCharsetGuess(input)
+	var urlStrs = []string{
+		"https://www.163.com",
+		// "https://english.news.cn",
+		// "https://jp.news.cn",
+		// "https://kr.news.cn",
+		// "https://arabic.news.cn",
+		// "https://www.bbc.com",
+		// "http://government.ru",
+		// "https://french.news.cn",
+		// "https://www.gouvernement.fr",
+		// "http://live.siammedia.org/",
+		// "http://hanoimoi.com.vn",
+		// "https://www.commerce.gov.mm",
+		// "https://www.rrdmyanmar.gov.mm",
 	}
+
+	for _, urlStr := range urlStrs {
+		resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
+
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+
+		text := doc.Find("a").Text()
+		text = strings.ReplaceAll(text, "\n", "")
+		text = strings.ReplaceAll(text, "\t", "")
+		text = strings.ReplaceAll(text, "  ", "")
+		m := regexp.MustCompile(`[\pP\pS]`)
+		text = m.ReplaceAllString(text, "")
+
+		text = fun.SubString(text, 0, 1024)
+
+		start := fun.Timestamp(true)
+		languages := []lingua.Language{
+			lingua.Arabic,
+			lingua.Russian,
+			lingua.Hindi,
+			lingua.Vietnamese,
+			lingua.Thai,
+		}
+		detector := lingua.NewLanguageDetectorBuilder().
+			FromLanguages(languages...).
+			Build()
+
+		if language, exists := detector.DetectLanguageOf(text); exists {
+			t.Log(urlStr)
+			t.Log(text)
+			t.Log(language.IsoCode639_1())
+			fmt.Println(fun.Timestamp(true) - start)
+		}
+	}
+
 }

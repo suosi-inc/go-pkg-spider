@@ -1,4 +1,4 @@
-package detect
+package spider
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/suosi-inc/chardet"
 	"github.com/x-funs/go-fun"
 )
 
@@ -26,8 +27,29 @@ type CharsetRes struct {
 	CharsetPos string
 }
 
-// Charset 解析 HTTP body、http.Header 中的 charset, 准确性高
-func Charset(h []byte, headers *http.Header) CharsetRes {
+// Charset 解析 HTTP body、http.Header 中的编码和语言, 如果未解析成功则尝试进行猜测
+func Charset(body []byte, headers *http.Header) CharsetRes {
+	var charsetRes CharsetRes
+	var guessCharset string
+
+	// 根据 Content-Type、Body Html 标签探测编码
+	charsetRes = CharsetHtmlHeader(body, headers)
+
+	// 未识别到 charset 则使用 guess
+	if charsetRes.Charset == "" {
+		guessCharset = CharsetGuess(body)
+
+		if guessCharset != "" {
+			charsetRes.Charset = guessCharset
+			charsetRes.CharsetPos = CharsetPosGuess
+		}
+	}
+
+	return charsetRes
+}
+
+// CharsetHtmlHeader 解析 HTTP body、http.Header 中的 charset, 准确性高
+func CharsetHtmlHeader(h []byte, headers *http.Header) CharsetRes {
 	var res CharsetRes
 	var c string
 
@@ -97,6 +119,19 @@ func CharsetFromHtml(h []byte) string {
 	}
 
 	return convertCharset(charset)
+}
+
+// CharsetGuess 根据 HTTP body 猜测编码
+func CharsetGuess(body []byte) string {
+	var guessCharset string
+
+	detector := chardet.NewHtmlDetector()
+	guess, err := detector.DetectBest(body)
+	if err == nil {
+		guessCharset = strings.ToLower(guess.Charset)
+	}
+
+	return guessCharset
 }
 
 // convertCharset 格式化 charset

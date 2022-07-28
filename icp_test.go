@@ -1,6 +1,8 @@
-package detect
+package spider
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestIcp(t *testing.T) {
 	texts := []string{

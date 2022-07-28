@@ -1,4 +1,4 @@
-package domain
+package spider
 
 import (
 	"errors"
@@ -14,7 +14,25 @@ type Domain struct {
 	ICANN                  bool
 }
 
-func Parse(domain string) (*Domain, error) {
+// TopDomain 返回的顶级域名
+func TopDomain(d string) string {
+	if d, err := DomainParse(d); err == nil {
+		return d.Domain + "." + d.TLD
+	}
+
+	return ""
+}
+
+// TopDomainFromUrl 解析 URL 返回顶级域名
+func TopDomainFromUrl(urlStr string) string {
+	if d, err := DomainParseFromUrl(urlStr); err == nil {
+		return d.Domain + "." + d.TLD
+	}
+
+	return ""
+}
+
+func DomainParse(domain string) (*Domain, error) {
 	if fun.Blank(domain) {
 		return nil, errors.New("domain is blank")
 	}
@@ -44,7 +62,7 @@ func Parse(domain string) (*Domain, error) {
 	}, nil
 }
 
-func ParseFromUrl(urlStr string) (*Domain, error) {
+func DomainParseFromUrl(urlStr string) (*Domain, error) {
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, errors.New("url parse error")
@@ -52,5 +70,5 @@ func ParseFromUrl(urlStr string) (*Domain, error) {
 
 	d := u.Hostname()
 
-	return Parse(d)
+	return DomainParse(d)
 }

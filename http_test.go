@@ -44,7 +44,7 @@ func TestHttpGet(t *testing.T) {
 		u, _ := url.Parse(urlStr)
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
-		lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+		lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 		t.Log(lang)
 	}
 }
@@ -67,7 +67,7 @@ func TestHttpGetPublic(t *testing.T) {
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
-	lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))
@@ -93,7 +93,7 @@ func TestHttpGetContentType(t *testing.T) {
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
-	lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))
@@ -121,7 +121,7 @@ func TestHttpGetContentLength(t *testing.T) {
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
-	lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))
