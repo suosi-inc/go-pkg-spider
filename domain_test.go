@@ -60,7 +60,7 @@ func TestTopDomain(t *testing.T) {
 	}
 
 	for _, domain := range domains {
-		t.Log(TopDomain(domain))
+		t.Log(DomainTop(domain))
 	}
 }
 

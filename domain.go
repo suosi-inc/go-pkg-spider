@@ -14,8 +14,8 @@ type Domain struct {
 	ICANN                  bool
 }
 
-// TopDomain 返回的顶级域名
-func TopDomain(d string) string {
+// DomainTop 返回的顶级域名
+func DomainTop(d string) string {
 	if d, err := DomainParse(d); err == nil {
 		return d.Domain + "." + d.TLD
 	}
@@ -23,8 +23,8 @@ func TopDomain(d string) string {
 	return ""
 }
 
-// TopDomainFromUrl 解析 URL 返回顶级域名
-func TopDomainFromUrl(urlStr string) string {
+// DomainTopFromUrl 解析 URL 返回顶级域名
+func DomainTopFromUrl(urlStr string) string {
 	if d, err := DomainParseFromUrl(urlStr); err == nil {
 		return d.Domain + "." + d.TLD
 	}
