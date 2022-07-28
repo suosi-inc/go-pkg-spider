@@ -84,6 +84,7 @@ func CharsetFromHtml(h []byte) string {
 			charset = matches[1]
 		}
 
+		// HTML5 标签
 		if charset == "" {
 			matches = regexp.MustCompile(RegexMetaPattern).FindStringSubmatch(html)
 			if len(matches) > 1 {

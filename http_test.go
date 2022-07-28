@@ -1,13 +1,12 @@
 package spider
 
 import (
+	"bytes"
+	"net/url"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/x-funs/go-fun"
-)
-
-const (
-	TestUrl = "http://localhost:8080"
 )
 
 func TestHttpGet(t *testing.T) {
@@ -32,15 +31,21 @@ func TestHttpGet(t *testing.T) {
 	}
 
 	for _, urlStr := range urlStrs {
+
 		resp, err := HttpGetResp(urlStr, nil, 30000)
 
 		t.Log(urlStr)
 		t.Log(err)
 		t.Log(resp.Success)
-		t.Log(resp.Charset)
-		t.Log(resp.Lang)
 		t.Log(resp.ContentLength)
 		t.Log(resp.Headers)
+		t.Log(resp.Charset)
+
+		u, _ := url.Parse(urlStr)
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+		lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+		t.Log(lang)
 	}
 }
 
@@ -55,10 +60,16 @@ func TestHttpGetPublic(t *testing.T) {
 	t.Log(urlStr)
 	t.Log(err)
 	t.Log(resp.Success)
-	t.Log(resp.Charset)
-	t.Log(resp.Lang)
 	t.Log(resp.ContentLength)
 	t.Log(resp.Headers)
+	t.Log(resp.Charset)
+
+	u, _ := url.Parse(urlStr)
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+	lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+	t.Log(lang)
+
 	t.Log(fun.String(resp.Body))
 }
 
@@ -75,10 +86,16 @@ func TestHttpGetContentType(t *testing.T) {
 	t.Log(urlStr)
 	t.Log(err)
 	t.Log(resp.Success)
-	t.Log(resp.Charset)
-	t.Log(resp.Lang)
 	t.Log(resp.ContentLength)
 	t.Log(resp.Headers)
+	t.Log(resp.Charset)
+
+	u, _ := url.Parse(urlStr)
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+	lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+	t.Log(lang)
+
 	t.Log(fun.String(resp.Body))
 }
 
@@ -97,9 +114,15 @@ func TestHttpGetContentLength(t *testing.T) {
 	t.Log(urlStr)
 	t.Log(err)
 	t.Log(resp.Success)
-	t.Log(resp.Charset)
-	t.Log(resp.Lang)
 	t.Log(resp.ContentLength)
 	t.Log(resp.Headers)
+	t.Log(resp.Charset)
+
+	u, _ := url.Parse(urlStr)
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+	lang := DetectLang(doc, resp.Charset.Charset, u.Hostname())
+	t.Log(lang)
+
 	t.Log(fun.String(resp.Body))
 }

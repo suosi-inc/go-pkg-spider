@@ -45,9 +45,6 @@ type HttpReq struct {
 type HttpResp struct {
 	*fun.HttpResp
 
-	// 语言 (en/zh/...)
-	Lang detect.LangRes
-
 	// 字符集
 	Charset detect.CharsetRes
 }
@@ -139,8 +136,8 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		r.HttpReq = &fun.HttpReq{
 			Transport: HttpDefaultTransport,
 		}
-	} else if r.HttpReq.Transport == nil {
-		r.HttpReq.Transport = HttpDefaultTransport
+	} else if r.Transport == nil {
+		r.Transport = HttpDefaultTransport
 	}
 
 	// 强制文本类型
@@ -149,10 +146,8 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 	}
 
 	// HttpResp
-	var lang detect.LangRes
 	var charset detect.CharsetRes
 	httpResp := &HttpResp{
-		Lang:    lang,
 		Charset: charset,
 	}
 
@@ -175,12 +170,6 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 				httpResp.Body = utf8Body
 			}
 		}
-	}
-
-	// 默认会自动进行语种探测
-	if r == nil || !r.DisableLang {
-		langRes := DetectLang(httpResp.Body, httpResp.Charset.Charset, req.URL.Hostname())
-		httpResp.Lang = langRes
 	}
 
 	return httpResp, nil

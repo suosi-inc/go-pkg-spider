@@ -1,7 +1,6 @@
 package detect
 
 import (
-	"bytes"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -20,6 +19,7 @@ var (
 		"koi8-r":      "ru",
 		"euc-jp":      "ja",
 		"euc-kr":      "ko",
+		"euc-cn":      "zh",
 		"iso-2022-jp": "ja",
 		"iso-2022-kr": "ko",
 	}
@@ -81,7 +81,7 @@ type LangRes struct {
 	LangPos string
 }
 
-func Lang(h []byte, charset string, host string) LangRes {
+func Lang(doc *goquery.Document, charset string, host string) LangRes {
 	var res LangRes
 	var lang string
 
@@ -95,8 +95,6 @@ func Lang(h []byte, charset string, host string) LangRes {
 	}
 
 	// 解析 Html 语言属性，当不为空或 en 时可信度高，直接返回
-	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(h))
-	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
 	lang = LangFromHtml(doc)
 	if lang != "" && lang != "en" {
 		res.Lang = lang

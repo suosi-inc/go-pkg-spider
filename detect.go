@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/suosi-inc/chardet"
 	"github.com/suosi-inc/go-pkg-spider/detect"
 )
@@ -30,8 +31,8 @@ func DetectCharset(body []byte, headers *http.Header) detect.CharsetRes {
 }
 
 // DetectLang 根据 HTTP body、编码、域名后缀探测语言
-func DetectLang(body []byte, charset string, host string) detect.LangRes {
-	langRes := detect.Lang(body, charset, host)
+func DetectLang(doc *goquery.Document, charset string, host string) detect.LangRes {
+	langRes := detect.Lang(doc, charset, host)
 
 	return langRes
 }
