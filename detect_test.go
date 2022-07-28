@@ -84,3 +84,28 @@ func TestLangFromUtf8Body(t *testing.T) {
 
 	}
 }
+
+func TestDetectIcp(t *testing.T) {
+	var urlStrs = []string{
+		"http://suosi.com.cn",
+		"https://www.163.com",
+		"https://www.sohu.com",
+		"https://www.qq.com",
+		"https://www.hexun.com",
+		"https://www.wfmc.edu.cn/",
+		"https://www.cankaoxiaoxi.com/",
+	}
+
+	for _, urlStr := range urlStrs {
+
+		resp, err := HttpGetResp(urlStr, nil, 30000)
+
+		t.Log(err)
+		t.Log(urlStr)
+
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		doc.Find("noscript,style,iframe,br,link,svg").Remove()
+		icp, loc := detect.Icp(doc)
+		t.Log(icp, loc)
+	}
+}
