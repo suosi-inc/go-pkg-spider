@@ -3,7 +3,6 @@ package spider
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"regexp"
 	"strings"
 	"testing"
@@ -13,45 +12,15 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-func TestCharsetLang(t *testing.T) {
-	var urlStrs = []string{
-		"http://suosi.com.cn",
-		"https://www.163.com",
-		"https://english.news.cn",
-		"https://jp.news.cn",
-		"https://kr.news.cn",
-		"https://www.donga.com/",
-		"http://www.koreatimes.com/",
-		"https://arabic.news.cn",
-		"https://www.bbc.com",
-		"http://government.ru",
-		"https://french.news.cn",
-		"https://www.gouvernement.fr",
-		"http://live.siammedia.org/",
-		"http://hanoimoi.com.vn",
-		"https://www.commerce.gov.mm",
-		"https://sanmarg.in/",
-		"https://www.rrdmyanmar.gov.mm",
-	}
+func BenchmarkHtmlParse(b *testing.B) {
 
-	for _, urlStr := range urlStrs {
-		resp, _ := fun.HttpGetResp(urlStr, nil, 30000)
+	resp, _ := fun.HttpGetResp("https://www.163.com", nil, 30000)
 
-		u, _ := url.Parse(urlStr)
-
-		start := fun.Timestamp(true)
-		charset := Charset(resp.Body, resp.Headers)
-		t.Log(urlStr)
-		t.Log(charset)
-
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
-		lang := Lang(doc, charset.Charset, u.Hostname())
-		t.Log(lang)
-
-		t.Log(fun.Timestamp(true) - start)
+		doc.Find(DefaultRemoveTags).Remove()
 	}
-
 }
 
 func TestGoquery(t *testing.T) {
@@ -97,7 +66,7 @@ func TestLingua(t *testing.T) {
 		resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+		doc.Find(DefaultRemoveTags).Remove()
 
 		text := doc.Find("a").Text()
 		text = strings.ReplaceAll(text, "\n", "")

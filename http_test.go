@@ -9,25 +9,25 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-func TestHttpGet(t *testing.T) {
+func TestHttpGetCharsetLang(t *testing.T) {
 	var urlStrs = []string{
-		"http://suosi.com.cn",
+		// "http://suosi.com.cn",
 		"https://www.163.com",
-		"https://english.news.cn",
-		"https://jp.news.cn",
-		"https://kr.news.cn",
-		"https://www.donga.com/",
-		"http://www.koreatimes.com/",
-		"https://arabic.news.cn",
-		"https://www.bbc.com",
-		"http://government.ru",
-		"https://french.news.cn",
-		"https://www.gouvernement.fr",
-		"http://live.siammedia.org/",
-		"http://hanoimoi.com.vn",
-		"https://www.commerce.gov.mm",
-		"https://sanmarg.in/",
-		"https://www.rrdmyanmar.gov.mm",
+		// "https://english.news.cn",
+		// "https://jp.news.cn",
+		// "https://kr.news.cn",
+		// "https://www.donga.com/",
+		// "http://www.koreatimes.com/",
+		// "https://arabic.news.cn",
+		// "https://www.bbc.com",
+		// "http://government.ru",
+		// "https://french.news.cn",
+		// "https://www.gouvernement.fr",
+		// "http://live.siammedia.org/",
+		// "http://hanoimoi.com.vn",
+		// "https://www.commerce.gov.mm",
+		// "https://sanmarg.in/",
+		// "https://www.rrdmyanmar.gov.mm",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -43,13 +43,17 @@ func TestHttpGet(t *testing.T) {
 
 		u, _ := url.Parse(urlStr)
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+		doc.Find(DefaultRemoveTags).Remove()
+
+		start := fun.Timestamp(true)
 		lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 		t.Log(lang)
+
+		t.Log(fun.Timestamp(true) - start)
 	}
 }
 
-func TestHttpGetPublic(t *testing.T) {
+func TestHttpGet(t *testing.T) {
 	var urlStr string
 
 	urlStr = "http://www.163.com"
@@ -66,7 +70,7 @@ func TestHttpGetPublic(t *testing.T) {
 
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+	doc.Find(DefaultRemoveTags).Remove()
 	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
@@ -92,7 +96,7 @@ func TestHttpGetContentType(t *testing.T) {
 
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+	doc.Find(DefaultRemoveTags).Remove()
 	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
@@ -120,7 +124,7 @@ func TestHttpGetContentLength(t *testing.T) {
 
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-	doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+	doc.Find(DefaultRemoveTags).Remove()
 	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 

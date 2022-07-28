@@ -31,7 +31,7 @@ func TestLangFromUtf8Body(t *testing.T) {
 		u, _ := url.Parse(urlStr)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find("script,noscript,style,iframe,br,link,svg,textarea").Remove()
+		doc.Find(DefaultRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
 		lang, pos := LangFromUtf8Body(doc, u.Hostname())
