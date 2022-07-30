@@ -2,7 +2,6 @@ package spider
 
 import (
 	"fmt"
-	"net/url"
 	"testing"
 )
 
@@ -32,10 +31,4 @@ func TestDomainTop(t *testing.T) {
 func TestDomainTopFromUrl(t *testing.T) {
 	fmt.Println(DomainTopFromUrl("https://www.google.com"))
 	fmt.Println(DomainTopFromUrl("https://www.baidu.com/news"))
-}
-
-func TestUrlParse(t *testing.T) {
-	u, _ := url.Parse("https://www.test.com:8080/a")
-	fmt.Println(u.Host)
-	fmt.Println(u.Hostname())
 }

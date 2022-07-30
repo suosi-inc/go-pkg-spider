@@ -17,7 +17,7 @@ type Domain struct {
 // DomainTop 返回的顶级域名
 func DomainTop(d string) string {
 	if d, err := DomainParse(d); err == nil {
-		return d.Domain + "." + d.TLD
+		return d.Domain + fun.DOT + d.TLD
 	}
 
 	return ""
@@ -45,7 +45,7 @@ func DomainParse(domain string) (*Domain, error) {
 	}
 
 	// convert to domain name, and tld
-	i := strings.Index(etld1, ".")
+	i := strings.Index(etld1, fun.DOT)
 	domName := etld1[0:i]
 	tld := etld1[i+1:]
 

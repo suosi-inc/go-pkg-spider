@@ -1,9 +1,13 @@
 package extractor
 
 import (
+	"errors"
+	"log"
+	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	spider "github.com/suosi-inc/go-pkg-spider"
 	"github.com/x-funs/go-fun"
 )
 
@@ -30,29 +34,101 @@ func Description(doc *goquery.Document) string {
 	return description
 }
 
-// func LinkTitles(doc *goquery.Document, domain string, url string) map[string]string {
-// 	var linkTitles = make(map[string]string, 0)
-//
-// 	aTags := doc.Find("a")
-// 	if aTags.Size() > 0 {
-// 		var tmpLinks map[string]string
-//
-// 		aTags.Each(func(i int, s *goquery.Selection) {
-// 			tmpLink1, exists := s.Attr("href")
-// 			if exists {
-// 				tmpTitle1 := s.Text()
-// 				href = strings.TrimSpace(href)
-//
-// 				if href != "" {
-// 					if strings.HasPrefix(href, "http") {
-// 						tmpLinks[href] = s.Text()
-// 					} else {
-// 						tmpLinks[fun.JoinUrl(domain, href)] = s.Text()
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-//
-// 	return linkTitles
-// }
+func LinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[string]string {
+	var linkTitles = make(map[string]string, 0)
+
+	// 当前请求的 urlStr
+	baseUrl, err := url.Parse(urlStr)
+	if err != nil {
+		return linkTitles
+	}
+
+	// 获取所有 a 链接
+	aTags := doc.Find("a")
+	if aTags.Size() > 0 {
+		var tmpLinks = make(map[string]string, 0)
+
+		// 提取所有的 a 链接
+		aTags.Each(func(i int, s *goquery.Selection) {
+			tmpLink, exists := s.Attr("href")
+			if exists {
+				tmpLink = fun.RemoveLines(tmpLink)
+				tmpLink = strings.TrimSpace(tmpLink)
+
+				tmpTitle := s.Text()
+				tmpLink = fun.RemoveLines(tmpLink)
+				tmpTitle = strings.ReplaceAll(tmpTitle, "  ", "")
+				tmpTitle = strings.TrimSpace(tmpTitle)
+				if tmpLink != "" && tmpTitle != "" {
+					tmpLinks[tmpLink] = tmpTitle
+				}
+			}
+		})
+
+		// return tmpLinks
+
+		// 返回链接
+		if len(tmpLinks) > 0 {
+			// 过滤掉非法链接
+			for link, title := range tmpLinks {
+				if a, err := formatAndFilterUrl(link, baseUrl, strictDomain); err == nil {
+					linkTitles[a] = title
+				} else {
+					log.Println("@@@", a, err)
+				}
+			}
+		}
+	}
+
+	return linkTitles
+}
+
+func formatAndFilterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error) {
+	var urlStr string
+
+	// 过滤掉不太正常的链接
+	if fun.ContainsAny(link, "{", "}", "[", "]", "@", "$", "<", ">", "\"") {
+		return link, errors.New("invalid url with illegal characters")
+	}
+
+	// 转换为绝对路径
+	if !fun.HasPrefixCase(link, "http") && !fun.HasPrefixCase(link, "https") {
+		if l, err := baseUrl.Parse(link); err == nil {
+
+			absoluteUrl := l.String()
+
+			// 验证连接是否合法
+			if u, err := url.Parse(absoluteUrl); err == nil {
+				if u.Hostname() != "" {
+					urlStr = u.String()
+				} else {
+					return absoluteUrl, errors.New("invalid url with host empty")
+				}
+			} else {
+				return absoluteUrl, errors.New("invalid url with parse error")
+			}
+		} else {
+			return link, errors.New("invalid url with baseUrl parse")
+		}
+	} else {
+		urlStr = link
+	}
+
+	// 验证 url 是否合法
+	if !fun.IsAbsoluteUrl(urlStr) {
+		return urlStr, errors.New("invalid url with absolute url")
+	}
+
+	// 限制链接为本站
+	if strictDomain {
+		if u, err := url.Parse(urlStr); err == nil {
+			hostname := u.Hostname()
+			baseDomainTop := spider.DomainTop(baseUrl.Hostname())
+			if hostname != baseDomainTop && !fun.HasSuffixCase(hostname, "."+baseDomainTop) {
+				return urlStr, errors.New("invalid url with strict domain")
+			}
+		}
+	}
+
+	return urlStr, nil
+}

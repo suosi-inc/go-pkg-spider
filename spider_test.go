@@ -3,6 +3,7 @@ package spider
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"testing"
@@ -69,8 +70,8 @@ func TestLingua(t *testing.T) {
 		doc.Find(DefaultRemoveTags).Remove()
 
 		text := doc.Find("a").Text()
-		text = strings.ReplaceAll(text, "\n", "")
-		text = strings.ReplaceAll(text, "\t", "")
+		text = fun.RemoveLines(text)
+		text = strings.ReplaceAll(text, fun.TAB, "")
 		text = strings.ReplaceAll(text, "  ", "")
 		m := regexp.MustCompile(`[\pP\pS]`)
 		text = m.ReplaceAllString(text, "")
@@ -95,6 +96,33 @@ func TestLingua(t *testing.T) {
 			t.Log(language.IsoCode639_1())
 			fmt.Println(fun.Timestamp(true) - start)
 		}
+	}
+
+}
+
+func TestUrlParse(t *testing.T) {
+	urlStrs := []string{
+		"javascript:;",
+		"javascript:;",
+		"//www.163.com/a",
+		"//  www.163.com/a",
+		"//www.163.com/a  b",
+		"httpx://www.163.com/a/b/c",
+	}
+
+	for _, urlStr := range urlStrs {
+		u, err := url.Parse(urlStr)
+		if err == nil {
+			t.Log(urlStr)
+			t.Log(u.Host)
+			t.Log(u.Path)
+			t.Log(u.Scheme)
+			t.Log(u.RawQuery)
+			t.Log(u.Fragment)
+		} else {
+			t.Log(err)
+		}
+
 	}
 
 }

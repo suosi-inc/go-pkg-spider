@@ -64,6 +64,10 @@ var (
 		"thai":       "th",
 		"french":     "fr",
 		"korean":     "ko",
+		"spanish":    "es",
+		"portuguese": "pt",
+		"german":     "de",
+		"italian":    "it",
 	}
 )
 
@@ -151,8 +155,8 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	}
 
 	// 去除换行、符号(为了保留语义只替换多余的空格)
-	text = strings.ReplaceAll(text, "\n", "")
-	text = strings.ReplaceAll(text, "\t", "")
+	text = fun.RemoveLines(text)
+	text = strings.ReplaceAll(text, fun.TAB, "")
 	text = strings.ReplaceAll(text, "  ", "")
 	m := regexp.MustCompile(`[\pP\pS]`)
 	text = m.ReplaceAllString(text, "")
@@ -195,18 +199,17 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 		englishCount := len(english)
 		englishRate := float64(englishCount) / float64(textCount)
 		if englishRate > 0.7 {
-			hostLang := langFromHost(host)
+			hostLang := LangFromHost(host)
 			if hostLang != "" {
 				return hostLang, LangPosHost
 			}
 
-			lang = "en"
-			return lang, LangPosBody
+			return "en", LangPosBody
 		}
 	}
 
 	// 不是英、中、日，尝试小语种的域名特征
-	lang = langFromHost(host)
+	lang = LangFromHost(host)
 	if lang != "" {
 		return lang, LangPosHost
 	}
@@ -223,7 +226,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	return lang, ""
 }
 
-func langFromHost(host string) string {
+func LangFromHost(host string) string {
 	var lang string
 
 	host = strings.ToLower(host)
