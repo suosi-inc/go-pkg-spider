@@ -33,7 +33,7 @@ func Charset(body []byte, headers *http.Header) CharsetRes {
 	var guessCharset string
 
 	// 根据 Content-Type、Body Html 标签探测编码
-	charsetRes = CharsetHtmlHeader(body, headers)
+	charsetRes = CharsetFromHeaderHtml(body, headers)
 
 	// 未识别到 charset 则使用 guess
 	if charsetRes.Charset == "" {
@@ -48,8 +48,8 @@ func Charset(body []byte, headers *http.Header) CharsetRes {
 	return charsetRes
 }
 
-// CharsetHtmlHeader 解析 HTTP body、http.Header 中的 charset, 准确性高
-func CharsetHtmlHeader(h []byte, headers *http.Header) CharsetRes {
+// CharsetFromHeaderHtml 解析 HTTP body、http.Header 中的 charset, 准确性高
+func CharsetFromHeaderHtml(h []byte, headers *http.Header) CharsetRes {
 	var res CharsetRes
 	var c string
 

@@ -1,10 +1,11 @@
-package spider
+package extract
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/suosi-inc/go-pkg-spider"
 )
 
 func TestDetectIcp(t *testing.T) {
@@ -20,13 +21,13 @@ func TestDetectIcp(t *testing.T) {
 
 	for _, urlStr := range urlStrs {
 
-		resp, err := HttpGetResp(urlStr, nil, 30000)
+		resp, err := spider.HttpGetResp(urlStr, nil, 30000)
 
 		t.Log(err)
 		t.Log(urlStr)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find(DefaultRemoveTags).Remove()
+		doc.Find(spider.DefaultRemoveTags).Remove()
 		icp, loc := Icp(doc)
 		t.Log(icp, loc)
 	}

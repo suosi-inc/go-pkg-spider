@@ -1,4 +1,4 @@
-package extractor
+package extract
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	spider "github.com/suosi-inc/go-pkg-spider"
+	"github.com/suosi-inc/go-pkg-spider"
 	"github.com/x-funs/go-fun"
 )
 
@@ -38,7 +38,7 @@ func LinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[str
 	var linkTitles = make(map[string]string, 0)
 
 	// 当前请求的 urlStr
-	baseUrl, err := url.Parse(urlStr)
+	baseUrl, err := fun.UrlParse(urlStr)
 	if err != nil {
 		return linkTitles
 	}
@@ -65,14 +65,13 @@ func LinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[str
 			}
 		})
 
-		// return tmpLinks
-
 		// 返回链接
 		if len(tmpLinks) > 0 {
 			// 过滤掉非法链接
 			for link, title := range tmpLinks {
-				if a, err := formatAndFilterUrl(link, baseUrl, strictDomain); err == nil {
+				if a, err := filterUrl(link, baseUrl, strictDomain); err == nil {
 					linkTitles[a] = title
+
 				} else {
 					log.Println("@@@", a, err)
 				}
@@ -83,7 +82,7 @@ func LinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[str
 	return linkTitles
 }
 
-func formatAndFilterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error) {
+func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error) {
 	var urlStr string
 
 	// 过滤掉不太正常的链接
@@ -98,12 +97,8 @@ func formatAndFilterUrl(link string, baseUrl *url.URL, strictDomain bool) (strin
 			absoluteUrl := l.String()
 
 			// 验证连接是否合法
-			if u, err := url.Parse(absoluteUrl); err == nil {
-				if u.Hostname() != "" {
-					urlStr = u.String()
-				} else {
-					return absoluteUrl, errors.New("invalid url with host empty")
-				}
+			if u, err := fun.UrlParse(absoluteUrl); err == nil {
+				urlStr = u.String()
 			} else {
 				return absoluteUrl, errors.New("invalid url with parse error")
 			}
@@ -121,12 +116,14 @@ func formatAndFilterUrl(link string, baseUrl *url.URL, strictDomain bool) (strin
 
 	// 限制链接为本站
 	if strictDomain {
-		if u, err := url.Parse(urlStr); err == nil {
+		if u, err := fun.UrlParse(urlStr); err == nil {
 			hostname := u.Hostname()
 			baseDomainTop := spider.DomainTop(baseUrl.Hostname())
 			if hostname != baseDomainTop && !fun.HasSuffixCase(hostname, "."+baseDomainTop) {
 				return urlStr, errors.New("invalid url with strict domain")
 			}
+		} else {
+			return urlStr, errors.New("invalid url with url parse by strict domain")
 		}
 	}
 

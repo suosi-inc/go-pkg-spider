@@ -1,4 +1,4 @@
-package spider
+package extract
 
 import (
 	"regexp"
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ProvinceMaps = map[string]string{
+	ProvinceMap = map[string]string{
 		"京": "北京",
 		"津": "天津",
 		"沪": "上海",

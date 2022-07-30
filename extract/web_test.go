@@ -1,20 +1,23 @@
-package extractor
+package extract
 
 import (
 	"bytes"
 	"fmt"
 	"net/url"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
-	spider "github.com/suosi-inc/go-pkg-spider"
+	"github.com/suosi-inc/go-pkg-spider"
 )
 
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
-		"https://www.qq.com",
+		// "https://www.qq.com",
 		// "https://www.36kr.com",
+		"https://www.163.com",
+		// "http://jyj.suqian.gov.cn",
+		// "http://www.news.cn",
+		// "http://www.cankaoxiaoxi.com",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -29,11 +32,19 @@ func TestLinkTitles(t *testing.T) {
 
 		linkTitles := LinkTitles(doc, urlStr, true)
 		// fmt.Println(len(linkTitles))
-		for link, title := range linkTitles {
-			if utf8.RuneCountInString(title) > 6 {
-				fmt.Println(link + "	->	" + title)
-			}
 
+		fmt.Println(len(linkTitles))
+
+		var contentLinks = make(map[string]string, 0)
+		for a, title := range linkTitles {
+			if spider.IsContentByLang(a, title, "zh") {
+				contentLinks[a] = title
+			}
+		}
+
+		fmt.Println(len(contentLinks))
+		for a, title := range contentLinks {
+			fmt.Println(a, title)
 		}
 
 	}

@@ -56,6 +56,34 @@ func TestHttpGetCharsetLang(t *testing.T) {
 	}
 }
 
+func TestHttpGetCharsetLangURL(t *testing.T) {
+	var urlStrs = []string{
+		"https://www.qq.com/scio.htm",
+	}
+
+	for _, urlStr := range urlStrs {
+
+		resp, err := HttpGetResp(urlStr, nil, 30000)
+
+		t.Log(urlStr)
+		t.Log(err)
+		t.Log(resp.Success)
+		t.Log(resp.ContentLength)
+		t.Log(resp.Headers)
+		t.Log(resp.Charset)
+
+		u, _ := url.Parse(urlStr)
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		doc.Find(DefaultRemoveTags).Remove()
+
+		start := fun.Timestamp(true)
+		lang := Lang(doc, resp.Charset.Charset, u.Hostname())
+		t.Log(lang)
+
+		t.Log(fun.Timestamp(true) - start)
+	}
+}
+
 func TestHttpGet(t *testing.T) {
 	var urlStr string
 

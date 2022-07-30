@@ -2,7 +2,6 @@ package spider
 
 import (
 	"errors"
-	"net/url"
 	"strings"
 
 	"github.com/x-funs/go-fun"
@@ -63,9 +62,9 @@ func DomainParse(domain string) (*Domain, error) {
 }
 
 func DomainParseFromUrl(urlStr string) (*Domain, error) {
-	u, err := url.Parse(urlStr)
+	u, err := fun.UrlParse(urlStr)
 	if err != nil {
-		return nil, errors.New("url parse error")
+		return nil, err
 	}
 
 	d := u.Hostname()

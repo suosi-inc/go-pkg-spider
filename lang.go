@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	CharsetLangMaps = map[string]string{
+	CharsetLangMap = map[string]string{
 		"gbk":         "zh",
 		"big5":        "zh",
 		"iso-2022-cn": "zh",
@@ -24,7 +24,7 @@ var (
 		"iso-2022-kr": "ko",
 	}
 
-	LangZhMaps = map[string]string{
+	LangEnZhMap = map[string]string{
 		"zh": "中文",
 		"en": "英语",
 		"ja": "日语",
@@ -42,6 +42,24 @@ var (
 		"id": "印尼语",
 	}
 
+	LangZhEnMap = map[string]string{
+		"中文":   "zh",
+		"英语":   "en",
+		"日语":   "ja",
+		"俄语":   "ru",
+		"韩语":   "ko",
+		"阿拉伯语": "ar",
+		"印地语":  "hi",
+		"泰语":   "th",
+		"越南语":  "vi",
+		"德语":   "de",
+		"法语":   "fr",
+		"意大利语": "it",
+		"西班牙语": "es",
+		"葡萄牙语": "pt",
+		"印尼语":  "id",
+	}
+
 	metaLangSelectors = []string{
 		"meta[http-equiv=content-language]",
 		"meta[name=lang]",
@@ -56,7 +74,7 @@ var (
 		lingua.Korean,
 	}
 
-	linguaMaps = map[string]string{
+	linguaMap = map[string]string{
 		"arabic":     "ar",
 		"russian":    "ru",
 		"hindi":      "hi",
@@ -91,8 +109,8 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 
 	// 如果存在特定语言的 charset 对照表，则直接返回
 	if charset != "" {
-		if _, exist := CharsetLangMaps[charset]; exist {
-			res.Lang = CharsetLangMaps[charset]
+		if _, exist := CharsetLangMap[charset]; exist {
+			res.Lang = CharsetLangMap[charset]
 			res.LangPos = LangPosCharset
 			return res
 		}
@@ -219,7 +237,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	if language, exists := detector.DetectLanguageOf(text); exists {
 
 		key := strings.ToLower(language.String())
-		linguaLang := linguaMaps[key]
+		linguaLang := linguaMap[key]
 		return linguaLang, LangPosLingua
 	}
 
