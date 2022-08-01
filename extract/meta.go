@@ -29,7 +29,7 @@ var HostGovCountryMap = map[string]string{
 	"dz": "阿尔及利亚",
 }
 
-func HostMeta(host string, lang string) (string, string, string) {
+func MetaFromHost(host string, lang string) (string, string, string) {
 	var tld string
 	var country string
 	var province string

@@ -15,6 +15,6 @@ func TestHostMeta(t *testing.T) {
 
 	for _, host := range hosts {
 
-		t.Log(HostMeta(host, ""))
+		t.Log(MetaFromHost(host, ""))
 	}
 }

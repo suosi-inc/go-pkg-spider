@@ -10,30 +10,69 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-func Title(doc *goquery.Document, length int) string {
+// WebTitle 返回网页标题, 最大 255 个字符
+func WebTitle(doc *goquery.Document, maxLength int) string {
 	title := doc.Find("title").Text()
 	title = strings.TrimSpace(title)
 
-	if length == 0 {
-		return title
+	if maxLength > 0 && maxLength < 255 {
+		return fun.SubString(title, 0, maxLength)
 	} else {
-		return fun.SubString(title, 0, length)
+		return fun.SubString(title, 0, 255)
 	}
 }
 
-func Keywords(doc *goquery.Document) string {
+// WebTitleClean 返回尽量清洗后的网页标题
+func WebTitleClean(title string, lang string) string {
+	zhSplits := []string{"_", "|", "-", "－", "｜"}
+	enSplits := []string{" - ", " | "}
+
+	// 中文网站，查找中文网站的分割标记，找到任意一个，从尾部循环删除后返回
+	if lang == "zh" {
+		for _, split := range zhSplits {
+			end := strings.LastIndex(title, split)
+			if end != -1 {
+				cleanTitle := title
+
+				for {
+					cleanTitle = cleanTitle[:end]
+					end = strings.LastIndex(cleanTitle, split)
+
+					if end == -1 {
+						break
+					}
+				}
+
+				return cleanTitle
+			}
+		}
+
+		// 其他，查找英文分割标记，如果找到，从尾部删除一次返回
+	} else {
+		for _, split := range enSplits {
+			end := strings.LastIndex(title, split)
+			if end != -1 {
+				return title[:end]
+			}
+		}
+	}
+
+	return title
+}
+
+func WebKeywords(doc *goquery.Document) string {
 	keywords := doc.Find("meta[name=keywords]").AttrOr("content", "")
 	keywords = strings.TrimSpace(keywords)
 	return keywords
 }
 
-func Description(doc *goquery.Document) string {
+func WebDescription(doc *goquery.Document) string {
 	description := doc.Find("meta[name=description]").AttrOr("content", "")
 	description = strings.TrimSpace(description)
 	return description
 }
 
-func LinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[string]string {
+func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[string]string {
 	var linkTitles = make(map[string]string, 0)
 
 	// 当前请求的 urlStr

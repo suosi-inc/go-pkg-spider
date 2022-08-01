@@ -3,15 +3,18 @@ package spider
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/suosi-inc/go-pkg-spider/extract"
+	"github.com/x-funs/go-fun"
 )
 
 func TestDomainDetect(t *testing.T) {
 	domains := []string{
-		"163.com",
+		// "163.com",
+		"cankaoxiaoxi.com",
 	}
 
 	for _, domain := range domains {
@@ -26,12 +29,17 @@ func TestDomainDetect(t *testing.T) {
 
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
-		"https://www.qq.com",
+		// "https://www.qq.com",
+		// "https://www.people.com.cn",
 		// "https://www.36kr.com",
-		// "https://www.163.com",
+		"https://www.163.com",
 		// "http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
 		// "http://www.cankaoxiaoxi.com",
+		// "http://www.bbc.com",
+		// "https://www.ft.com",
+		// "https://www.reuters.com/",
+		// "https://nypost.com/",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -41,26 +49,40 @@ func TestLinkTitles(t *testing.T) {
 		t.Log(urlStr)
 		t.Log(err)
 
+		// 解析 HTML
+		u, _ := url.Parse(urlStr)
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 		doc.Find(DefaultRemoveTags).Remove()
 
-		linkTitles := extract.LinkTitles(doc, urlStr, true)
-		// fmt.Println(len(linkTitles))
+		// 语言
+		langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 
-		fmt.Println(len(linkTitles))
+		linkTitles := extract.WebLinkTitles(doc, urlStr, true)
 
-		var contentLinks = make(map[string]string, 0)
-		for a, title := range linkTitles {
-			if extract.IsContentByLang(a, title, "zh") {
-				contentLinks[a] = title
-			}
-		}
+		linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, "")
 
-		fmt.Println(len(contentLinks))
-		i := 1
-		for a, title := range contentLinks {
+		fmt.Println(len(linkRes.Content))
+		fmt.Println(len(linkRes.List))
+		fmt.Println(len(linkRes.None))
+		i := 0
+		for subdomain, _ := range domainRes {
 			i = i + 1
-			fmt.Println(i, ":"+a+"\t=>"+title)
+			fmt.Println(i, "domain:"+subdomain)
+		}
+		i = 0
+		for a, title := range linkRes.Content {
+			i = i + 1
+			fmt.Println(i, "content:"+a+"\t=>\t"+title)
+		}
+		i = 0
+		for a, title := range linkRes.List {
+			i = i + 1
+			fmt.Println(i, "list:"+a+"\t=>\t"+title)
+		}
+		i = 0
+		for a, title := range linkRes.None {
+			i = i + 1
+			fmt.Println(i, "none:"+a+"\t=>\t"+title)
 		}
 
 	}
@@ -91,19 +113,37 @@ func TestDetectIcp(t *testing.T) {
 	}
 }
 
-func TestIcpFromText(t *testing.T) {
-	texts := []string{
-		"粤ICP备17055554号",
-		"粤ICP备17055554-34号",
-		"沪ICP备05018492",
-		"粤B2-20090059",
-		"京公网安备31010402001073号",
-		"京公网安备-31010-4020010-73号",
-		"鲁ICP备05002386鲁公网安备37070502000027号",
+func TestLangFromUtf8Body(t *testing.T) {
+	var urlStrs = []string{
+		// "https://www.163.com",
+		// "https://english.news.cn",
+		// "https://jp.news.cn",
+		// "https://kr.news.cn",
+		// "https://arabic.news.cn",
+		// "https://www.bbc.com",
+		// "http://government.ru",
+		// "https://french.news.cn",
+		// "https://www.gouvernement.fr",
+		// "http://live.siammedia.org/",
+		// "http://hanoimoi.com.vn",
+		// "https://www.commerce.gov.mm",
+		// "https://www.rrdmyanmar.gov.mm",
+
 	}
 
-	for _, text := range texts {
-		icp, loc := extract.IcpFromText(text)
-		t.Log(icp, loc)
+	for _, urlStr := range urlStrs {
+		resp, _ := fun.HttpGetResp(urlStr, nil, 30000)
+		u, _ := url.Parse(urlStr)
+
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		doc.Find(DefaultRemoveTags).Remove()
+
+		start := fun.Timestamp(true)
+		lang, pos := LangFromUtf8Body(doc, u.Hostname())
+		t.Log(urlStr)
+		t.Log(lang)
+		t.Log(pos)
+		t.Log(fun.Timestamp(true) - start)
+
 	}
 }
