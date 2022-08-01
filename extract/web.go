@@ -2,12 +2,16 @@ package extract
 
 import (
 	"errors"
-	"log"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/x-funs/go-fun"
+)
+
+var (
+	regexUrlPattern = regexp.MustCompile(fun.RegexUrl)
 )
 
 // WebTitle 返回网页标题, 最大 255 个字符
@@ -32,18 +36,18 @@ func WebTitleClean(title string, lang string) string {
 		for _, split := range zhSplits {
 			end := strings.LastIndex(title, split)
 			if end != -1 {
-				cleanTitle := title
+				titleClean := title
 
 				for {
-					cleanTitle = cleanTitle[:end]
-					end = strings.LastIndex(cleanTitle, split)
+					titleClean = strings.TrimSpace(titleClean[:end])
+					end = strings.LastIndex(titleClean, split)
 
 					if end == -1 {
 						break
 					}
 				}
 
-				return cleanTitle
+				return titleClean
 			}
 		}
 
@@ -52,7 +56,8 @@ func WebTitleClean(title string, lang string) string {
 		for _, split := range enSplits {
 			end := strings.LastIndex(title, split)
 			if end != -1 {
-				return title[:end]
+				titleClean := strings.TrimSpace(title[:end])
+				return titleClean
 			}
 		}
 	}
@@ -76,7 +81,7 @@ func WebDescription(doc *goquery.Document) string {
 
 // WebLinkTitles 返回网页链接和锚文本
 func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[string]string {
-	var linkTitles = make(map[string]string, 0)
+	var linkTitles = make(map[string]string)
 
 	// 当前请求的 urlStr
 	baseUrl, err := fun.UrlParse(urlStr)
@@ -87,7 +92,7 @@ func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[
 	// 获取所有 a 链接
 	aTags := doc.Find("a")
 	if aTags.Size() > 0 {
-		var tmpLinks = make(map[string]string, 0)
+		var tmpLinks = make(map[string]string)
 
 		// 提取所有的 a 链接
 		aTags.Each(func(i int, s *goquery.Selection) {
@@ -112,9 +117,8 @@ func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[
 			for link, title := range tmpLinks {
 				if a, err := filterUrl(link, baseUrl, strictDomain); err == nil {
 					linkTitles[a] = title
-
 				} else {
-					log.Println("@@@", a, err)
+					//log.Println("@@@", a, err)
 				}
 			}
 		}
@@ -151,10 +155,10 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 		urlStr = link
 	}
 
-	// 验证 url 是否合法
-	if !fun.IsAbsoluteUrl(urlStr) {
-		return urlStr, errors.New("invalid url with absolute url")
-	}
+	// 验证 url 是否合法 TODO: 性能问题
+	//if !regexUrlPattern.MatchString(urlStr) {
+	//	return urlStr, errors.New("invalid url with absolute url")
+	//}
 
 	// 限制链接为站内链接
 	if strictDomain {

@@ -25,8 +25,8 @@ type LinkRes struct {
 type SubDomainRes map[string]bool
 
 // LinkTypes 返回链接分组
-func LinkTypes(linkTitles map[string]string, lang string, regex string) (LinkRes, SubDomainRes) {
-	linkRes := LinkRes{
+func LinkTypes(linkTitles map[string]string, lang string, regex string) (*LinkRes, SubDomainRes) {
+	linkRes := &LinkRes{
 		Content: make(map[string]string),
 		List:    make(map[string]string),
 		None:    make(map[string]string),
@@ -97,7 +97,7 @@ func LinkIsContentByLang(link string, title string, lang string) LinkType {
 					return LinkTypeContent
 				} else if titleLen < 8 {
 					// 包含常用标点
-					if fun.ContainsAny(title, "，。；：？！（）《》“”") {
+					if fun.ContainsAny(title, "，", "。", "；", "：", "？", "！", "（", "）", "《", "》", "“", "”") {
 						return LinkTypeContent
 					} else {
 						// TODO: 根据 URL 特征判断

@@ -27,19 +27,47 @@ func TestDomainDetect(t *testing.T) {
 	}
 }
 
+func BenchmarkLinkTitles(b *testing.B) {
+	urlStr := "http://www.163.com"
+
+	resp, _ := HttpGetResp(urlStr, nil, 30000)
+
+	// 解析 HTML
+	u, _ := url.Parse(urlStr)
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+	doc.Find(DefaultRemoveTags).Remove()
+
+	// 语言
+	langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// 标题
+		linkTitles := extract.WebLinkTitles(doc, urlStr, true)
+
+		// 连接和子域名
+		_, _ = extract.LinkTypes(linkTitles, langRes.Lang, "")
+		//_, _ = extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
+	}
+
+	//fmt.Println(langRes.Lang)
+
+}
+
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
 		// "https://www.qq.com",
 		// "https://www.people.com.cn",
 		// "https://www.36kr.com",
-		"https://www.163.com",
-		// "http://jyj.suqian.gov.cn",
+		//"https://www.163.com",
+		//"http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
-		// "http://www.cankaoxiaoxi.com",
+		//"http://www.cankaoxiaoxi.com",
 		// "http://www.bbc.com",
 		// "https://www.ft.com",
 		// "https://www.reuters.com/",
 		// "https://nypost.com/",
+		"http://www.mengcheng.gov.cn/",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -57,13 +85,17 @@ func TestLinkTitles(t *testing.T) {
 		// 语言
 		langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 
+		// 标题
 		linkTitles := extract.WebLinkTitles(doc, urlStr, true)
 
+		// 连接和子域名
 		linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, "")
+		//linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
 
-		fmt.Println(len(linkRes.Content))
-		fmt.Println(len(linkRes.List))
-		fmt.Println(len(linkRes.None))
+		fmt.Println("all:", len(linkTitles))
+		fmt.Println("content:", len(linkRes.Content))
+		fmt.Println("list:", len(linkRes.List))
+		fmt.Println("none:", len(linkRes.None))
 		i := 0
 		for subdomain, _ := range domainRes {
 			i = i + 1

@@ -36,23 +36,23 @@ func DetectDomain(domain string) (*DomainRes, error) {
 		ForceTextContentType: true,
 	}
 
-	schemes := []string{"https", "http"}
 	homeDomains := []string{"www.", ""}
+	schemes := []string{"https", "http"}
 
 	domainRes := &DomainRes{
 		Domain: domain,
 	}
 
-	for _, scheme := range schemes {
+	for _, homeDomain := range homeDomains {
 
-		for _, homeDomain := range homeDomains {
+		for _, scheme := range schemes {
 			urlStr := scheme + "://" + homeDomain + domain
 
 			resp, err := HttpGetResp(urlStr, req, 10000)
 			if resp.Success && err == nil {
 				domainRes.State = 1
 				domainRes.Scheme = scheme
-				domainRes.HomeDomain = homeDomain
+				domainRes.HomeDomain = homeDomain + domain
 				domainRes.HttpCode = resp.StatusCode
 				domainRes.Charset = resp.Charset
 
