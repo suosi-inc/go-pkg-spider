@@ -31,6 +31,7 @@ func DomainTopFromUrl(urlStr string) string {
 	return ""
 }
 
+// DomainParse 解析域名, 返回 Domain
 func DomainParse(domain string) (*Domain, error) {
 	if fun.Blank(domain) {
 		return nil, errors.New("domain is blank")
@@ -61,6 +62,7 @@ func DomainParse(domain string) (*Domain, error) {
 	}, nil
 }
 
+// DomainParseFromUrl 解析域名, 返回 Domain
 func DomainParseFromUrl(urlStr string) (*Domain, error) {
 	u, err := fun.UrlParse(urlStr)
 	if err != nil {

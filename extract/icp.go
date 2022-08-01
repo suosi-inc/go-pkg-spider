@@ -69,6 +69,7 @@ func Icp(doc *goquery.Document) (string, string) {
 
 }
 
+// IcpFromText 提取文本中备案相关的信息
 func IcpFromText(text string) (string, string) {
 	var icp, loc string
 

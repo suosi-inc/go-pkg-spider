@@ -24,6 +24,7 @@ type LinkRes struct {
 
 type SubDomainRes map[string]bool
 
+// LinkTypes 返回链接分组
 func LinkTypes(linkTitles map[string]string, lang string, regex string) (LinkRes, SubDomainRes) {
 	linkRes := LinkRes{
 		Content: make(map[string]string),

@@ -60,18 +60,21 @@ func WebTitleClean(title string, lang string) string {
 	return title
 }
 
+// WebKeywords 返回网页 Keyword
 func WebKeywords(doc *goquery.Document) string {
 	keywords := doc.Find("meta[name=keywords]").AttrOr("content", "")
 	keywords = strings.TrimSpace(keywords)
 	return keywords
 }
 
+// WebDescription 返回网页描述
 func WebDescription(doc *goquery.Document) string {
 	description := doc.Find("meta[name=description]").AttrOr("content", "")
 	description = strings.TrimSpace(description)
 	return description
 }
 
+// WebLinkTitles 返回网页链接和锚文本
 func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[string]string {
 	var linkTitles = make(map[string]string, 0)
 
@@ -120,6 +123,7 @@ func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[
 	return linkTitles
 }
 
+// filterUrl 过滤 url
 func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error) {
 	var urlStr string
 

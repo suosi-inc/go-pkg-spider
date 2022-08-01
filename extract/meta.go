@@ -29,6 +29,7 @@ var HostGovCountryMap = map[string]string{
 	"dz": "阿尔及利亚",
 }
 
+// MetaFromHost 根据域名尽可能返回一些固定信息
 func MetaFromHost(host string, lang string) (string, string, string) {
 	var tld string
 	var country string
