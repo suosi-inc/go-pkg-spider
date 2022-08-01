@@ -56,8 +56,8 @@ func LinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[str
 				tmpLink = strings.TrimSpace(tmpLink)
 
 				tmpTitle := s.Text()
-				tmpLink = fun.RemoveLines(tmpLink)
-				tmpTitle = strings.ReplaceAll(tmpTitle, "  ", "")
+				tmpTitle = fun.RemoveLines(tmpTitle)
+				tmpTitle = strings.ReplaceAll(tmpTitle, fun.TAB, "")
 				tmpTitle = strings.TrimSpace(tmpTitle)
 				if tmpLink != "" && tmpTitle != "" {
 					tmpLinks[tmpLink] = tmpTitle
@@ -67,7 +67,7 @@ func LinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[str
 
 		// 返回链接
 		if len(tmpLinks) > 0 {
-			// 过滤掉非法链接
+			// 过滤链接
 			for link, title := range tmpLinks {
 				if a, err := filterUrl(link, baseUrl, strictDomain); err == nil {
 					linkTitles[a] = title
@@ -114,7 +114,7 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 		return urlStr, errors.New("invalid url with absolute url")
 	}
 
-	// 限制链接为本站
+	// 限制链接为站内链接
 	if strictDomain {
 		if u, err := fun.UrlParse(urlStr); err == nil {
 			hostname := u.Hostname()

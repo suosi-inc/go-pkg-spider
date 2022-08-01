@@ -12,12 +12,12 @@ import (
 
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
-		// "https://www.qq.com",
+		"https://www.qq.com",
 		// "https://www.36kr.com",
-		"https://www.163.com",
+		//"https://www.163.com",
 		// "http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
-		// "http://www.cankaoxiaoxi.com",
+		//"http://www.cankaoxiaoxi.com",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -43,8 +43,10 @@ func TestLinkTitles(t *testing.T) {
 		}
 
 		fmt.Println(len(contentLinks))
+		i := 1
 		for a, title := range contentLinks {
-			fmt.Println(a, title)
+			i = i + 1
+			fmt.Println(i, ":"+a+"\t=>"+title)
 		}
 
 	}
