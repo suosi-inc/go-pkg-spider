@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	zhMinTitle = 7
+	TokenTitleLen = 8
+	LatinTitleLen = 4
 )
 
 func IsContentByRegex(link string, regex string) bool {
@@ -20,12 +21,20 @@ func IsContentByRegex(link string, regex string) bool {
 }
 
 func IsContentByLang(link string, title string, lang string) bool {
-	if lang == "zh" {
-		// 至少含有中文
-		if fun.Matches(title, `\p{Han}`) {
-			title = fun.RemoveSign(title)
-			titleLen := utf8.RuneCountInString(title)
-			if titleLen > zhMinTitle {
+	langSlices := []string{"zh", "ja", "ko", "ar", "hi", "th", "vi", "id"}
+
+	if fun.SliceContains(langSlices, lang) {
+		title = fun.RemoveSign(title)
+		titleLen := utf8.RuneCountInString(title)
+		if lang == "zh" {
+			// 至少含有中文
+			if fun.Matches(title, `\p{Han}`) {
+				if titleLen < TokenTitleLen {
+					return true
+				}
+			}
+		} else {
+			if titleLen >= TokenTitleLen {
 				return true
 			}
 		}

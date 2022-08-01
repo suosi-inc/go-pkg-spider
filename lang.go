@@ -39,7 +39,6 @@ var (
 		"it": "意大利语",
 		"es": "西班牙语",
 		"pt": "葡萄牙语",
-		"id": "印尼语",
 	}
 
 	LangZhEnMap = map[string]string{
@@ -57,7 +56,6 @@ var (
 		"意大利语": "it",
 		"西班牙语": "es",
 		"葡萄牙语": "pt",
-		"印尼语":  "id",
 	}
 
 	metaLangSelectors = []string{
@@ -80,12 +78,7 @@ var (
 		"hindi":      "hi",
 		"vietnamese": "vi",
 		"thai":       "th",
-		"french":     "fr",
 		"korean":     "ko",
-		"spanish":    "es",
-		"portuguese": "pt",
-		"german":     "de",
-		"italian":    "it",
 	}
 )
 

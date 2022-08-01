@@ -14,7 +14,8 @@ func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
 		// "https://www.qq.com",
 		// "https://www.36kr.com",
-		"https://www.163.com",
+		// "https://www.163.com",
+		"https://www.sohu.com",
 		// "http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
 		// "http://www.cankaoxiaoxi.com",
