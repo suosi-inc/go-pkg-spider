@@ -5,7 +5,6 @@ import (
 )
 
 var HostGovCountryMap = map[string]string{
-	"cn": "中国",
 	"hk": "中国",
 	"tw": "中国",
 	"mo": "中国",
@@ -49,11 +48,6 @@ func MetaFromHost(host string, lang string) (string, string, string) {
 		country = "美国"
 		category = "政务"
 		return country, province, category
-	}
-
-	// .cn 在中国必须要备案且实名
-	if tld == "cn" {
-		country = "中国"
 	}
 
 	// 判断是否是政府域名
