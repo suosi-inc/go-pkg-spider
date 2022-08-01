@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/suosi-inc/go-pkg-spider/extract"
 	"github.com/x-funs/go-fun"
 )
 
@@ -49,7 +50,7 @@ func TestHttpGetCharsetLang(t *testing.T) {
 		doc.Find(DefaultRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
-		lang := Lang(doc, resp.Charset.Charset, u.Hostname())
+		lang := extract.Lang(doc, resp.Charset.Charset, u.Hostname())
 		t.Log(lang)
 
 		t.Log(fun.Timestamp(true) - start)
@@ -58,7 +59,7 @@ func TestHttpGetCharsetLang(t *testing.T) {
 
 func TestHttpGetCharsetLangURL(t *testing.T) {
 	var urlStrs = []string{
-		"https://www.qq.com/scio.htm",
+		"https://marriott.co.kr",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -77,7 +78,7 @@ func TestHttpGetCharsetLangURL(t *testing.T) {
 		doc.Find(DefaultRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
-		lang := Lang(doc, resp.Charset.Charset, u.Hostname())
+		lang := extract.Lang(doc, resp.Charset.Charset, u.Hostname())
 		t.Log(lang)
 
 		t.Log(fun.Timestamp(true) - start)
@@ -87,7 +88,7 @@ func TestHttpGetCharsetLangURL(t *testing.T) {
 func TestHttpGet(t *testing.T) {
 	var urlStr string
 
-	urlStr = "http://www.163.com"
+	urlStr = "http://www.niuchaoqun.com"
 	// urlStr = "http://www.qq.com"
 
 	resp, err := HttpGetResp(urlStr, nil, 10000)
@@ -102,7 +103,7 @@ func TestHttpGet(t *testing.T) {
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find(DefaultRemoveTags).Remove()
-	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
+	lang := extract.Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))
@@ -128,7 +129,7 @@ func TestHttpGetContentType(t *testing.T) {
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find(DefaultRemoveTags).Remove()
-	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
+	lang := extract.Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))
@@ -156,7 +157,7 @@ func TestHttpGetContentLength(t *testing.T) {
 	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find(DefaultRemoveTags).Remove()
-	lang := Lang(doc, resp.Charset.Charset, u.Hostname())
+	lang := extract.Lang(doc, resp.Charset.Charset, u.Hostname())
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))

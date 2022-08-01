@@ -1,4 +1,4 @@
-package spider
+package extract
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/suosi-inc/go-pkg-spider"
 	"github.com/x-funs/go-fun"
 )
 
@@ -31,7 +32,7 @@ func TestLangFromUtf8Body(t *testing.T) {
 		u, _ := url.Parse(urlStr)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find(DefaultRemoveTags).Remove()
+		doc.Find(spider.DefaultRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
 		lang, pos := LangFromUtf8Body(doc, u.Hostname())

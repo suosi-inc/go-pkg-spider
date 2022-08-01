@@ -3,6 +3,7 @@ package spider
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"testing"
@@ -95,6 +96,35 @@ func TestLingua(t *testing.T) {
 			t.Log(language.IsoCode639_1())
 			fmt.Println(fun.Timestamp(true) - start)
 		}
+	}
+
+}
+
+func TestUrlParse(t *testing.T) {
+	var urlStrs = []string{
+		"https://www.163.com",
+		"https://www.163.com/",
+		"https://www.163.com/a",
+		"https://www.163.com/aa.html",
+		"https://www.163.com/a/b",
+		"https://www.163.com/a/bb.html",
+		"https://www.163.com/a/b/",
+		"https://www.163.com/a/b/c",
+		"https://www.163.com/a/b/cc.html",
+	}
+
+	for _, urlStr := range urlStrs {
+		u, _ := url.Parse(urlStr)
+		link := "javascript:;"
+		absolute, err := u.Parse(link)
+		t.Log(err)
+
+		_, err = url.Parse(absolute.String())
+		if err != nil {
+			t.Log(err)
+		}
+
+		t.Log(urlStr + "	+ " + link + " => " + absolute.String())
 	}
 
 }

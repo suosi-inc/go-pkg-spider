@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/suosi-inc/go-pkg-spider"
 	"github.com/x-funs/go-fun"
 )
 
@@ -118,7 +117,7 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	if strictDomain {
 		if u, err := fun.UrlParse(urlStr); err == nil {
 			hostname := u.Hostname()
-			baseDomainTop := spider.DomainTop(baseUrl.Hostname())
+			baseDomainTop := DomainTop(baseUrl.Hostname())
 			if hostname != baseDomainTop && !fun.HasSuffixCase(hostname, "."+baseDomainTop) {
 				return urlStr, errors.New("invalid url with strict domain")
 			}
