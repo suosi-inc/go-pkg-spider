@@ -41,14 +41,16 @@ func BenchmarkLinkTitles(b *testing.B) {
 
 	langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 
+	fmt.Println(langRes)
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// 标题
-		linkTitles := extract.WebLinkTitles(doc, urlStr, true)
+		linkTitles, _ := extract.WebLinkTitles(doc, urlStr, true)
 
 		// 连接和子域名
-		_, _ = extract.LinkTypes(linkTitles, langRes.Lang, "")
+		_, _ = extract.LinkTypes(linkTitles, langRes.Lang, nil)
 		// _, _ = extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
 	}
 
@@ -69,7 +71,10 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.ft.com",
 		// "https://www.reuters.com/",
 		// "https://nypost.com/",
-		"http://www.mengcheng.gov.cn/",
+		// "http://www.mengcheng.gov.cn/",
+		// "https://www.chunichi.co.jp",
+		// "https://www.donga.com/",
+		"https://people.com/",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -87,19 +92,34 @@ func TestLinkTitles(t *testing.T) {
 		// 语言
 		langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 
-		// 标题
-		linkTitles := extract.WebLinkTitles(doc, urlStr, true)
+		fmt.Println(langRes)
 
-		// 连接和子域名
-		linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, "")
-		// linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
+		// 标题
+		linkTitles, filters := extract.WebLinkTitles(doc, urlStr, true)
+
+		// 分类链接和子域名列表
+		linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, nil)
+
+		// 分类链接和子域名列表，规则
+		// rules := map[string][]string{
+		// 	"cankaoxiaoxi.com": []string{
+		// 		"\\d{7}\\.shtml$",
+		// 	},
+		// }
+		// linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, rules)
 
 		fmt.Println("all:", len(linkTitles))
 		fmt.Println("content:", len(linkRes.Content))
 		fmt.Println("list:", len(linkRes.List))
 		fmt.Println("none:", len(linkRes.None))
+
 		i := 0
-		for subdomain, _ := range domainRes {
+		for a, title := range filters {
+			i = i + 1
+			fmt.Println(i, "filter:"+a+"\t=>\t"+title)
+		}
+		i = 0
+		for subdomain := range domainRes {
 			i = i + 1
 			fmt.Println(i, "domain:"+subdomain)
 		}

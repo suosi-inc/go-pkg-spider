@@ -24,7 +24,6 @@ var (
 		"application/xml",
 		"application/xhtml+xml",
 		"application/json",
-		"application/javascript",
 	}
 )
 

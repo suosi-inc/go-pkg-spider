@@ -8,12 +8,9 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-type LinkType int
-
-const (
-	LinkTypeNone    LinkType = 0
-	LinkTypeContent LinkType = 1
-	LinkTypeList    LinkType = 2
+var (
+	zhPuncs   = []string{"，", "。", "；", "：", "？", "！", "（", "）", "《", "》", "“", "”"}
+	wordLangs = []string{"en", "ru", "ar", "de", "fr", "it", "es", "pt"}
 )
 
 type LinkRes struct {
@@ -22,10 +19,18 @@ type LinkRes struct {
 	None    map[string]string
 }
 
-type SubDomainRes map[string]bool
+type LinkTypeRule map[string][]string
 
-// LinkTypes 返回链接分组
-func LinkTypes(linkTitles map[string]string, lang string, regex string) (*LinkRes, SubDomainRes) {
+type LinkType int
+
+const (
+	LinkTypeNone    LinkType = 0
+	LinkTypeContent LinkType = 1
+	LinkTypeList    LinkType = 2
+)
+
+// LinkTypes 返回链接分类结果
+func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*LinkRes, fun.StringSet) {
 	linkRes := &LinkRes{
 		Content: make(map[string]string),
 		List:    make(map[string]string),
@@ -37,14 +42,14 @@ func LinkTypes(linkTitles map[string]string, lang string, regex string) (*LinkRe
 	for link, title := range linkTitles {
 		u, err := fun.UrlParse(link)
 		if err == nil {
-			subDomain := u.Hostname()
-			domainTop := DomainTop(subDomain)
-			if subDomain != domainTop {
-				subDomains[subDomain] = true
+			hostname := u.Hostname()
+			domainTop := DomainTop(hostname)
+			if hostname != domainTop {
+				subDomains[hostname] = true
 			}
 		}
 
-		if regex == "" {
+		if rules == nil {
 			linkType := LinkIsContentByLang(link, title, lang)
 			switch linkType {
 			case LinkTypeContent:
@@ -55,7 +60,7 @@ func LinkTypes(linkTitles map[string]string, lang string, regex string) (*LinkRe
 				linkRes.None[link] = title
 			}
 		} else {
-			if LinkIsContentByRegex(link, regex) {
+			if LinkIsContentByRegex(link, rules) {
 				linkRes.Content[link] = title
 			} else {
 				linkRes.List[link] = title
@@ -66,10 +71,24 @@ func LinkTypes(linkTitles map[string]string, lang string, regex string) (*LinkRe
 	return linkRes, subDomains
 }
 
-func LinkIsContentByRegex(link string, regex string) bool {
-	if !fun.Blank(regex) {
-		if fun.Matches(link, regex) {
-			return true
+func LinkIsContentByRegex(link string, rules LinkTypeRule) bool {
+	u, err := fun.UrlParse(link)
+	if err == nil {
+		hostname := u.Hostname()
+		domainTop := DomainTop(hostname)
+
+		if _, exist := rules[hostname]; exist {
+			for _, regex := range rules[hostname] {
+				if fun.Matches(link, regex) {
+					return true
+				}
+			}
+		} else if _, exist := rules[domainTop]; exist {
+			for _, regex := range rules[domainTop] {
+				if fun.Matches(link, regex) {
+					return true
+				}
+			}
 		}
 	}
 
@@ -77,12 +96,9 @@ func LinkIsContentByRegex(link string, regex string) bool {
 }
 
 func LinkIsContentByLang(link string, title string, lang string) LinkType {
-	tokenLangs := []string{"ja", "ko"}
-	wordLangs := []string{"en", "ru", "ar", "de", "fr", "it", "es", "pt"}
-
-	return LinkTypeNone
-
 	if lang == "zh" {
+		// 中文
+
 		m := regexp.MustCompile(`\p{Han}`)
 		zhs := m.FindAllString(title, -1)
 		hanCount := len(zhs)
@@ -91,15 +107,17 @@ func LinkIsContentByLang(link string, title string, lang string) LinkType {
 		if hanCount > 0 {
 			// 内容页标题中文大于4
 			if hanCount > 4 {
+
 				// 去掉空格
 				title = strings.ReplaceAll(title, fun.SPACE, "")
 				titleLen := utf8.RuneCountInString(title)
+
 				// >= 8 判定为内容页 URL
 				if titleLen >= 8 {
 					return LinkTypeContent
 				} else if titleLen < 8 {
 					// 包含常用标点
-					if fun.ContainsAny(title, "，", "。", "；", "：", "？", "！", "（", "）", "《", "》", "“", "”") {
+					if fun.ContainsAny(title, zhPuncs...) {
 						return LinkTypeContent
 					} else {
 						// TODO: 根据 URL 特征判断
@@ -113,26 +131,14 @@ func LinkIsContentByLang(link string, title string, lang string) LinkType {
 			return LinkTypeNone
 		}
 
-		// 类似中文的语种
-	} else if fun.SliceContains(tokenLangs, lang) {
-		// 去掉空格
-		title = strings.ReplaceAll(title, fun.SPACE, "")
-		titleLen := utf8.RuneCountInString(title)
-		// >= 8 判定为内容页 URL
-		if titleLen >= 8 {
-			return LinkTypeContent
-		} else if titleLen < 8 {
-			// TODO 其他规则
-			return LinkTypeList
-		} else if titleLen < 2 {
-			return LinkTypeNone
-		}
-		// 单词类的语种
 	} else if fun.SliceContains(wordLangs, lang) {
+		// 英语等单词类的语种
+
 		// 去掉所有标点
 		m := regexp.MustCompile(`\pP`)
 		title = m.ReplaceAllString(title, "")
 
+		// 按照空格切分计算长度
 		words := fun.SplitTrim(title, fun.SPACE)
 		if len(words) >= 5 {
 			return LinkTypeContent
@@ -140,10 +146,14 @@ func LinkIsContentByLang(link string, title string, lang string) LinkType {
 			return LinkTypeList
 		}
 	} else {
+		// 其他语种，去除标点，计算长度
+		m := regexp.MustCompile(`[\pP]`)
+		title = m.ReplaceAllString(title, "")
+
 		titleLen := utf8.RuneCountInString(title)
-		if titleLen >= 8 {
+		if titleLen >= 10 {
 			return LinkTypeContent
-		} else if titleLen < 8 {
+		} else if titleLen < 10 {
 			// TODO 其他规则
 			return LinkTypeList
 		}

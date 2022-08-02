@@ -1,6 +1,9 @@
 package extract
 
 import (
+	"fmt"
+	"net/url"
+	"path"
 	"testing"
 
 	"github.com/x-funs/go-fun"
@@ -19,6 +22,14 @@ func TestTitleClean(t *testing.T) {
 	}
 }
 
+func TestUrlQuery(t *testing.T) {
+	urlStr := "/a/b/abc.html?a=1&b=2&c=3"
+	u, err := url.Parse(urlStr)
+
+	fmt.Println(err)
+	fmt.Println(path.Ext(u.Path))
+}
+
 func TestFilterUrl(t *testing.T) {
 	urlStr := "http://www.163.com/a/b/"
 	baseUrl, _ := fun.UrlParse(urlStr)
@@ -27,4 +38,5 @@ func TestFilterUrl(t *testing.T) {
 	t.Log(filterUrl("../c/123.html", baseUrl, true))
 	t.Log(filterUrl("/c/123.html", baseUrl, true))
 	t.Log(filterUrl("//www.163.com/c/123.html", baseUrl, true))
+	t.Log(filterUrl("//www.163.com/c/123.pdf?abc=1123", baseUrl, true))
 }

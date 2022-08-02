@@ -3,7 +3,7 @@ package extract
 import (
 	"errors"
 	"net/url"
-	"regexp"
+	"path"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -11,7 +11,19 @@ import (
 )
 
 var (
-	regexUrlPattern = regexp.MustCompile(`fun.RegexUrl`)
+	filterUrlSuffix = []string{
+		".jpg", ".jpeg", ".png", ".gif", ".bmp", ".txt", ".xml",
+		".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+		".zip", ".rar", ".7z", ".gz", ".apk", ".cgi", ".exe", ".bz2", ".play",
+		".rss", ".sig", ".sgf",
+		".mp3", ".mp4", ".rm", ".rmvb", ".mov", ".ogv", ".flv",
+	}
+
+	invalidCharsets = []string{"{", "}", "[", "]", "@", "$", "<", ">", "\""}
+
+	zhSplits = []string{"_", "|", "-", "－", "｜"}
+
+	enSplits = []string{" - ", " | "}
 )
 
 // WebTitle 返回网页标题, 最大 255 个字符
@@ -28,9 +40,6 @@ func WebTitle(doc *goquery.Document, maxLength int) string {
 
 // WebTitleClean 返回尽量清洗后的网页标题
 func WebTitleClean(title string, lang string) string {
-	zhSplits := []string{"_", "|", "-", "－", "｜"}
-	enSplits := []string{" - ", " | "}
-
 	// 中文网站，查找中文网站的分割标记，找到任意一个，从尾部循环删除后返回
 	if lang == "zh" {
 		for _, split := range zhSplits {
@@ -80,13 +89,14 @@ func WebDescription(doc *goquery.Document) string {
 }
 
 // WebLinkTitles 返回网页链接和锚文本
-func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) map[string]string {
+func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) (map[string]string, map[string]string) {
 	var linkTitles = make(map[string]string)
+	var filters = make(map[string]string)
 
 	// 当前请求的 urlStr
 	baseUrl, err := fun.UrlParse(baseUrlStr)
 	if err != nil {
-		return linkTitles
+		return linkTitles, filters
 	}
 
 	// 获取所有 a 链接
@@ -118,13 +128,13 @@ func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) 
 				if a, err := filterUrl(link, baseUrl, strictDomain); err == nil {
 					linkTitles[a] = title
 				} else {
-					// log.Println("@@@", a, err)
+					filters[a] = err.Error()
 				}
 			}
 		}
 	}
 
-	return linkTitles
+	return linkTitles, filters
 }
 
 // filterUrl 过滤 url
@@ -132,14 +142,13 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	var urlStr string
 
 	// 过滤掉不太正常的链接
-	if fun.ContainsAny(link, "{", "}", "[", "]", "@", "$", "<", ">", "\"") {
+	if fun.ContainsAny(link, invalidCharsets...) {
 		return link, errors.New("invalid url with illegal characters")
 	}
 
 	// 转换为绝对路径
 	if !fun.HasPrefixCase(link, "http") && !fun.HasPrefixCase(link, "https") {
 		if l, err := baseUrl.Parse(link); err == nil {
-
 			absoluteUrl := l.String()
 
 			// 验证连接是否合法
@@ -155,9 +164,22 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 		urlStr = link
 	}
 
+	u, err := fun.UrlParse(urlStr)
+
+	// 过滤掉明显错误的后缀
+	if err == nil {
+		ext := path.Ext(u.Path)
+		if ext != "" {
+			ext = strings.ToLower(ext)
+			if fun.SliceContains(filterUrlSuffix, ext) {
+				return urlStr, errors.New("invalid url with suffix")
+			}
+		}
+	}
+
 	// 限制链接为站内链接
 	if strictDomain {
-		if u, err := fun.UrlParse(urlStr); err == nil {
+		if err == nil {
 			hostname := u.Hostname()
 			baseDomainTop := DomainTop(baseUrl.Hostname())
 			if hostname != baseDomainTop && !fun.HasSuffixCase(hostname, "."+baseDomainTop) {
