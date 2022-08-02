@@ -28,7 +28,7 @@ func TestDomainDetect(t *testing.T) {
 }
 
 func BenchmarkLinkTitles(b *testing.B) {
-	urlStr := "http://www.163.com"
+	urlStr := "http://www.news.cn"
 
 	resp, _ := HttpGetResp(urlStr, nil, 30000)
 
@@ -38,19 +38,21 @@ func BenchmarkLinkTitles(b *testing.B) {
 	doc.Find(DefaultRemoveTags).Remove()
 
 	// 语言
+
 	langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		// 标题
 		linkTitles := extract.WebLinkTitles(doc, urlStr, true)
 
 		// 连接和子域名
 		_, _ = extract.LinkTypes(linkTitles, langRes.Lang, "")
-		//_, _ = extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
+		// _, _ = extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
 	}
 
-	//fmt.Println(langRes.Lang)
+	fmt.Println(langRes.Lang)
 
 }
 
@@ -59,10 +61,10 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.qq.com",
 		// "https://www.people.com.cn",
 		// "https://www.36kr.com",
-		//"https://www.163.com",
-		//"http://jyj.suqian.gov.cn",
+		// "https://www.163.com",
+		// "http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
-		//"http://www.cankaoxiaoxi.com",
+		// "http://www.cankaoxiaoxi.com",
 		// "http://www.bbc.com",
 		// "https://www.ft.com",
 		// "https://www.reuters.com/",
@@ -90,7 +92,7 @@ func TestLinkTitles(t *testing.T) {
 
 		// 连接和子域名
 		linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, "")
-		//linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
+		// linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
 
 		fmt.Println("all:", len(linkTitles))
 		fmt.Println("content:", len(linkRes.Content))

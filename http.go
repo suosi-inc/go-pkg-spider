@@ -161,10 +161,10 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		charsetRes := Charset(httpResp.Body, httpResp.Headers)
 		httpResp.Charset = charsetRes
 
-		if charsetRes.Charset != "" && charsetRes.Charset != "utf-8" {
+		if charsetRes.Charset != "" && charsetRes.Charset != "UTF-8" {
 			utf8Body, err := fun.ToUtf8(httpResp.Body, charsetRes.Charset)
 			if err != nil {
-				return httpResp, errors.New("charset detect to utf-8 error")
+				return httpResp, errors.New("charset detect to UTF-8 error")
 			} else {
 				httpResp.Body = utf8Body
 			}

@@ -117,8 +117,8 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 		return res
 	}
 
-	// 当 utf-8 编码时，lang 为空或 en 不可信，进行基于内容、域名的语种的检测
-	if charset == "utf-8" && (lang == "" || lang == "en") {
+	// 当 utf 编码时，lang 为空或 en 不可信，进行基于内容、域名的语种的检测
+	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
 		bodyLang, pos := LangFromUtf8Body(doc, host)
 		if bodyLang != "" {
 			res.Lang = bodyLang

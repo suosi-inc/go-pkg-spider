@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	regexUrlPattern = regexp.MustCompile(fun.RegexUrl)
+	regexUrlPattern = regexp.MustCompile(`fun.RegexUrl`)
 )
 
 // WebTitle 返回网页标题, 最大 255 个字符
@@ -80,11 +80,11 @@ func WebDescription(doc *goquery.Document) string {
 }
 
 // WebLinkTitles 返回网页链接和锚文本
-func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[string]string {
+func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) map[string]string {
 	var linkTitles = make(map[string]string)
 
 	// 当前请求的 urlStr
-	baseUrl, err := fun.UrlParse(urlStr)
+	baseUrl, err := fun.UrlParse(baseUrlStr)
 	if err != nil {
 		return linkTitles
 	}
@@ -118,7 +118,7 @@ func WebLinkTitles(doc *goquery.Document, urlStr string, strictDomain bool) map[
 				if a, err := filterUrl(link, baseUrl, strictDomain); err == nil {
 					linkTitles[a] = title
 				} else {
-					//log.Println("@@@", a, err)
+					// log.Println("@@@", a, err)
 				}
 			}
 		}
@@ -154,11 +154,6 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	} else {
 		urlStr = link
 	}
-
-	// 验证 url 是否合法 TODO: 性能问题
-	//if !regexUrlPattern.MatchString(urlStr) {
-	//	return urlStr, errors.New("invalid url with absolute url")
-	//}
 
 	// 限制链接为站内链接
 	if strictDomain {

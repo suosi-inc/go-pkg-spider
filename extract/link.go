@@ -80,6 +80,8 @@ func LinkIsContentByLang(link string, title string, lang string) LinkType {
 	tokenLangs := []string{"ja", "ko"}
 	wordLangs := []string{"en", "ru", "ar", "de", "fr", "it", "es", "pt"}
 
+	return LinkTypeNone
+
 	if lang == "zh" {
 		m := regexp.MustCompile(`\p{Han}`)
 		zhs := m.FindAllString(title, -1)

@@ -94,7 +94,7 @@ func CharsetFromHtml(h []byte) string {
 		// 检测是否是 UTF-8
 		valid := utf8.Valid(h)
 		if valid {
-			return "utf-8"
+			return "UTF-8"
 		}
 
 		// 检测 HTML 标签
@@ -136,27 +136,27 @@ func CharsetGuess(body []byte) string {
 
 // convertCharset 格式化 charset
 func convertCharset(charset string) string {
-	c := strings.ToLower(strings.TrimSpace(charset))
+	c := strings.ToUpper(strings.TrimSpace(charset))
 
 	if c != "" {
-		// alias utf8, utf-16..
-		if strings.HasPrefix(c, "utf") {
-			return "utf-8"
+		// alias utf8
+		if c == "UTF8" || c == "UTF_8" {
+			return "UTF-8"
 		}
 
-		// alias gb2312 gb18030..
-		if strings.HasPrefix(c, "gb") {
-			return "gbk"
+		// alias gb2312, gb18030
+		if strings.HasPrefix(c, "GB") {
+			return "GBK"
 		}
 
 		// alias big5-hkscs..
-		if strings.HasPrefix(c, "big5") {
-			return "big5"
+		if strings.HasPrefix(c, "BIG5") {
+			return "Big5"
 		}
 
-		// alias shift-jis..
-		if strings.HasPrefix(c, "shift") {
-			return "shift_jis"
+		// alias shift-jis
+		if strings.HasPrefix(c, "SHIFT") {
+			return "SHIFT_JIS"
 		}
 	}
 
