@@ -68,8 +68,7 @@ var (
 func Icp(doc *goquery.Document) (string, string) {
 	text := doc.Find("body").Text()
 	text = fun.RemoveLines(text)
-	text = strings.ReplaceAll(text, fun.TAB, "")
-	text = strings.ReplaceAll(text, fun.SPACE, "")
+	text = strings.NewReplacer(fun.TAB, "", fun.SPACE, "").Replace(text)
 
 	return IcpFromText(text)
 

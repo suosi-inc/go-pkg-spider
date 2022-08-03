@@ -1,6 +1,8 @@
 package extract
 
 import (
+	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -8,86 +10,200 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-var (
-	zhPuncs   = []string{"，", "。", "；", "：", "？", "！", "（", "）", "《", "》", "“", "”"}
-	wordLangs = []string{"en", "ru", "ar", "de", "fr", "it", "es", "pt"}
-)
-
-type LinkRes struct {
-	Content map[string]string
-	List    map[string]string
-	None    map[string]string
-}
-
-type LinkTypeRule map[string][]string
-
-type LinkType int
-
 const (
 	LinkTypeNone    LinkType = 0
 	LinkTypeContent LinkType = 1
 	LinkTypeList    LinkType = 2
+	LinkTypeUnknown LinkType = 3
+
+	RegexPublishDate = `20[2-3]\d{1}(0[1-9]|1[0-2]|[1-9])(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])?`
 )
+
+var (
+	zhPuncs   = []string{"，", "。", "；", "：", "？", "！", "（", "）", "“", "”"}
+	wordLangs = []string{"en", "ru", "ar", "de", "fr", "it", "es", "pt"}
+
+	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
+	regexZhPattern          = regexp.MustCompile(`\p{Han}`)
+	regexEnPattern          = regexp.MustCompile(`[a-zA-Z]`)
+	regexPuncPattern        = regexp.MustCompile(`\pP`)
+)
+
+type LinkType int
+
+type LinkTypeRule map[string][]string
+
+type LinkRes struct {
+	Content map[string]string
+	List    map[string]string
+	Unknown map[string]string
+	None    map[string]string
+}
 
 // LinkTypes 返回链接分类结果
 func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*LinkRes, fun.StringSet) {
 	linkRes := &LinkRes{
 		Content: make(map[string]string),
 		List:    make(map[string]string),
+		Unknown: make(map[string]string),
 		None:    make(map[string]string),
 	}
 
 	subDomains := make(map[string]bool)
 
+	// 统计数据
+	var contentPublishCount int
+	contentTopPaths := make(map[string]int)
+
 	for link, title := range linkTitles {
-		u, err := fun.UrlParse(link)
-		if err == nil {
-			hostname := u.Hostname()
+		if linkUrl, err := fun.UrlParse(link); err == nil {
+			hostname := linkUrl.Hostname()
 			domainTop := DomainTop(hostname)
 			if hostname != domainTop {
 				subDomains[hostname] = true
 			}
-		}
 
-		if rules == nil {
-			linkType := LinkIsContentByLang(link, title, lang)
-			switch linkType {
-			case LinkTypeContent:
-				linkRes.Content[link] = title
-			case LinkTypeList:
-				linkRes.List[link] = title
-			case LinkTypeNone:
-				linkRes.None[link] = title
-			}
-		} else {
-			if LinkIsContentByRegex(link, rules) {
-				linkRes.Content[link] = title
+			if rules == nil {
+				linkType := LinkIsContentByTitle(linkUrl, title, lang)
+				switch linkType {
+				case LinkTypeContent:
+					linkRes.Content[link] = title
+
+					// 内容页 URL path 时间特征统计
+					pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
+					pathClean := strings.NewReplacer(fun.SLASH, "", fun.DOT, "", fun.DASH, "", fun.UNDERSCORE, "").Replace(pathDir)
+					if regexPublishDatePattern.MatchString(pathClean) {
+						contentPublishCount++
+					}
+
+					// 内容页 URL path 统计
+					paths := fun.SplitTrim(pathDir, fun.SLASH)
+					if len(paths) > 0 {
+						pathIndex := paths[0]
+						contentTopPaths[pathIndex]++
+					}
+				case LinkTypeList:
+					linkRes.List[link] = title
+				case LinkTypeNone:
+					linkRes.None[link] = title
+				case LinkTypeUnknown:
+					linkRes.Unknown[link] = title
+				}
 			} else {
-				linkRes.List[link] = title
+				if LinkIsContentByRegex(linkUrl, rules) {
+					linkRes.Content[link] = title
+				} else {
+					linkRes.List[link] = title
+				}
 			}
 		}
+	}
+
+	// 基于内容页 URL path 特征统计与处理
+	if rules == nil {
+		linkRes = linkTypePathProcess(linkRes, contentTopPaths, contentPublishCount)
 	}
 
 	return linkRes, subDomains
 }
 
-func LinkIsContentByRegex(link string, rules LinkTypeRule) bool {
-	u, err := fun.UrlParse(link)
-	if err == nil {
-		hostname := u.Hostname()
-		domainTop := DomainTop(hostname)
+func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, contentPublishCount int) *LinkRes {
+	// 统计
+	contentCount := len(linkRes.Content)
+	listCount := len(linkRes.List)
+	unknownCount := len(linkRes.Unknown)
 
-		if _, exist := rules[hostname]; exist {
-			for _, regex := range rules[hostname] {
-				if fun.Matches(link, regex) {
-					return true
+	// 内容页 URL path 发布时间特征比例
+	publishProb := float32(contentPublishCount) / float32(contentCount)
+
+	// 内容页 URL path 占比较多的特征，取 Top 2
+	topPaths := make([]string, 0)
+	if contentCount >= 10 {
+		for topPath, stat := range contentTopPaths {
+			if stat > 1 {
+				prob := float32(stat) / float32(contentCount)
+				if prob > 0.4 {
+					topPaths = append(topPaths, topPath)
 				}
 			}
-		} else if _, exist := rules[domainTop]; exist {
-			for _, regex := range rules[domainTop] {
-				if fun.Matches(link, regex) {
-					return true
+		}
+	}
+
+	// 内容页 URL path 具有明显的发布时间特征比例
+	if publishProb > 0.7 {
+		if listCount > 0 {
+			for link, title := range linkRes.List {
+				linkUrl, _ := fun.UrlParse(link)
+				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
+				pathClean := strings.NewReplacer(fun.SLASH, "", fun.DOT, "", fun.DASH, "", fun.UNDERSCORE, "").Replace(pathDir)
+				if regexPublishDatePattern.MatchString(pathClean) {
+					linkRes.Content[link] = title
+					delete(linkRes.List, link)
 				}
+			}
+		}
+		if unknownCount > 0 {
+			for link, title := range linkRes.Unknown {
+				linkUrl, _ := fun.UrlParse(link)
+				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
+				pathClean := strings.NewReplacer(fun.SLASH, "", fun.DOT, "", fun.DASH, "", fun.UNDERSCORE, "").Replace(pathDir)
+				if regexPublishDatePattern.MatchString(pathClean) {
+					linkRes.Content[link] = title
+				} else {
+					linkRes.List[link] = title
+				}
+				delete(linkRes.Unknown, link)
+			}
+		}
+	} else if len(topPaths) > 0 && unknownCount > 0 {
+		for link, title := range linkRes.Unknown {
+			linkUrl, _ := fun.UrlParse(link)
+
+			pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
+			paths := fun.SplitTrim(pathDir, fun.SLASH)
+			if len(paths) > 0 {
+				pathIndex := paths[0]
+				if fun.SliceContains(topPaths, pathIndex) {
+					linkRes.Content[link] = title
+				} else {
+					linkRes.List[link] = title
+				}
+				delete(linkRes.Unknown, link)
+			}
+		}
+	}
+
+	// 最后清洗一下内容页中无 path 的
+	if contentCount > 0 && (publishProb > 0.7 || len(topPaths) > 0) {
+		for link, title := range linkRes.Content {
+			linkUrl, _ := fun.UrlParse(link)
+			pathStr := strings.TrimSpace(linkUrl.Path)
+			pathDir := path.Dir(pathStr)
+			paths := fun.SplitTrim(pathDir, fun.SLASH)
+			if pathStr == "" || pathStr == "/" || len(paths) == 0 {
+				linkRes.Unknown[link] = title
+				delete(linkRes.Content, link)
+			}
+		}
+	}
+
+	return linkRes
+}
+
+func LinkIsContentByRegex(linkUrl *url.URL, rules LinkTypeRule) bool {
+	hostname := linkUrl.Hostname()
+	domainTop := DomainTop(hostname)
+
+	if _, exist := rules[hostname]; exist {
+		for _, regex := range rules[hostname] {
+			if fun.Matches(linkUrl.String(), regex) {
+				return true
+			}
+		}
+	} else if _, exist := rules[domainTop]; exist {
+		for _, regex := range rules[domainTop] {
+			if fun.Matches(linkUrl.String(), regex) {
+				return true
 			}
 		}
 	}
@@ -95,18 +211,27 @@ func LinkIsContentByRegex(link string, rules LinkTypeRule) bool {
 	return false
 }
 
-func LinkIsContentByLang(link string, title string, lang string) LinkType {
+func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType {
+	link := linkUrl.String()
+
+	if utf8.RuneCountInString(link) > 128 {
+		return LinkTypeNone
+	}
+
+	pathDir := strings.TrimSpace(linkUrl.Path)
+	if pathDir == "" || pathDir == fun.SLASH {
+		return LinkTypeNone
+	}
+
 	if lang == "zh" {
 		// 中文
-
-		m := regexp.MustCompile(`\p{Han}`)
-		zhs := m.FindAllString(title, -1)
+		zhs := regexZhPattern.FindAllString(title, -1)
 		hanCount := len(zhs)
 
 		// 必须包含中文
 		if hanCount > 0 {
-			// 内容页标题中文大于4
-			if hanCount > 4 {
+			// 内容页标题中文大于 5
+			if hanCount > 5 {
 
 				// 去掉空格
 				title = strings.ReplaceAll(title, fun.SPACE, "")
@@ -116,13 +241,14 @@ func LinkIsContentByLang(link string, title string, lang string) LinkType {
 				if titleLen >= 8 {
 					return LinkTypeContent
 				} else if titleLen < 8 {
-					// 包含常用标点
-					if fun.ContainsAny(title, zhPuncs...) {
-						return LinkTypeContent
-					} else {
-						// TODO: 根据 URL 特征判断
-						return LinkTypeList
+
+					// 如果是中文，判断是否包含常用标点
+					if lang == "zh" {
+						if fun.ContainsAny(title, zhPuncs...) {
+							return LinkTypeContent
+						}
 					}
+					return LinkTypeUnknown
 				}
 			} else {
 				return LinkTypeList
@@ -135,15 +261,23 @@ func LinkIsContentByLang(link string, title string, lang string) LinkType {
 		// 英语等单词类的语种
 
 		// 去掉所有标点
-		m := regexp.MustCompile(`\pP`)
-		title = m.ReplaceAllString(title, "")
+		title = regexPuncPattern.ReplaceAllString(title, "")
 
-		// 按照空格切分计算长度
-		words := fun.SplitTrim(title, fun.SPACE)
-		if len(words) >= 5 {
-			return LinkTypeContent
+		ens := regexEnPattern.FindAllString(title, -1)
+		enCount := len(ens)
+
+		// 必须包含英文字母
+		if enCount > 0 {
+			// 按照空格切分计算长度
+			words := fun.SplitTrim(title, fun.SPACE)
+
+			if len(words) >= 5 {
+				return LinkTypeContent
+			} else {
+				return LinkTypeList
+			}
 		} else {
-			return LinkTypeList
+			return LinkTypeNone
 		}
 	} else {
 		// 其他语种，去除标点，计算长度

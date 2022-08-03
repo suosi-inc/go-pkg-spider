@@ -166,6 +166,11 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 
 	u, err := fun.UrlParse(urlStr)
 
+	// 验证转换后是否是绝对路径
+	if !u.IsAbs() {
+		return urlStr, errors.New("invalid url with not absolute url")
+	}
+
 	// 过滤掉明显错误的后缀
 	if err == nil {
 		ext := path.Ext(u.Path)
@@ -177,7 +182,7 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 		}
 	}
 
-	// 限制链接为站内链接
+	// 过滤掉站外链接
 	if strictDomain {
 		if err == nil {
 			hostname := u.Hostname()

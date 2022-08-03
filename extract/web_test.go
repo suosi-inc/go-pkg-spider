@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"path"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/x-funs/go-fun"
 )
@@ -23,11 +24,17 @@ func TestTitleClean(t *testing.T) {
 }
 
 func TestUrlQuery(t *testing.T) {
-	urlStr := "/a/b/abc.html?a=1&b=2&c=3"
+	// urlStr := "https://people.com/tag/stories-to-make-you-smile/a/b/abc.html?a=1&b=2&c=3#ddd"
+	urlStr := "https://vipmail.163.com/abc"
 	u, err := url.Parse(urlStr)
 
 	fmt.Println(err)
-	fmt.Println(path.Ext(u.Path))
+	fmt.Println(u.Path)
+	fmt.Println(u.RawQuery)
+	fmt.Println(path.Dir(u.Path))
+	// fmt.Println(path.Base(u.Path))
+
+	fmt.Println(utf8.RuneCountInString("https://adx.36kr.com/api/ad/click?sign=2eda7665240cec93f902311eb10c195a&param.redirectUrl=aHR0cHM6Ly8zNmtyLmNvbS9wLzE4NTM5NTQ2NzgxMzIzNTI&param.adsdk=Phid2i9VOob6U23ybkDx8q7cr1KbBDM4oiu1d_-C6gY5qf5SKxqBPsptEVMy_wtzqB5Yr08U7ioREUL7HLxIrQ"))
 }
 
 func TestFilterUrl(t *testing.T) {

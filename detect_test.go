@@ -66,6 +66,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.163.com",
 		// "http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
+		"http://www.news.cn/politicspro/",
 		// "http://www.cankaoxiaoxi.com",
 		// "http://www.bbc.com",
 		// "https://www.ft.com",
@@ -74,7 +75,7 @@ func TestLinkTitles(t *testing.T) {
 		// "http://www.mengcheng.gov.cn/",
 		// "https://www.chunichi.co.jp",
 		// "https://www.donga.com/",
-		"https://people.com/",
+		// "https://people.com/",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -111,6 +112,7 @@ func TestLinkTitles(t *testing.T) {
 		fmt.Println("all:", len(linkTitles))
 		fmt.Println("content:", len(linkRes.Content))
 		fmt.Println("list:", len(linkRes.List))
+		fmt.Println("unknown:", len(linkRes.Unknown))
 		fmt.Println("none:", len(linkRes.None))
 
 		i := 0
@@ -127,6 +129,11 @@ func TestLinkTitles(t *testing.T) {
 		for a, title := range linkRes.Content {
 			i = i + 1
 			fmt.Println(i, "content:"+a+"\t=>\t"+title)
+		}
+		i = 0
+		for a, title := range linkRes.Unknown {
+			i = i + 1
+			fmt.Println(i, "unknown:"+a+"\t=>\t"+title)
 		}
 		i = 0
 		for a, title := range linkRes.List {
