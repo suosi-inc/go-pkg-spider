@@ -11,15 +11,21 @@ import (
 )
 
 const (
-	RegexCharsetPattern   = "(?i)charset=\\s*([a-z][_\\-0-9a-z]*)"
-	RegexMetaPattern      = "(?i)<meta\\s+([^>]*http-equiv=(\"|')?content-type(\"|')?[^>]*)>"
-	RegexMetaHtml5Pattern = "(?i)<meta\\s+charset\\s*=\\s*[\"']?([a-z][_\\-0-9a-z]*)[^>]*>"
-)
-
-const (
 	CharsetPosHeader = "header"
 	CharsetPosHtml   = "html"
 	CharsetPosGuess  = "guess"
+)
+
+const (
+	RegexCharset      = "(?i)charset=\\s*([a-z][_\\-0-9a-z]*)"
+	RegexCharsetHtml4 = "(?i)<meta\\s+([^>]*http-equiv=(\"|')?content-type(\"|')?[^>]*)>"
+	RegexCharsetHtml5 = "(?i)<meta\\s+charset\\s*=\\s*[\"']?([a-z][_\\-0-9a-z]*)[^>]*>"
+)
+
+var (
+	regexCharsetPattern      = regexp.MustCompile(RegexCharset)
+	regexCharsetHtml4Pattern = regexp.MustCompile(RegexCharsetHtml4)
+	regexCharsetHtml5Pattern = regexp.MustCompile(RegexCharsetHtml5)
 )
 
 type CharsetRes struct {
@@ -76,7 +82,7 @@ func CharsetFromHeader(headers *http.Header) string {
 	if headers != nil {
 		contentType := headers.Get("Content-Type")
 		if !fun.Blank(contentType) {
-			matches := regexp.MustCompile(RegexCharsetPattern).FindStringSubmatch(contentType)
+			matches := regexCharsetPattern.FindStringSubmatch(contentType)
 			if len(matches) > 1 {
 				charset = matches[1]
 			}
@@ -101,16 +107,16 @@ func CharsetFromHtml(h []byte) string {
 		html := fun.String(h)
 
 		// 优先判断 HTML5 标签
-		matches := regexp.MustCompile(RegexMetaHtml5Pattern).FindStringSubmatch(html)
+		matches := regexCharsetHtml5Pattern.FindStringSubmatch(html)
 		if len(matches) > 1 {
 			charset = matches[1]
 		}
 
 		// HTML4 标签
 		if charset == "" {
-			matches = regexp.MustCompile(RegexMetaPattern).FindStringSubmatch(html)
+			matches = regexCharsetHtml4Pattern.FindStringSubmatch(html)
 			if len(matches) > 1 {
-				matches = regexp.MustCompile(RegexCharsetPattern).FindStringSubmatch(matches[1])
+				matches = regexCharsetPattern.FindStringSubmatch(matches[1])
 				if len(matches) > 1 {
 					charset = matches[1]
 				}

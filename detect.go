@@ -65,12 +65,12 @@ func DetectDomain(domain string) (*DomainRes, error) {
 				langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 				domainRes.Lang = langRes
 
-				// 中国的 ICP
+				// 中国的 ICP 解析省份
 				icp, province := extract.Icp(doc)
 				if icp != "" && province != "" {
 					domainRes.Country = "中国"
 					domainRes.Icp = icp
-					domainRes.Province = extract.ProvinceMap[province]
+					domainRes.Province = extract.ProvinceShortMap[province]
 				}
 
 				// 尽可能的探测一些信息国家/省份/类别

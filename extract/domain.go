@@ -13,7 +13,7 @@ type Domain struct {
 	ICANN                  bool
 }
 
-// DomainTop 返回的顶级域名
+// DomainTop 返回顶级域名
 func DomainTop(d string) string {
 	if d, err := DomainParse(d); err == nil {
 		return d.Domain + fun.DOT + d.TLD

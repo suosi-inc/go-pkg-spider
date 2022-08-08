@@ -121,9 +121,8 @@ func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) 
 			}
 		})
 
-		// 返回链接
+		// 过滤链接
 		if len(tmpLinks) > 0 {
-			// 过滤链接
 			for link, title := range tmpLinks {
 				if a, err := filterUrl(link, baseUrl, strictDomain); err == nil {
 					linkTitles[a] = title

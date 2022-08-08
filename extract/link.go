@@ -116,7 +116,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 	// 内容页 URL path 发布时间特征比例
 	publishProb := float32(contentPublishCount) / float32(contentCount)
 
-	// 内容页 URL path 占比较多的特征，取 Top 2
+	// 内容页 URL path 占比较多的特征， 只取 Top 2
 	topPaths := make([]string, 0)
 	if contentCount >= 10 {
 		for topPath, stat := range contentTopPaths {
@@ -129,7 +129,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 		}
 	}
 
-	// 内容页 URL path 具有明显的发布时间特征比例
+	// 内容页 URL path 具有明显的发布时间特征比例，处理 List、Unknow
 	if publishProb > 0.7 {
 		if listCount > 0 {
 			for link, title := range linkRes.List {
@@ -156,6 +156,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 			}
 		}
 	} else if len(topPaths) > 0 && unknownCount > 0 {
+		// 内容页 URL path 具有前缀特征，处理 Unknown
 		for link, title := range linkRes.Unknown {
 			linkUrl, _ := fun.UrlParse(link)
 
@@ -173,7 +174,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 		}
 	}
 
-	// 最后清洗一下内容页中无 path 的
+	// path 具有特征，最后清洗一下内容页中无 path 的
 	if contentCount > 0 && (publishProb > 0.7 || len(topPaths) > 0) {
 		for link, title := range linkRes.Content {
 			linkUrl, _ := fun.UrlParse(link)

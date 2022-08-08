@@ -66,7 +66,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.163.com",
 		// "http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
-		"http://www.news.cn/politicspro/",
+		// "http://www.news.cn/politicspro/",
 		// "http://www.cankaoxiaoxi.com",
 		// "http://www.bbc.com",
 		// "https://www.ft.com",
