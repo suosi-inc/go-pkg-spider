@@ -47,3 +47,12 @@ func TestFilterUrl(t *testing.T) {
 	t.Log(filterUrl("//www.163.com/c/123.html", baseUrl, true))
 	t.Log(filterUrl("//www.163.com/c/123.pdf?abc=1123", baseUrl, true))
 }
+
+func BenchmarkFilterUrl(b *testing.B) {
+	urlStr := "http://www.163.com/a/b/"
+	baseUrl, _ := fun.UrlParse(urlStr)
+
+	for i := 0; i < b.N; i++ {
+		filterUrl("../c/123.html", baseUrl, true)
+	}
+}

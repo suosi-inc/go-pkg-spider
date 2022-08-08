@@ -122,7 +122,8 @@ func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) 
 		})
 
 		// 过滤链接
-		if len(tmpLinks) > 0 {
+		tmpLinkLen := len(tmpLinks)
+		if tmpLinkLen > 0 {
 			for link, title := range tmpLinks {
 				if a, err := filterUrl(link, baseUrl, strictDomain); err == nil {
 					linkTitles[a] = title
@@ -140,7 +141,7 @@ func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) 
 func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error) {
 	var urlStr string
 
-	// 过滤掉不太正常的链接
+	// 过滤掉链接中包含特殊字符的
 	if fun.ContainsAny(link, invalidCharsets...) {
 		return link, errors.New("invalid url with illegal characters")
 	}
@@ -148,22 +149,19 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	// 转换为绝对路径
 	if !fun.HasPrefixCase(link, "http") && !fun.HasPrefixCase(link, "https") {
 		if l, err := baseUrl.Parse(link); err == nil {
-			absoluteUrl := l.String()
-
-			// 验证连接是否合法
-			if u, err := fun.UrlParse(absoluteUrl); err == nil {
-				urlStr = u.String()
-			} else {
-				return absoluteUrl, errors.New("invalid url with parse error")
-			}
+			urlStr = l.String()
 		} else {
-			return link, errors.New("invalid url with baseUrl parse")
+			return link, errors.New("invalid url with baseUrl parse error")
 		}
 	} else {
 		urlStr = link
 	}
 
+	// 解析验证
 	u, err := fun.UrlParse(urlStr)
+	if err != nil {
+		return urlStr, errors.New("invalid url with parse error")
+	}
 
 	// 验证转换后是否是绝对路径
 	if !u.IsAbs() {
@@ -173,7 +171,7 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	// 过滤掉明显错误的后缀
 	if err == nil {
 		ext := path.Ext(u.Path)
-		if ext != "" {
+		if strings.Contains(ext, ".") {
 			ext = strings.ToLower(ext)
 			if fun.SliceContains(filterUrlSuffix, ext) {
 				return urlStr, errors.New("invalid url with suffix")
@@ -183,14 +181,10 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 
 	// 过滤掉站外链接
 	if strictDomain {
-		if err == nil {
-			hostname := u.Hostname()
-			baseDomainTop := DomainTop(baseUrl.Hostname())
-			if hostname != baseDomainTop && !fun.HasSuffixCase(hostname, "."+baseDomainTop) {
-				return urlStr, errors.New("invalid url with strict domain")
-			}
-		} else {
-			return urlStr, errors.New("invalid url with url parse by strict domain")
+		hostname := u.Hostname()
+		baseDomainTop := DomainTop(baseUrl.Hostname())
+		if hostname != baseDomainTop && !fun.HasSuffixCase(hostname, "."+baseDomainTop) {
+			return urlStr, errors.New("invalid url with strict domain")
 		}
 	}
 

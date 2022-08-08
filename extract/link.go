@@ -71,7 +71,7 @@ func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*
 
 					// 内容页 URL path 时间特征统计
 					pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
-					pathClean := strings.NewReplacer(fun.SLASH, "", fun.DOT, "", fun.DASH, "", fun.UNDERSCORE, "").Replace(pathDir)
+					pathClean := pathDirClean(pathDir)
 					if regexPublishDatePattern.MatchString(pathClean) {
 						contentPublishCount++
 					}
@@ -135,7 +135,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 			for link, title := range linkRes.List {
 				linkUrl, _ := fun.UrlParse(link)
 				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
-				pathClean := strings.NewReplacer(fun.SLASH, "", fun.DOT, "", fun.DASH, "", fun.UNDERSCORE, "").Replace(pathDir)
+				pathClean := pathDirClean(pathDir)
 				if regexPublishDatePattern.MatchString(pathClean) {
 					linkRes.Content[link] = title
 					delete(linkRes.List, link)
@@ -146,7 +146,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 			for link, title := range linkRes.Unknown {
 				linkUrl, _ := fun.UrlParse(link)
 				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
-				pathClean := strings.NewReplacer(fun.SLASH, "", fun.DOT, "", fun.DASH, "", fun.UNDERSCORE, "").Replace(pathDir)
+				pathClean := pathDirClean(pathDir)
 				if regexPublishDatePattern.MatchString(pathClean) {
 					linkRes.Content[link] = title
 				} else {
@@ -295,4 +295,13 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 	}
 
 	return LinkTypeNone
+}
+
+func pathDirClean(pathDir string) string {
+	pathClean := strings.ReplaceAll(pathDir, fun.SLASH, "")
+	pathClean = strings.ReplaceAll(pathClean, fun.DOT, "")
+	pathClean = strings.ReplaceAll(pathClean, fun.DASH, "")
+	pathClean = strings.ReplaceAll(pathClean, fun.UNDERSCORE, "")
+
+	return pathClean
 }

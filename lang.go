@@ -167,7 +167,9 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 
 	// 去除换行、符号(为了保留语义只替换多余的空格)
 	text = fun.RemoveLines(text)
-	text = strings.NewReplacer(fun.TAB, "", "  ", "").Replace(text)
+	text = strings.ReplaceAll(text, fun.TAB, "")
+	text = strings.ReplaceAll(text, "  ", "")
+
 	m := regexp.MustCompile(`[\pP\pS]`)
 	text = m.ReplaceAllString(text, "")
 

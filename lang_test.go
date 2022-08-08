@@ -36,8 +36,12 @@ func TestLingua(t *testing.T) {
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 
 		text := doc.Find("a").Text()
+
 		text = fun.RemoveLines(text)
-		text = strings.NewReplacer(fun.TAB, "", "  ", "").Replace(text)
+
+		text = strings.ReplaceAll(text, fun.TAB, "")
+		text = strings.ReplaceAll(text, "  ", "")
+
 		m := regexp.MustCompile(`[\pP\pS]`)
 		text = m.ReplaceAllString(text, "")
 

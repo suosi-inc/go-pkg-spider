@@ -28,7 +28,7 @@ func TestDomainDetect(t *testing.T) {
 }
 
 func BenchmarkLinkTitles(b *testing.B) {
-	urlStr := "http://www.news.cn"
+	urlStr := "https://www.news.cn/"
 
 	resp, _ := HttpGetResp(urlStr, nil, 30000)
 
@@ -43,27 +43,31 @@ func BenchmarkLinkTitles(b *testing.B) {
 
 	fmt.Println(langRes)
 
+	var linkTitles map[string]string
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// 标题
-		linkTitles, _ := extract.WebLinkTitles(doc, urlStr, true)
+		linkTitles, _ = extract.WebLinkTitles(doc, urlStr, true)
 
 		// 连接和子域名
-		_, _ = extract.LinkTypes(linkTitles, langRes.Lang, nil)
+		// _, _ = extract.LinkTypes(linkTitles, langRes.Lang, nil)
 		// _, _ = extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
 	}
 
 	fmt.Println(langRes.Lang)
+	fmt.Println(len(linkTitles))
 
 }
 
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
 		// "https://www.qq.com",
-		// "https://www.people.com.cn",
+		"https://www.people.com.cn",
 		// "https://www.36kr.com",
 		// "https://www.163.com",
+		// "https://news.163.com/",
 		// "http://jyj.suqian.gov.cn",
 		// "http://www.news.cn",
 		// "http://www.news.cn/politicspro/",
