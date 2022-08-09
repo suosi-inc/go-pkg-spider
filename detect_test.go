@@ -14,7 +14,7 @@ import (
 func TestDomainDetect(t *testing.T) {
 	domains := []string{
 		// "163.com",
-		"cankaoxiaoxi.com",
+		"czql.gov.cn",
 	}
 
 	for _, domain := range domains {
@@ -28,7 +28,7 @@ func TestDomainDetect(t *testing.T) {
 }
 
 func BenchmarkLinkTitles(b *testing.B) {
-	urlStr := "https://www.news.cn/"
+	urlStr := "http://www.163.com/"
 
 	resp, _ := HttpGetResp(urlStr, nil, 30000)
 
@@ -52,9 +52,17 @@ func BenchmarkLinkTitles(b *testing.B) {
 		linkTitles, _ = extract.WebLinkTitles(doc, urlStr, true)
 
 		// 连接和子域名
-		// _, _ = extract.LinkTypes(linkTitles, langRes.Lang, nil)
-		// _, _ = extract.LinkTypes(linkTitles, langRes.Lang, `\d{7}\.shtml$`)
+		_, _ = extract.LinkTypes(linkTitles, langRes.Lang, nil)
+
+		// rules := map[string][]string{
+		// 	"163.com": []string{
+		// 		"`\\w{16}\\.html`",
+		// 	},
+		// }
+		// _, _ = extract.LinkTypes(linkTitles, langRes.Lang, rules)
 	}
+
+	b.StopTimer()
 
 	fmt.Println(langRes.Lang)
 	fmt.Println(len(linkTitles))
@@ -64,12 +72,12 @@ func BenchmarkLinkTitles(b *testing.B) {
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
 		// "https://www.qq.com",
-		"https://www.people.com.cn",
+		// "https://www.people.com.cn",
 		// "https://www.36kr.com",
 		// "https://www.163.com",
 		// "https://news.163.com/",
 		// "http://jyj.suqian.gov.cn",
-		// "http://www.news.cn",
+		"http://www.news.cn",
 		// "http://www.news.cn/politicspro/",
 		// "http://www.cankaoxiaoxi.com",
 		// "http://www.bbc.com",
@@ -80,6 +88,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.chunichi.co.jp",
 		// "https://www.donga.com/",
 		// "https://people.com/",
+		// "https://czql.gov.cn/",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -193,7 +202,7 @@ func TestLangFromUtf8Body(t *testing.T) {
 		// "http://hanoimoi.com.vn",
 		// "https://www.commerce.gov.mm",
 		// "https://www.rrdmyanmar.gov.mm",
-
+		"https://czql.gov.cn/",
 	}
 
 	for _, urlStr := range urlStrs {

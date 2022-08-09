@@ -23,6 +23,8 @@ var (
 	zhPuncs   = []string{"，", "。", "；", "：", "？", "！", "（", "）", "“", "”"}
 	wordLangs = []string{"en", "ru", "ar", "de", "fr", "it", "es", "pt"}
 
+	zhEnTitles = []string{"nba", "cba", "5g", "ai", "it"}
+
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 	regexZhPattern          = regexp.MustCompile(`\p{Han}`)
 	regexEnPattern          = regexp.MustCompile(`[a-zA-Z]`)
@@ -99,7 +101,7 @@ func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*
 		}
 	}
 
-	// 基于内容页 URL path 特征统计与处理
+	// 基于内容页 URL path 特征统计与分类
 	if rules == nil {
 		linkRes = linkTypePathProcess(linkRes, contentTopPaths, contentPublishCount)
 	}
@@ -129,7 +131,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 		}
 	}
 
-	// 内容页 URL path 具有明显的发布时间特征比例，处理 List、Unknow
+	// 内容页 URL path 具有明显的发布时间特征比例，处理 List、Unknown
 	if publishProb > 0.7 {
 		if listCount > 0 {
 			for link, title := range linkRes.List {
@@ -174,7 +176,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 		}
 	}
 
-	// path 具有特征，最后清洗一下内容页中无 path 的
+	// path 具有特征，清洗一下内容页中无 path 的
 	if contentCount > 0 && (publishProb > 0.7 || len(topPaths) > 0) {
 		for link, title := range linkRes.Content {
 			linkUrl, _ := fun.UrlParse(link)
@@ -219,8 +221,9 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 		return LinkTypeNone
 	}
 
+	// 无 path 或者默认 path, 应当由 domain 处理
 	pathDir := strings.TrimSpace(linkUrl.Path)
-	if pathDir == "" || pathDir == fun.SLASH {
+	if pathDir == "" || pathDir == fun.SLASH || pathDir == "/index.html" || pathDir == "/index.htm" || pathDir == "/index.shtml" {
 		return LinkTypeNone
 	}
 
@@ -229,7 +232,7 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 		zhs := regexZhPattern.FindAllString(title, -1)
 		hanCount := len(zhs)
 
-		// 必须包含中文
+		// 必须包含中文才可能是内容页
 		if hanCount > 0 {
 			// 内容页标题中文大于 5
 			if hanCount > 5 {
@@ -255,6 +258,11 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 				return LinkTypeList
 			}
 		} else {
+			// 没有中文，简单匹配英文字典
+			if fun.SliceContains(zhEnTitles, strings.ToLower(title)) {
+				return LinkTypeList
+			}
+
 			return LinkTypeNone
 		}
 

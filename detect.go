@@ -27,32 +27,36 @@ type DomainRes struct {
 }
 
 func DetectDomain(domain string) (*DomainRes, error) {
+	domainRes := &DomainRes{}
+
+	schemes := []string{"http", "https"}
+	homeDomains := []string{"www", ""}
 
 	req := &HttpReq{
 		HttpReq: &fun.HttpReq{
 			MaxContentLength: 4 * 1024 * 1024,
-			MaxRedirect:      3,
+			MaxRedirect:      2,
 		},
 		ForceTextContentType: true,
 	}
 
-	homeDomains := []string{"www.", ""}
-	schemes := []string{"https", "http"}
+	for _, scheme := range schemes {
 
-	domainRes := &DomainRes{
-		Domain: domain,
-	}
+		for _, homeDomain := range homeDomains {
 
-	for _, homeDomain := range homeDomains {
-
-		for _, scheme := range schemes {
-			urlStr := scheme + "://" + homeDomain + domain
+			var urlStr string
+			if homeDomain != "" {
+				urlStr = scheme + "://" + homeDomain + fun.DOT + domain
+			} else {
+				urlStr = scheme + "://" + domain
+			}
 
 			resp, err := HttpGetResp(urlStr, req, 10000)
 			if resp.Success && err == nil {
+				domainRes.Domain = domain
 				domainRes.State = 1
 				domainRes.Scheme = scheme
-				domainRes.HomeDomain = homeDomain + domain
+				domainRes.HomeDomain = homeDomain
 				domainRes.HttpCode = resp.StatusCode
 				domainRes.Charset = resp.Charset
 
@@ -65,7 +69,7 @@ func DetectDomain(domain string) (*DomainRes, error) {
 				langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 				domainRes.Lang = langRes
 
-				// 中国的 ICP 解析省份
+				// 中国 ICP 解析
 				icp, province := extract.Icp(doc)
 				if icp != "" && province != "" {
 					domainRes.Country = "中国"

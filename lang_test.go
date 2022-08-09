@@ -28,6 +28,7 @@ func TestLingua(t *testing.T) {
 		// "http://hanoimoi.com.vn",
 		// "https://www.commerce.gov.mm",
 		// "https://www.rrdmyanmar.gov.mm",
+		"https://czql.gov.cn/",
 	}
 
 	for _, urlStr := range urlStrs {

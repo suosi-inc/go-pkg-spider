@@ -169,13 +169,11 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	}
 
 	// 过滤掉明显错误的后缀
-	if err == nil {
-		ext := path.Ext(u.Path)
-		if strings.Contains(ext, ".") {
-			ext = strings.ToLower(ext)
-			if fun.SliceContains(filterUrlSuffix, ext) {
-				return urlStr, errors.New("invalid url with suffix")
-			}
+	ext := path.Ext(u.Path)
+	if strings.Contains(ext, ".") {
+		ext = strings.ToLower(ext)
+		if fun.SliceContains(filterUrlSuffix, ext) {
+			return urlStr, errors.New("invalid url with suffix")
 		}
 	}
 

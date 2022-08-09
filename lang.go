@@ -12,16 +12,16 @@ import (
 
 var (
 	CharsetLangMap = map[string]string{
-		"gbk":         "zh",
-		"big5":        "zh",
-		"iso-2022-cn": "zh",
-		"shift_jis":   "ja",
-		"koi8-r":      "ru",
-		"euc-jp":      "ja",
-		"euc-kr":      "ko",
-		"euc-cn":      "zh",
-		"iso-2022-jp": "ja",
-		"iso-2022-kr": "ko",
+		"GBK":         "zh",
+		"Big5":        "zh",
+		"ISO-2022-CN": "zh",
+		"SHIFT_JIS":   "ja",
+		"KOI8-R":      "ru",
+		"EUC-JP":      "ja",
+		"EUC-KR":      "ko",
+		"EUC-CN":      "zh",
+		"ISO-2022-JP": "ja",
+		"ISO-2022-KR": "ko",
 	}
 
 	LangEnZhMap = map[string]string{

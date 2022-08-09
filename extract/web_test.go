@@ -25,7 +25,7 @@ func TestTitleClean(t *testing.T) {
 
 func TestUrlQuery(t *testing.T) {
 	// urlStr := "https://people.com/tag/stories-to-make-you-smile/a/b/abc.html?a=1&b=2&c=3#ddd"
-	urlStr := "https://vipmail.163.com/abc"
+	urlStr := "https://vipmail.163.com/index.html?abc=123"
 	u, err := url.Parse(urlStr)
 
 	fmt.Println(err)
@@ -52,7 +52,11 @@ func BenchmarkFilterUrl(b *testing.B) {
 	urlStr := "http://www.163.com/a/b/"
 	baseUrl, _ := fun.UrlParse(urlStr)
 
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
-		filterUrl("../c/123.html", baseUrl, true)
+		filterUrl("https://www.163.com/news/article/HEAJM4F1000189FH.html", baseUrl, true)
+
+		// url.Parse("https://www.163.com/news/article/HEAJM4F1000189FH.html")
 	}
 }
