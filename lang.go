@@ -88,7 +88,7 @@ const (
 	LangPosBody    = "body"
 	LangPosLingua  = "lingua"
 	LangPosHost    = "host"
-	BodyChunkSize  = 1024
+	BodyChunkSize  = 2048
 )
 
 type LangRes struct {
@@ -155,11 +155,11 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	var lang string
 	var text string
 
-	// 获取网页中最多 128 个 a 标签，如果没有 a 标签或过少，则获取 body
+	// 获取网页中最多 64 个 a 标签，如果没有 a 标签或过少，则获取 body
 	aTag := doc.Find("a")
 	aTagSize := aTag.Size()
 	if aTagSize >= 16 {
-		sliceMax := fun.Min(aTagSize, 128)
+		sliceMax := fun.Min(aTagSize, 64)
 		text = aTag.Slice(0, sliceMax).Text()
 	} else {
 		text = doc.Find("body").Text()
@@ -210,7 +210,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	if english != nil {
 		englishCount := len(english)
 		englishRate := float64(englishCount) / float64(textCount)
-		if englishRate > 0.7 {
+		if englishRate > 0.5 {
 			hostLang := LangFromHost(host)
 			if hostLang != "" {
 				return hostLang, LangPosHost
