@@ -120,7 +120,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 
 	// 内容页 URL path 占比较多的特征， 只取 Top 2
 	topPaths := make([]string, 0)
-	if contentCount >= 10 {
+	if contentCount >= 8 {
 		for topPath, stat := range contentTopPaths {
 			if stat > 1 {
 				prob := float32(stat) / float32(contentCount)

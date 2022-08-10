@@ -12,8 +12,8 @@ import (
 
 type DomainRes struct {
 	Domain     string
-	Scheme     string
 	HomeDomain string
+	Scheme     string
 	Charset    CharsetRes
 	Lang       LangRes
 	Country    string
@@ -24,45 +24,64 @@ type DomainRes struct {
 	Icp        string
 	State      int
 	HttpCode   int
+	Articles   int
+	SubDomains map[string]bool
+	ErrorPos   string
 }
 
-func DetectDomain(domain string) (*DomainRes, error) {
-	domainRes := &DomainRes{}
+func DetectDomain(domain string, timeout int) (*DomainRes, error) {
+	if timeout == 0 {
+		timeout = 10000
+	}
 
-	schemes := []string{"http", "https"}
-	homeDomains := []string{"www", ""}
+	domainRes := &DomainRes{}
 
 	req := &HttpReq{
 		HttpReq: &fun.HttpReq{
-			MaxContentLength: 4 * 1024 * 1024,
-			MaxRedirect:      2,
+			MaxContentLength: 2 * 1024 * 1024,
+			MaxRedirect:      1,
 		},
 		ForceTextContentType: true,
 	}
 
-	for _, scheme := range schemes {
+	scheme := "http"
+	homes := []string{"www", ""}
 
-		for _, homeDomain := range homeDomains {
+	for _, home := range homes {
 
-			var urlStr string
-			if homeDomain != "" {
-				urlStr = scheme + "://" + homeDomain + fun.DOT + domain
-			} else {
-				urlStr = scheme + "://" + domain
+		var urlStr string
+		var homeDomain string
+		if home != "" {
+			homeDomain = home + fun.DOT + domain
+			urlStr = scheme + "://" + homeDomain
+		} else {
+			homeDomain = domain
+			urlStr = scheme + "://" + homeDomain
+		}
+
+		resp, err := HttpGetResp(urlStr, req, timeout)
+		if resp.Success && err == nil {
+			domainRes.Domain = domain
+			domainRes.HomeDomain = homeDomain
+			domainRes.State = 1
+			domainRes.HttpCode = resp.StatusCode
+			domainRes.Charset = resp.Charset
+			domainRes.Scheme = scheme
+
+			// 如果发生了协议跳转，则重新设置 scheme
+			if domainRes.Scheme != resp.RequestURL.Scheme {
+				domainRes.Scheme = resp.RequestURL.Scheme
 			}
 
-			resp, err := HttpGetResp(urlStr, req, 10000)
-			if resp.Success && err == nil {
-				domainRes.Domain = domain
-				domainRes.State = 1
-				domainRes.Scheme = scheme
-				domainRes.HomeDomain = homeDomain
-				domainRes.HttpCode = resp.StatusCode
-				domainRes.Charset = resp.Charset
+			// 如果发生了跳转，则重新设置 homeDomain
+			if domainRes.HomeDomain != resp.RequestURL.Hostname() {
+				domainRes.HomeDomain = resp.RequestURL.Hostname()
+			}
 
-				// 解析 HTML
-				u, _ := url.Parse(urlStr)
-				doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+			// 解析 HTML
+			u, _ := url.Parse(urlStr)
+			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+			if docErr == nil {
 				doc.Find(DefaultRemoveTags).Remove()
 
 				// 语言
@@ -89,10 +108,21 @@ func DetectDomain(domain string) (*DomainRes, error) {
 				domainRes.Title = extract.WebTitle(doc, 0)
 				domainRes.TitleClean = extract.WebTitleClean(domainRes.Title, langRes.Lang)
 
+				linkTitles, _ := extract.WebLinkTitles(doc, urlStr, true)
+
+				links, subDomains := extract.LinkTypes(linkTitles, langRes.Lang, nil)
+
+				domainRes.Articles = len(links.Content)
+				domainRes.SubDomains = subDomains
+
 				return domainRes, nil
+			} else {
+				return domainRes, errors.New("ErrorDocParse")
 			}
+		} else {
+			return domainRes, err
 		}
 	}
 
-	return nil, errors.New("domain detect error")
+	return domainRes, errors.New("ErrorDomainDetect")
 }

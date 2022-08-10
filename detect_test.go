@@ -13,12 +13,12 @@ import (
 
 func TestDomainDetect(t *testing.T) {
 	domains := []string{
-		// "163.com",
-		"czql.gov.cn",
+		"jrj.com.cn",
+		// "suosi.com.cn",
 	}
 
 	for _, domain := range domains {
-		domainRes, err := DetectDomain(domain)
+		domainRes, err := DetectDomain(domain, 10000)
 		if err == nil {
 			t.Log(domainRes)
 		} else {
@@ -28,7 +28,7 @@ func TestDomainDetect(t *testing.T) {
 }
 
 func BenchmarkLinkTitles(b *testing.B) {
-	urlStr := "http://www.163.com/"
+	urlStr := "http://www.qq.com/"
 
 	resp, _ := HttpGetResp(urlStr, nil, 30000)
 
@@ -77,7 +77,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.163.com",
 		// "https://news.163.com/",
 		// "http://jyj.suqian.gov.cn",
-		"http://www.news.cn",
+		// "https://www.huxiu.com/",
 		// "http://www.news.cn/politicspro/",
 		// "http://www.cankaoxiaoxi.com",
 		// "http://www.bbc.com",
@@ -89,6 +89,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.donga.com/",
 		// "https://people.com/",
 		// "https://czql.gov.cn/",
+		"https://qiye.163.com/",
 	}
 
 	for _, urlStr := range urlStrs {
