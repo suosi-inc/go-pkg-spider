@@ -24,9 +24,9 @@ type Content struct {
 }
 
 type CountInfo struct {
-	// 文本长度，如 <p> 标签的文本
+	// 文本长度, 如 <p> 标签的文本
 	TextCount int
-	// 带有链接的文本长度，如 <a> 标签中的文本
+	// 带有链接的文本长度, 如 <a> 标签中的文本
 	LinkTextCount int
 	// 标签数量
 	TagCount int

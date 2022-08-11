@@ -116,7 +116,7 @@ func TestLinkTitles(t *testing.T) {
 		// 分类链接和子域名列表
 		linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, nil)
 
-		// 分类链接和子域名列表，规则
+		// 分类链接和子域名列表, 规则
 		// rules := map[string][]string{
 		// 	"cankaoxiaoxi.com": []string{
 		// 		"\\d{7}\\.shtml$",

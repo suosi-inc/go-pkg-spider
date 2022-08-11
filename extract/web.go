@@ -40,7 +40,7 @@ func WebTitle(doc *goquery.Document, maxLength int) string {
 
 // WebTitleClean 返回尽量清洗后的网页标题
 func WebTitleClean(title string, lang string) string {
-	// 中文网站，查找中文网站的分割标记，找到任意一个，从尾部循环删除后返回
+	// 中文网站, 查找中文网站的分割标记, 找到任意一个, 从尾部循环删除后返回
 	if lang == "zh" {
 		titleClean := title
 		for _, split := range zhSplits {
@@ -61,7 +61,7 @@ func WebTitleClean(title string, lang string) string {
 		titleClean = fun.RemoveSuffix(titleClean, "首页")
 		return titleClean
 
-		// 其他，查找英文分割标记，如果找到，从尾部删除一次返回
+		// 其他, 查找英文分割标记, 如果找到, 从尾部删除一次返回
 	} else {
 		for _, split := range enSplits {
 			end := strings.LastIndex(title, split)

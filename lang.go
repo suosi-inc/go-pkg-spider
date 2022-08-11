@@ -103,7 +103,7 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 	var res LangRes
 	var lang string
 
-	// 如果存在特定语言的 charset 对照表，则直接返回
+	// 如果存在特定语言的 charset 对照表, 则直接返回
 	if charset != "" {
 		if _, exist := CharsetLangMap[charset]; exist {
 			res.Lang = CharsetLangMap[charset]
@@ -112,7 +112,7 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 		}
 	}
 
-	// 解析 Html 语言属性，当不为空不为 en 时可信度比较高, 直接返回
+	// 解析 Html 语言属性, 当不为空不为 en 时可信度比较高, 直接返回
 	lang = LangFromHtml(doc)
 	if lang != "" && lang != "en" {
 		res.Lang = lang
@@ -120,7 +120,7 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 		return res
 	}
 
-	// 当 utf 编码时，lang 为空或 en 可信度比较低，进行基于内容语种的检测
+	// 当 utf 编码时, lang 为空或 en 可信度比较低, 进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
 		bodyLang, pos := LangFromUtf8Body(doc, host)
 		if bodyLang != "" {
@@ -158,7 +158,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	var lang string
 	var text string
 
-	// 获取网页中最多 64 个 a 标签，如果没有 a 标签或过少，则获取 body
+	// 获取网页中最多 64 个 a 标签, 如果没有 a 标签或过少, 则获取 body
 	aTag := doc.Find("a")
 	aTagSize := aTag.Size()
 	if aTagSize >= 16 {
@@ -215,7 +215,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 		englishRate := float64(englishCount) / float64(textCount)
 		if englishRate > 0.38 {
 
-			// 包含拉丁补充字符集, 使用 lingua 分析主要的拉丁语系
+			// 包含拉丁补充字符集, 使用 lingua 分析主要的非英语拉丁语种
 			latinRegexp := regexp.MustCompile("[\u0080-\u00ff]")
 			latin := latinRegexp.FindAllString(text, -1)
 			if latin != nil {
@@ -235,7 +235,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 		}
 	}
 
-	// 未包含中日英, 使用 lingua 分析指定非拉丁语系特定语种
+	// 最后, 使用 lingua 分析其他主要的非拉丁语种
 	detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLanguages...).Build()
 	if language, exists := detector.DetectLanguageOf(text); exists {
 

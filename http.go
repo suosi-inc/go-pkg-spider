@@ -155,7 +155,7 @@ func HttpDoResp(req *http.Request, r *HttpReq, timeout int) (*HttpResp, error) {
 		return httpResp, err
 	}
 
-	// 默认会自动进行探测编码和转码，除非手动禁用
+	// 默认会自动进行探测编码和转码, 除非手动禁用
 	if r == nil || !r.DisableCharset {
 		charsetRes := Charset(httpResp.Body, httpResp.Headers)
 		httpResp.Charset = charsetRes

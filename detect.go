@@ -81,12 +81,12 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			domainRes.Charset = resp.Charset
 			domainRes.Scheme = scheme
 
-			// 如果发生了协议跳转，则重新设置 scheme
+			// 如果发生了协议跳转, 则重新设置 scheme
 			if domainRes.Scheme != resp.RequestURL.Scheme {
 				domainRes.Scheme = resp.RequestURL.Scheme
 			}
 
-			// 如果发生了跳转，则重新设置 homeDomain
+			// 如果发生了跳转, 则重新设置 homeDomain
 			if domainRes.HomeDomain != resp.RequestURL.Hostname() {
 				domainRes.HomeDomain = resp.RequestURL.Hostname()
 			}
