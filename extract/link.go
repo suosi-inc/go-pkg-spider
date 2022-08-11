@@ -21,9 +21,9 @@ const (
 
 var (
 	zhPuncs   = []string{"，", "。", "；", "：", "？", "！", "（", "）", "“", "”"}
-	wordLangs = []string{"en", "ru", "ar", "de", "fr", "it", "es", "pt"}
+	wordLangs = []string{"en", "ru", "ar", "de", "fr", "es", "pt"}
 
-	zhEnTitles = []string{"nba", "cba", "5g", "ai", "it"}
+	zhEnTitles = []string{"nba", "cba", "5g", "ai", "it", "ipo"}
 
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 	regexZhPattern          = regexp.MustCompile(`\p{Han}`)

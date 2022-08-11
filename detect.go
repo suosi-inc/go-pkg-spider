@@ -121,7 +121,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 				domainRes.Title = extract.WebTitle(doc, 0)
 				domainRes.TitleClean = extract.WebTitleClean(domainRes.Title, langRes.Lang)
 
-				linkTitles, _ := extract.WebLinkTitles(doc, urlStr, true)
+				linkTitles, _ := extract.WebLinkTitles(doc, resp.RequestURL, true)
 
 				links, subDomains := extract.LinkTypes(linkTitles, langRes.Lang, nil)
 

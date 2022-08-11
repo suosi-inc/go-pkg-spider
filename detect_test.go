@@ -47,7 +47,7 @@ func BenchmarkLinkTitles(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// 标题
-		linkTitles, _ = extract.WebLinkTitles(doc, urlStr, true)
+		linkTitles, _ = extract.WebLinkTitles(doc, resp.RequestURL, true)
 
 		// 连接和子域名
 		_, _ = extract.LinkTypes(linkTitles, langRes.Lang, nil)
@@ -106,10 +106,11 @@ func TestLinkTitles(t *testing.T) {
 		// 语言
 		langRes := Lang(doc, resp.Charset.Charset)
 
+		fmt.Println(resp.Charset)
 		fmt.Println(langRes)
 
 		// 标题
-		linkTitles, filters := extract.WebLinkTitles(doc, urlStr, true)
+		linkTitles, filters := extract.WebLinkTitles(doc, resp.RequestURL, true)
 
 		// 分类链接和子域名列表
 		linkRes, domainRes := extract.LinkTypes(linkTitles, langRes.Lang, nil)

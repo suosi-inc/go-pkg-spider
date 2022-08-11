@@ -90,13 +90,12 @@ func WebDescription(doc *goquery.Document) string {
 }
 
 // WebLinkTitles 返回网页链接和锚文本
-func WebLinkTitles(doc *goquery.Document, baseUrlStr string, strictDomain bool) (map[string]string, map[string]string) {
+func WebLinkTitles(doc *goquery.Document, baseUrl *url.URL, strictDomain bool) (map[string]string, map[string]string) {
 	var linkTitles = make(map[string]string)
 	var filters = make(map[string]string)
 
 	// 当前请求的 urlStr
-	baseUrl, err := fun.UrlParse(baseUrlStr)
-	if err != nil {
+	if baseUrl == nil {
 		return linkTitles, filters
 	}
 
