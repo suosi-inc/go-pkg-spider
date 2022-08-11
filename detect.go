@@ -29,7 +29,20 @@ type DomainRes struct {
 	ErrorPos   string
 }
 
-func DetectDomain(domain string, timeout int) (*DomainRes, error) {
+func DetectDomain(domain string, timeout int, retry int) (*DomainRes, error) {
+	if retry == 0 {
+		retry = 1
+	}
+	for i := 0; i < retry; i++ {
+		domainRes, err := DetectDomainDo(domain, timeout)
+		if err == nil {
+			return domainRes, nil
+		}
+	}
+	return nil, errors.New("ErrorDomainDetect")
+}
+
+func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 	if timeout == 0 {
 		timeout = 10000
 	}

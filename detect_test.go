@@ -18,7 +18,7 @@ func TestDomainDetect(t *testing.T) {
 	}
 
 	for _, domain := range domains {
-		domainRes, err := DetectDomain(domain, 10000)
+		domainRes, err := DetectDomain(domain, 10000, 1)
 		if err == nil {
 			t.Log(domainRes)
 		} else {
