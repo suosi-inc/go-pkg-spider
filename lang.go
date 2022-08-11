@@ -67,9 +67,17 @@ var (
 		lingua.Arabic,
 		lingua.Russian,
 		lingua.Hindi,
-		lingua.Vietnamese,
 		lingua.Thai,
 		lingua.Korean,
+	}
+
+	linguaLatinLanguages = []lingua.Language{
+		lingua.English,
+		lingua.French,
+		lingua.German,
+		lingua.Spanish,
+		lingua.Vietnamese,
+		lingua.Portuguese,
 	}
 
 	linguaMap = map[string]string{
@@ -79,6 +87,11 @@ var (
 		"vietnamese": "vi",
 		"thai":       "th",
 		"korean":     "ko",
+		"english":    "en",
+		"french":     "fr",
+		"german":     "de",
+		"spanish":    "es",
+		"portuguese": "pt",
 	}
 )
 
@@ -185,7 +198,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 		hanRate := float64(hanCount) / float64(textCount)
 
 		// 汉字比例
-		if hanRate >= 0.3 {
+		if hanRate >= 0.38 {
 			jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
 			ja := jaRegex.FindAllString(text, -1)
 			if ja != nil {
@@ -204,13 +217,20 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 		}
 	}
 
-	// 英语占比很高, 不一定是英语, 可能是拉丁语系, 妥协的办法进行域名后缀再判定(不一定准确)
+	// 英语占比很高, 不一定是英语, 可能是拉丁语系, 分析主要的一些语种
 	englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
 	english := englishRegexp.FindAllString(text, -1)
 	if english != nil {
 		englishCount := len(english)
 		englishRate := float64(englishCount) / float64(textCount)
-		if englishRate > 0.5 {
+		if englishRate > 0.38 {
+			detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLatinLanguages...).Build()
+			if language, exists := detector.DetectLanguageOf(text); exists {
+				key := strings.ToLower(language.String())
+				linguaLang := linguaMap[key]
+				return linguaLang, LangPosLingua
+			}
+
 			hostLang := LangFromHost(host)
 			if hostLang != "" {
 				return hostLang, LangPosHost
@@ -220,19 +240,19 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 		}
 	}
 
-	// 不是英、中、日，尝试小语种的域名特征
-	lang = LangFromHost(host)
-	if lang != "" {
-		return lang, LangPosHost
-	}
-
-	// 域名没有特征，最后使用 lingua 分析指定小语种
+	// 未包含中日英, 使用 lingua 分析指定非拉丁语系语种
 	detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLanguages...).Build()
 	if language, exists := detector.DetectLanguageOf(text); exists {
 
 		key := strings.ToLower(language.String())
 		linguaLang := linguaMap[key]
 		return linguaLang, LangPosLingua
+	}
+
+	// 最后分析只能从域名特征入手
+	lang = LangFromHost(host)
+	if lang != "" {
+		return lang, LangPosHost
 	}
 
 	return lang, ""

@@ -3,8 +3,6 @@ package spider
 import (
 	"bytes"
 	"fmt"
-	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -58,62 +56,38 @@ func BenchmarkLinguaTest(b *testing.B) {
 func TestLingua(t *testing.T) {
 
 	var urlStrs = []string{
-		//"https://www.163.com",
+		// "https://www.163.com",
 		// "https://english.news.cn",
 		// "https://jp.news.cn",
 		// "https://kr.news.cn",
 		// "https://arabic.news.cn",
 		// "https://www.bbc.com",
 		// "http://government.ru",
-		"https://french.news.cn",
+		// "https://french.news.cn",
 		// "https://www.gouvernement.fr",
 		// "http://live.siammedia.org/",
-		// "http://hanoimoi.com.vn",
+		"http://hanoimoi.com.vn",
 		// "https://www.commerce.gov.mm",
 		// "https://www.rrdmyanmar.gov.mm",
-		//"https://czql.gov.cn/",
+		// "https://czql.gov.cn/",
 	}
 
 	for _, urlStr := range urlStrs {
-		resp, _ := fun.HttpGetResp(urlStr, nil, 10000)
+		resp, _ := HttpGetResp(urlStr, nil, 10000)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 
-		text := doc.Find("a").Text()
+		doc.Find(DefaultRemoveTags).Remove()
 
-		text = fun.RemoveLines(text)
+		u, _ := fun.UrlParse(urlStr)
 
-		text = strings.ReplaceAll(text, fun.TAB, "")
-		text = strings.ReplaceAll(text, "  ", "")
-
-		m := regexp.MustCompile(`[\pP\pS]`)
-		text = m.ReplaceAllString(text, "")
-
-		text = fun.SubString(text, 0, 2048)
-
+		// 语言
 		start := fun.Timestamp(true)
-		languages := []lingua.Language{
-			//lingua.Arabic,
-			//lingua.Russian,
-			//lingua.Hindi,
-			//lingua.Vietnamese,
-			//lingua.Thai,
-			lingua.French,
-			lingua.Spanish,
-			lingua.Portuguese,
-			lingua.German,
-			lingua.English,
-		}
-		detector := lingua.NewLanguageDetectorBuilder().
-			FromLanguages(languages...).
-			Build()
+		langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
 
-		if language, exists := detector.DetectLanguageOf(text); exists {
-			t.Log(urlStr)
-			t.Log(text)
-			t.Log(language.IsoCode639_1())
-			fmt.Println(fun.Timestamp(true) - start)
-		}
+		t.Log(urlStr)
+		t.Log(langRes)
+		t.Log(fun.Timestamp(true) - start)
 	}
 
 }
