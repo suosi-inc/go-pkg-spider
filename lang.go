@@ -32,11 +32,8 @@ var (
 		"ko": "韩语",
 		"ar": "阿拉伯语",
 		"hi": "印地语",
-		"th": "泰语",
-		"vi": "越南语",
 		"de": "德语",
 		"fr": "法语",
-		"it": "意大利语",
 		"es": "西班牙语",
 		"pt": "葡萄牙语",
 	}
@@ -49,11 +46,8 @@ var (
 		"韩语":   "ko",
 		"阿拉伯语": "ar",
 		"印地语":  "hi",
-		"泰语":   "th",
-		"越南语":  "vi",
 		"德语":   "de",
 		"法语":   "fr",
-		"意大利语": "it",
 		"西班牙语": "es",
 		"葡萄牙语": "pt",
 	}
@@ -67,31 +61,27 @@ var (
 		lingua.Arabic,
 		lingua.Russian,
 		lingua.Hindi,
-		lingua.Thai,
 		lingua.Korean,
 	}
 
 	linguaLatinLanguages = []lingua.Language{
-		lingua.English,
 		lingua.French,
 		lingua.German,
 		lingua.Spanish,
-		lingua.Vietnamese,
 		lingua.Portuguese,
+		lingua.English,
 	}
 
 	linguaMap = map[string]string{
 		"arabic":     "ar",
 		"russian":    "ru",
 		"hindi":      "hi",
-		"vietnamese": "vi",
-		"thai":       "th",
 		"korean":     "ko",
-		"english":    "en",
 		"french":     "fr",
 		"german":     "de",
 		"spanish":    "es",
 		"portuguese": "pt",
+		"english":    "en",
 	}
 )
 
@@ -122,7 +112,7 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 		}
 	}
 
-	// 解析 Html 语言属性，当不为空或 en 时可信度高，直接返回
+	// 解析 Html 语言属性，当不为空不为 en 时可信度比较高, 直接返回
 	lang = LangFromHtml(doc)
 	if lang != "" && lang != "en" {
 		res.Lang = lang
@@ -130,7 +120,7 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 		return res
 	}
 
-	// 当 utf 编码时，lang 为空或 en 不可信，进行基于内容、域名的语种的检测
+	// 当 utf 编码时，lang 为空或 en 可信度比较低，进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
 		bodyLang, pos := LangFromUtf8Body(doc, host)
 		if bodyLang != "" {
@@ -190,7 +180,7 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 	text = fun.SubString(text, 0, BodyChunkSize)
 	textCount := utf8.RuneCountInString(text)
 
-	// 是否包含汉字
+	// 首先判断是否包含汉字, 中文和日语
 	hanRegex := regexp.MustCompile(`\p{Han}`)
 	han := hanRegex.FindAllString(text, -1)
 	if han != nil {
@@ -217,42 +207,41 @@ func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
 		}
 	}
 
-	// 英语占比很高, 不一定是英语, 可能是拉丁语系, 分析主要的一些语种
+	// 其次判断拉丁语系, 分析主要的一些语种
 	englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
 	english := englishRegexp.FindAllString(text, -1)
 	if english != nil {
 		englishCount := len(english)
 		englishRate := float64(englishCount) / float64(textCount)
 		if englishRate > 0.38 {
-			detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLatinLanguages...).Build()
-			if language, exists := detector.DetectLanguageOf(text); exists {
-				key := strings.ToLower(language.String())
-				linguaLang := linguaMap[key]
-				return linguaLang, LangPosLingua
-			}
 
-			hostLang := LangFromHost(host)
-			if hostLang != "" {
-				return hostLang, LangPosHost
+			// 包含拉丁补充字符集, 使用 lingua 分析主要的拉丁语系
+			latinRegexp := regexp.MustCompile("[\u0080-\u00ff]")
+			latin := latinRegexp.FindAllString(text, -1)
+			if latin != nil {
+				latinCount := len(latin)
+
+				if latinCount > 3 {
+					detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLatinLanguages...).Build()
+					if language, exists := detector.DetectLanguageOf(text); exists {
+						key := strings.ToLower(language.String())
+						linguaLang := linguaMap[key]
+						return linguaLang, LangPosLingua
+					}
+				}
 			}
 
 			return "en", LangPosBody
 		}
 	}
 
-	// 未包含中日英, 使用 lingua 分析指定非拉丁语系语种
+	// 未包含中日英, 使用 lingua 分析指定非拉丁语系特定语种
 	detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLanguages...).Build()
 	if language, exists := detector.DetectLanguageOf(text); exists {
 
 		key := strings.ToLower(language.String())
 		linguaLang := linguaMap[key]
 		return linguaLang, LangPosLingua
-	}
-
-	// 最后分析只能从域名特征入手
-	lang = LangFromHost(host)
-	if lang != "" {
-		return lang, LangPosHost
 	}
 
 	return lang, ""
@@ -266,20 +255,20 @@ func LangFromHost(host string) string {
 		lang = "fr"
 	} else if strings.HasSuffix(host, ".de") {
 		lang = "de"
-	} else if strings.HasSuffix(host, ".it") {
-		lang = "it"
 	} else if strings.HasSuffix(host, ".es") {
+		lang = "es"
+	} else if strings.HasSuffix(host, ".ar") {
 		lang = "es"
 	} else if strings.HasSuffix(host, ".pt") {
 		lang = "pt"
+	} else if strings.HasSuffix(host, ".br") {
+		lang = "pt"
+	} else if strings.HasSuffix(host, ".ru") {
+		lang = "ru"
+	} else if strings.HasSuffix(host, ".pl") {
+		lang = "pt"
 	} else if strings.HasSuffix(host, ".in") {
-		lang = "in"
-	} else if strings.HasSuffix(host, ".vn") {
-		lang = "vi"
-	} else if strings.HasSuffix(host, ".mm") {
-		lang = "my"
-	} else if strings.HasSuffix(host, ".th") {
-		lang = "th"
+		lang = "hi"
 	}
 
 	return lang

@@ -89,7 +89,8 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.donga.com/",
 		// "https://people.com/",
 		// "https://czql.gov.cn/",
-		"https://qiye.163.com/",
+		// "https://qiye.163.com/",
+		"https://www.washingtontimes.com/",
 	}
 
 	for _, urlStr := range urlStrs {

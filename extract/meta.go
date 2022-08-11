@@ -113,11 +113,6 @@ func MetaFromHost(host string, lang string) (string, string, string) {
 		return country, province, category
 	}
 
-	if strings.HasSuffix(host, ".it") && lang == "it" {
-		country = "意大利"
-		return country, province, category
-	}
-
 	if strings.HasSuffix(host, ".es") && lang == "es" {
 		country = "西班牙"
 		return country, province, category
@@ -135,16 +130,6 @@ func MetaFromHost(host string, lang string) (string, string, string) {
 
 	if strings.HasSuffix(host, ".fr") && lang == "fr" {
 		country = "法国"
-		return country, province, category
-	}
-
-	if strings.HasSuffix(host, ".th") && lang == "th" {
-		country = "泰国"
-		return country, province, category
-	}
-
-	if strings.HasSuffix(host, ".vn") && lang == "vi" {
-		country = "越南"
 		return country, province, category
 	}
 
