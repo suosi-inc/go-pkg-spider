@@ -56,4 +56,5 @@ func TestDomainTop(t *testing.T) {
 func TestDomainTopFromUrl(t *testing.T) {
 	fmt.Println(DomainTopFromUrl("https://www.google.com"))
 	fmt.Println(DomainTopFromUrl("https://www.baidu.com/news"))
+	fmt.Println(DomainTopFromUrl("http://szb.xnnews.com.cn/zhzx/202207/t20220722_2731400.htm"))
 }
