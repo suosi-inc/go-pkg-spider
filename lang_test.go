@@ -91,11 +91,9 @@ func TestLang(t *testing.T) {
 
 		doc.Find(DefaultRemoveTags).Remove()
 
-		u, _ := fun.UrlParse(urlStr)
-
 		// 语言
 		start := fun.Timestamp(true)
-		langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
+		langRes := Lang(doc, resp.Charset.Charset)
 
 		t.Log(urlStr)
 		t.Log(langRes)

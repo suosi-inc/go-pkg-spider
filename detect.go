@@ -98,7 +98,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 				doc.Find(DefaultRemoveTags).Remove()
 
 				// 语言
-				langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
+				langRes := Lang(doc, resp.Charset.Charset)
 				domainRes.Lang = langRes
 
 				// 中国 ICP 解析

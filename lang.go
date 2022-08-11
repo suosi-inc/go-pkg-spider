@@ -99,7 +99,7 @@ type LangRes struct {
 	LangPos string
 }
 
-func Lang(doc *goquery.Document, charset string, host string) LangRes {
+func Lang(doc *goquery.Document, charset string) LangRes {
 	var res LangRes
 	var lang string
 
@@ -122,7 +122,7 @@ func Lang(doc *goquery.Document, charset string, host string) LangRes {
 
 	// 当 utf 编码时, lang 为空或 en 可信度比较低, 进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
-		bodyLang, pos := LangFromUtf8Body(doc, host)
+		bodyLang, pos := LangFromUtf8Body(doc)
 		if bodyLang != "" {
 			res.Lang = bodyLang
 			res.LangPos = pos
@@ -154,7 +154,7 @@ func LangFromHtml(doc *goquery.Document) string {
 	return lang
 }
 
-func LangFromUtf8Body(doc *goquery.Document, host string) (string, string) {
+func LangFromUtf8Body(doc *goquery.Document) (string, string) {
 	var lang string
 	var text string
 

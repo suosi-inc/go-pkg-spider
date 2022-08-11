@@ -44,7 +44,7 @@ func WebTitleClean(title string, lang string) string {
 	if lang == "zh" {
 		titleClean := title
 		for _, split := range zhSplits {
-			end := strings.LastIndex(title, split)
+			end := strings.LastIndex(titleClean, split)
 			if end != -1 {
 				for {
 					titleClean = strings.TrimSpace(titleClean[:end])

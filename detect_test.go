@@ -3,7 +3,6 @@ package spider
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -13,7 +12,7 @@ import (
 
 func TestDomainDetect(t *testing.T) {
 	domains := []string{
-		"qq.com",
+		"game234.com",
 		// "suosi.com.cn",
 	}
 
@@ -33,13 +32,12 @@ func BenchmarkLinkTitles(b *testing.B) {
 	resp, _ := HttpGetResp(urlStr, nil, 30000)
 
 	// 解析 HTML
-	u, _ := url.Parse(urlStr)
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find(DefaultRemoveTags).Remove()
 
 	// 语言
 
-	langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
+	langRes := Lang(doc, resp.Charset.Charset)
 
 	fmt.Println(langRes)
 
@@ -90,7 +88,8 @@ func TestLinkTitles(t *testing.T) {
 		// "https://people.com/",
 		// "https://czql.gov.cn/",
 		// "https://qiye.163.com/",
-		"https://www.washingtontimes.com/",
+		// "https://www.washingtontimes.com/",
+		"https://www.gamersky.com/",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -101,12 +100,11 @@ func TestLinkTitles(t *testing.T) {
 		t.Log(err)
 
 		// 解析 HTML
-		u, _ := url.Parse(urlStr)
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 		doc.Find(DefaultRemoveTags).Remove()
 
 		// 语言
-		langRes := Lang(doc, resp.Charset.Charset, u.Hostname())
+		langRes := Lang(doc, resp.Charset.Charset)
 
 		fmt.Println(langRes)
 
@@ -209,13 +207,12 @@ func TestLangFromUtf8Body(t *testing.T) {
 
 	for _, urlStr := range urlStrs {
 		resp, _ := fun.HttpGetResp(urlStr, nil, 30000)
-		u, _ := url.Parse(urlStr)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 		doc.Find(DefaultRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
-		lang, pos := LangFromUtf8Body(doc, u.Hostname())
+		lang, pos := LangFromUtf8Body(doc)
 		t.Log(urlStr)
 		t.Log(lang)
 		t.Log(pos)
