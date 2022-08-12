@@ -88,9 +88,10 @@ var (
 
 const (
 	LangPosCharset = "charset"
-	LangPosHtml    = "html"
+	LangPosHtmlTag = "html"
 	LangPosBody    = "body"
 	LangPosLingua  = "lingua"
+	LangPosTd      = "td"
 	LangPosHost    = "host"
 	BodyChunkSize  = 2048
 )
@@ -108,7 +109,7 @@ type LangRes struct {
 	LangPos string
 }
 
-func Lang(doc *goquery.Document, charset string, content bool) LangRes {
+func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 	var res LangRes
 	var lang string
 
@@ -125,13 +126,23 @@ func Lang(doc *goquery.Document, charset string, content bool) LangRes {
 	lang = LangFromHtml(doc)
 	if lang != "" && lang != "en" {
 		res.Lang = lang
-		res.LangPos = LangPosHtml
+		res.LangPos = LangPosHtmlTag
 		return res
 	}
 
 	// 当 utf 编码时, lang 为空或 en 可信度比较低, 进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
-		bodyLang, pos := LangFromUtf8Body(doc, content)
+		// 列表模式, 优先判断TD是否是中文或日语
+
+		tdLang, pos := LangFromTd(doc, list)
+		if tdLang != "" {
+			res.Lang = tdLang
+			res.LangPos = pos
+			return res
+		}
+
+		// 最后根据内容进行语种判断
+		bodyLang, pos := LangFromUtf8Body(doc, list)
 		if bodyLang != "" {
 			res.Lang = bodyLang
 			res.LangPos = pos
@@ -172,13 +183,61 @@ func LangFromHtml(doc *goquery.Document) string {
 
 	return lang
 }
+func LangFromTd(doc *goquery.Document, list bool) (string, string) {
+	var lang string
+	var text string
 
-func LangFromUtf8Body(doc *goquery.Document, content bool) (string, string) {
+	// 列表模式
+	if list {
+		// 获取 TD
+		title := extract.WebTitle(doc, 0)
+		description := extract.WebDescription(doc, 0)
+		text = title + description
+
+		text = fun.RemoveSign(text)
+
+		text = strings.TrimSpace(text)
+
+		// 截取后的字符长度
+		textCount := utf8.RuneCountInString(text)
+
+		// 首先判断是否包含汉字, 中文和日语
+		hanRegex := regexp.MustCompile(`\p{Han}`)
+		han := hanRegex.FindAllString(text, -1)
+		if han != nil {
+			hanCount := len(han)
+			hanRate := float64(hanCount) / float64(textCount)
+
+			// 汉字比例
+			if hanRate >= 0.38 {
+				jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
+				ja := jaRegex.FindAllString(text, -1)
+				if ja != nil {
+					jaCount := len(ja)
+					jaRate := float64(jaCount) / float64(hanCount)
+
+					// 日语占比
+					if jaRate > 0.1 {
+						lang = "ja"
+						return lang, LangPosTd
+					}
+				}
+
+				lang = "zh"
+				return lang, LangPosTd
+			}
+		}
+	}
+
+	return lang, ""
+}
+
+func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	var lang string
 	var text string
 
 	// 抽取内容
-	text = textForLang(doc, content)
+	text = textForLang(doc, list)
 
 	textCount := utf8.RuneCountInString(text)
 	if textCount < 32 {
@@ -268,17 +327,11 @@ func LangFromUtf8Body(doc *goquery.Document, content bool) (string, string) {
 	return lang, ""
 }
 
-func textForLang(doc *goquery.Document, content bool) string {
+func textForLang(doc *goquery.Document, list bool) string {
 	var text string
 
-	// 内容页模式, 获取网页中最多 64 个 p 标签
-	if content {
-		pTag := doc.Find("p")
-		pTagSize := pTag.Size()
-		sliceMax := fun.Min(pTagSize, 64)
-		text = pTag.Slice(0, sliceMax).Text()
-	} else {
-		// 列表页模式
+	// 列表页模式
+	if list {
 		// 优先获取网页中最多 64 个 a 标签, 如果没有 a 标签或过少，则放弃
 		aTag := doc.Find("a")
 		aTagSize := aTag.Size()
@@ -291,14 +344,12 @@ func textForLang(doc *goquery.Document, content bool) string {
 				text = ""
 			}
 		}
-
-		// 获取 TDK
-		if text == "" || aTagSize < 16 {
-			title := extract.WebTitle(doc, 0)
-			description := extract.WebDescription(doc, 0)
-			keywords := extract.WebKeywords(doc)
-			text = title + description + keywords
-		}
+	} else {
+		// 内容页模式, 获取网页中最多 64 个 p 标签
+		pTag := doc.Find("p")
+		pTagSize := pTag.Size()
+		sliceMax := fun.Min(pTagSize, 64)
+		text = pTag.Slice(0, sliceMax).Text()
 	}
 
 	// 如果内容太少, 获取 body 文本

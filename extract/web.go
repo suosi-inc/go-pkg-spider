@@ -64,8 +64,8 @@ func WebTitleClean(title string, lang string) string {
 
 		return titleClean
 
-		// 其他, 查找英文分割标记, 如果找到, 从尾部删除一次返回
 	} else {
+		// 其他, 查找英文分割标记, 如果找到, 从尾部删除一次返回
 		for _, split := range enSplits {
 			end := strings.LastIndex(title, split)
 			if end != -1 {

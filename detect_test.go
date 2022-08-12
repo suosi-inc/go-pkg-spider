@@ -39,7 +39,7 @@ func BenchmarkLinkTitles(b *testing.B) {
 
 	// 语言
 
-	langRes := Lang(doc, resp.Charset.Charset, false)
+	langRes := Lang(doc, resp.Charset.Charset, true)
 
 	fmt.Println(langRes)
 
@@ -106,7 +106,7 @@ func TestLinkTitles(t *testing.T) {
 		doc.Find(DefaultDocRemoveTags).Remove()
 
 		// 语言
-		langRes := Lang(doc, resp.Charset.Charset, false)
+		langRes := Lang(doc, resp.Charset.Charset, true)
 
 		fmt.Println(resp.Charset)
 		fmt.Println(langRes)

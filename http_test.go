@@ -47,7 +47,7 @@ func TestHttpGetCharsetLang(t *testing.T) {
 		doc.Find(DefaultDocRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
-		lang := Lang(doc, resp.Charset.Charset, false)
+		lang := Lang(doc, resp.Charset.Charset, true)
 		t.Log(lang)
 
 		t.Log(fun.Timestamp(true) - start)
@@ -74,7 +74,7 @@ func TestHttpGetCharsetLangURL(t *testing.T) {
 		doc.Find(DefaultDocRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
-		lang := Lang(doc, resp.Charset.Charset, false)
+		lang := Lang(doc, resp.Charset.Charset, true)
 		t.Log(lang)
 
 		t.Log(fun.Timestamp(true) - start)
@@ -98,7 +98,7 @@ func TestHttpGet(t *testing.T) {
 
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find(DefaultDocRemoveTags).Remove()
-	lang := Lang(doc, resp.Charset.Charset, false)
+	lang := Lang(doc, resp.Charset.Charset, true)
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))
@@ -123,7 +123,7 @@ func TestHttpGetContentType(t *testing.T) {
 
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find(DefaultDocRemoveTags).Remove()
-	lang := Lang(doc, resp.Charset.Charset, false)
+	lang := Lang(doc, resp.Charset.Charset, true)
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))
@@ -150,7 +150,7 @@ func TestHttpGetContentLength(t *testing.T) {
 
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	doc.Find(DefaultDocRemoveTags).Remove()
-	lang := Lang(doc, resp.Charset.Charset, false)
+	lang := Lang(doc, resp.Charset.Charset, true)
 	t.Log(lang)
 
 	t.Log(fun.String(resp.Body))

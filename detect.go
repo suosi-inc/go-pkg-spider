@@ -127,7 +127,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 				}
 
 				// 语言
-				langRes := Lang(doc, resp.Charset.Charset, false)
+				langRes := Lang(doc, resp.Charset.Charset, true)
 				domainRes.Lang = langRes
 
 				// 尽可能的探测一些信息国家/省份/类别

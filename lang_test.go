@@ -94,7 +94,7 @@ func TestLang(t *testing.T) {
 
 		// 语言
 		start := fun.Timestamp(true)
-		langRes := Lang(doc, resp.Charset.Charset, false)
+		langRes := Lang(doc, resp.Charset.Charset, true)
 
 		t.Log(urlStr)
 		t.Log(resp.Charset)
