@@ -58,7 +58,10 @@ func WebTitleClean(title string, lang string) string {
 			}
 		}
 
-		titleClean = fun.RemoveSuffix(titleClean, "首页")
+		if titleClean != "首页" {
+			titleClean = fun.RemoveSuffix(titleClean, "首页")
+		}
+
 		return titleClean
 
 		// 其他, 查找英文分割标记, 如果找到, 从尾部删除一次返回
