@@ -186,8 +186,9 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	// 过滤掉站外链接
 	if strictDomain {
 		hostname := u.Hostname()
+		domainTop := DomainTop(hostname)
 		baseDomainTop := DomainTop(baseUrl.Hostname())
-		if hostname != baseDomainTop && !fun.HasSuffixCase(hostname, "."+baseDomainTop) {
+		if domainTop != baseDomainTop {
 			return urlStr, errors.New("invalid url with strict domain")
 		}
 	}

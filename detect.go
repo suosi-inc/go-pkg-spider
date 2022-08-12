@@ -91,7 +91,8 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			domainRes.HomeDomain = homeDomain
 			requestHostname := resp.RequestURL.Hostname()
 			if domainRes.HomeDomain != requestHostname {
-				if !fun.HasSuffixCase(requestHostname, "."+domain) {
+				requestTopDomain := extract.DomainTop(requestHostname)
+				if requestTopDomain != domain {
 					return domainRes, errors.New("ErrorRedirect:" + requestHostname)
 				}
 
