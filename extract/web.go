@@ -26,15 +26,15 @@ var (
 	enSplits = []string{" - ", " | "}
 )
 
-// WebTitle 返回网页标题, 最大 255 个字符
+// WebTitle 返回网页标题, 最大 128 个字符
 func WebTitle(doc *goquery.Document, maxLength int) string {
 	title := doc.Find("title").Text()
 	title = strings.TrimSpace(title)
 
-	if maxLength > 0 && maxLength < 255 {
+	if maxLength > 0 && maxLength < 128 {
 		return fun.SubString(title, 0, maxLength)
 	} else {
-		return fun.SubString(title, 0, 255)
+		return fun.SubString(title, 0, 128)
 	}
 }
 
@@ -82,11 +82,16 @@ func WebKeywords(doc *goquery.Document) string {
 	return keywords
 }
 
-// WebDescription 返回网页描述
-func WebDescription(doc *goquery.Document) string {
+// WebDescription 返回网页描述, 最大 384 个字符
+func WebDescription(doc *goquery.Document, maxLength int) string {
 	description := doc.Find("meta[name=description]").AttrOr("content", "")
 	description = strings.TrimSpace(description)
-	return description
+
+	if maxLength > 0 && maxLength < 384 {
+		return fun.SubString(description, 0, maxLength)
+	} else {
+		return fun.SubString(description, 0, 384)
+	}
 }
 
 // WebLinkTitles 返回网页链接和锚文本
