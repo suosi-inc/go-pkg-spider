@@ -78,13 +78,23 @@ func WebTitleClean(title string, lang string) string {
 // WebKeywords 返回网页 Keyword
 func WebKeywords(doc *goquery.Document) string {
 	keywords := doc.Find("meta[name=keywords]").AttrOr("content", "")
+	if keywords == "" {
+		keywords = doc.Find("meta[name=Keywords]").AttrOr("content", "")
+	}
+
 	keywords = strings.TrimSpace(keywords)
+
 	return keywords
 }
 
 // WebDescription 返回网页描述, 最大 384 个字符
 func WebDescription(doc *goquery.Document, maxLength int) string {
 	description := doc.Find("meta[name=description]").AttrOr("content", "")
+
+	if description == "" {
+		description = doc.Find("meta[name=Description]").AttrOr("content", "")
+	}
+
 	description = strings.TrimSpace(description)
 
 	if maxLength > 0 && maxLength < 384 {
