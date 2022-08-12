@@ -28,7 +28,6 @@ type DomainRes struct {
 	ContentCount int
 	ListCount    int
 	SubDomains   map[string]bool
-	ErrorPos     string
 }
 
 // DetectDomain 域名探测
