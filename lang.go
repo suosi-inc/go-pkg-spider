@@ -198,6 +198,9 @@ func LangFromUtf8Body(doc *goquery.Document, content bool) (string, string) {
 	text = fun.SubString(text, 0, BodyChunkSize)
 	text = strings.TrimSpace(text)
 
+	// 截取后的字符长度
+	textCount = utf8.RuneCountInString(text)
+
 	// 首先判断是否包含汉字, 中文和日语
 	hanRegex := regexp.MustCompile(`\p{Han}`)
 	han := hanRegex.FindAllString(text, -1)
