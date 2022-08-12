@@ -219,10 +219,9 @@ func LangFromTd(doc *goquery.Document, list bool) (string, string) {
 					ja := jaRegex.FindAllString(bodyText, -1)
 					if ja != nil {
 						jaCount := len(ja)
-						jaRate := float64(jaCount) / float64(hanCount)
 
-						// 日语占比
-						if jaRate > 0.1 {
+						// 日语出现次数
+						if jaCount > 5 {
 							lang = "ja"
 							return lang, LangPosTd
 						}
