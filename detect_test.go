@@ -12,7 +12,7 @@ import (
 
 func TestDomainDetect(t *testing.T) {
 	domains := []string{
-		"sina.cn",
+		"china-nengyuan.com",
 		// "suosi.com.cn",
 	}
 
@@ -34,11 +34,11 @@ func BenchmarkLinkTitles(b *testing.B) {
 
 	// 解析 HTML
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-	doc.Find(DefaultRemoveTags).Remove()
+	doc.Find(DefaultDocRemoveTags).Remove()
 
 	// 语言
 
-	langRes := Lang(doc, resp.Charset.Charset)
+	langRes := Lang(doc, resp.Charset.Charset, false)
 
 	fmt.Println(langRes)
 
@@ -102,10 +102,10 @@ func TestLinkTitles(t *testing.T) {
 
 		// 解析 HTML
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find(DefaultRemoveTags).Remove()
+		doc.Find(DefaultDocRemoveTags).Remove()
 
 		// 语言
-		langRes := Lang(doc, resp.Charset.Charset)
+		langRes := Lang(doc, resp.Charset.Charset, false)
 
 		fmt.Println(resp.Charset)
 		fmt.Println(langRes)
@@ -183,7 +183,7 @@ func TestDetectIcp(t *testing.T) {
 		t.Log(urlStr)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find(DefaultRemoveTags).Remove()
+		doc.Find(DefaultDocRemoveTags).Remove()
 		icp, loc := extract.Icp(doc)
 		t.Log(icp, loc)
 	}
@@ -211,10 +211,10 @@ func TestLangFromUtf8Body(t *testing.T) {
 		resp, _ := fun.HttpGetResp(urlStr, nil, 30000)
 
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find(DefaultRemoveTags).Remove()
+		doc.Find(DefaultDocRemoveTags).Remove()
 
 		start := fun.Timestamp(true)
-		lang, pos := LangFromUtf8Body(doc)
+		lang, pos := LangFromUtf8Body(doc, false)
 		t.Log(urlStr)
 		t.Log(lang)
 		t.Log(pos)

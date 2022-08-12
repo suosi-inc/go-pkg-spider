@@ -7,6 +7,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/pemistahl/lingua-go"
+	"github.com/suosi-inc/go-pkg-spider/extract"
 	"github.com/x-funs/go-fun"
 )
 
@@ -94,12 +95,20 @@ const (
 	BodyChunkSize  = 2048
 )
 
+const (
+	RegexLangHtml = "^(?i)([a-z]{2}|[a-z]{2}\\-[a-z]+)$"
+)
+
+var (
+	regexLangHtmlPattern = regexp.MustCompile(RegexLangHtml)
+)
+
 type LangRes struct {
 	Lang    string
 	LangPos string
 }
 
-func Lang(doc *goquery.Document, charset string) LangRes {
+func Lang(doc *goquery.Document, charset string, content bool) LangRes {
 	var res LangRes
 	var lang string
 
@@ -122,7 +131,7 @@ func Lang(doc *goquery.Document, charset string) LangRes {
 
 	// 当 utf 编码时, lang 为空或 en 可信度比较低, 进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
-		bodyLang, pos := LangFromUtf8Body(doc)
+		bodyLang, pos := LangFromUtf8Body(doc, content)
 		if bodyLang != "" {
 			res.Lang = bodyLang
 			res.LangPos = pos
@@ -137,48 +146,57 @@ func LangFromHtml(doc *goquery.Document) string {
 
 	// html lang
 	if lang, exists := doc.Find("html").Attr("lang"); exists {
-		lang = fun.SubString(lang, 0, 2)
-		return lang
+		lang = strings.TrimSpace(lang)
+		if regexLangHtmlPattern.MatchString(lang) {
+			lang = fun.SubString(lang, 0, 2)
+			return lang
+		}
 	}
 	if lang, exists := doc.Find("html").Attr("xml:lang"); exists {
-		lang = fun.SubString(lang, 0, 2)
-		return lang
+		lang = strings.TrimSpace(lang)
+		if regexLangHtmlPattern.MatchString(lang) {
+			lang = fun.SubString(lang, 0, 2)
+			return lang
+		}
+
 	}
 	for _, selector := range metaLangSelectors {
 		if lang, exists := doc.Find(selector).Attr("content"); exists {
-			lang = fun.SubString(lang, 0, 2)
-			return lang
+			lang = strings.TrimSpace(lang)
+			if regexLangHtmlPattern.MatchString(lang) {
+				lang = fun.SubString(lang, 0, 2)
+				return lang
+			}
 		}
 	}
 
 	return lang
 }
 
-func LangFromUtf8Body(doc *goquery.Document) (string, string) {
+func LangFromUtf8Body(doc *goquery.Document, content bool) (string, string) {
 	var lang string
 	var text string
 
-	// 获取网页中最多 64 个 a 标签, 如果没有 a 标签或过少, 则获取 body
-	aTag := doc.Find("a")
-	aTagSize := aTag.Size()
-	if aTagSize >= 16 {
-		sliceMax := fun.Min(aTagSize, 64)
-		text = aTag.Slice(0, sliceMax).Text()
-	} else {
-		text = doc.Find("body").Text()
+	// 抽取内容
+	text = textForLang(doc, content)
+
+	textCount := utf8.RuneCountInString(text)
+	if textCount < 32 {
+		return "", ""
 	}
 
-	// 去除换行、符号(为了保留语义只替换多余的空格)
+	// 去除换行(为了保留语义只替换多余的空格)
 	text = fun.RemoveLines(text)
 	text = strings.ReplaceAll(text, fun.TAB, "")
 	text = strings.ReplaceAll(text, "  ", "")
 
+	// 去除符号
 	m := regexp.MustCompile(`[\pP\pS]`)
 	text = m.ReplaceAllString(text, "")
 
 	// 最大截取 BodyChunkSize 个字符
 	text = fun.SubString(text, 0, BodyChunkSize)
-	textCount := utf8.RuneCountInString(text)
+	text = strings.TrimSpace(text)
 
 	// 首先判断是否包含汉字, 中文和日语
 	hanRegex := regexp.MustCompile(`\p{Han}`)
@@ -245,6 +263,48 @@ func LangFromUtf8Body(doc *goquery.Document) (string, string) {
 	}
 
 	return lang, ""
+}
+
+func textForLang(doc *goquery.Document, content bool) string {
+	var text string
+
+	// 内容页模式, 获取网页中最多 64 个 p 标签
+	if content {
+		pTag := doc.Find("p")
+		pTagSize := pTag.Size()
+		sliceMax := fun.Min(pTagSize, 64)
+		text = pTag.Slice(0, sliceMax).Text()
+	} else {
+		// 列表页模式
+		// 优先获取网页中最多 64 个 a 标签, 如果没有 a 标签或过少，则放弃
+		aTag := doc.Find("a")
+		aTagSize := aTag.Size()
+		if aTagSize >= 16 {
+			sliceMax := fun.Min(aTagSize, 64)
+			text = aTag.Slice(0, sliceMax).Text()
+
+			// 如果 a 标签中包含过多的 {} 可能是动态渲染, 放弃
+			if strings.Count(text, "{") >= 5 && strings.Count(text, "}") >= 5 {
+				text = ""
+			}
+		}
+
+		// 获取 TDK
+		if text == "" || aTagSize < 16 {
+			title := extract.WebTitle(doc, 0)
+			description := extract.WebDescription(doc, 0)
+			keywords := extract.WebKeywords(doc)
+			text = title + description + keywords
+		}
+	}
+
+	// 如果内容太少, 获取 body 文本
+	textCount := utf8.RuneCountInString(text)
+	if textCount < 32 {
+		text = doc.Find("body").Text()
+	}
+
+	return text
 }
 
 func LangFromHost(host string) string {

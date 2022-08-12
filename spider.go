@@ -1,5 +1,5 @@
 package spider
 
 var (
-	DefaultRemoveTags = "noscript,style,iframe,br,link,svg"
+	DefaultDocRemoveTags = "noscript,style,iframe,br,link,svg"
 )

@@ -10,6 +10,10 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
+const (
+	DetectDomainRemoveTags = "script,noscript,style,iframe,link,svg"
+)
+
 type DomainRes struct {
 	Domain       string
 	HomeDomain   string
@@ -112,11 +116,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			u, _ := url.Parse(urlStr)
 			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 			if docErr == nil {
-				doc.Find(DefaultRemoveTags).Remove()
-
-				// 语言
-				langRes := Lang(doc, resp.Charset.Charset)
-				domainRes.Lang = langRes
+				doc.Find(DefaultDocRemoveTags).Remove()
 
 				// 中国 ICP 解析
 				icp, province := extract.Icp(doc)
@@ -125,6 +125,10 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 					domainRes.Icp = icp
 					domainRes.Province = extract.ProvinceShortMap[province]
 				}
+
+				// 语言
+				langRes := Lang(doc, resp.Charset.Charset, false)
+				domainRes.Lang = langRes
 
 				// 尽可能的探测一些信息国家/省份/类别
 				if domainRes.Country == "" {

@@ -18,7 +18,7 @@ func BenchmarkHtmlParse(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		doc.Find(DefaultRemoveTags).Remove()
+		doc.Find(DefaultDocRemoveTags).Remove()
 	}
 }
 
@@ -70,4 +70,11 @@ func TestUrlParse(t *testing.T) {
 		t.Log(urlStr + "	+ " + link + " => " + absolute.String())
 	}
 
+}
+
+func TestCount(t *testing.T) {
+	fmt.Println(regexLangHtmlPattern.MatchString("zh"))
+	fmt.Println(regexLangHtmlPattern.MatchString("en"))
+	fmt.Println(regexLangHtmlPattern.MatchString("zh-cn"))
+	fmt.Println(regexLangHtmlPattern.MatchString("utf-8"))
 }
