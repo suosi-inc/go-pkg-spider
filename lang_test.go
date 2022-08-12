@@ -96,6 +96,7 @@ func TestLang(t *testing.T) {
 		langRes := Lang(doc, resp.Charset.Charset)
 
 		t.Log(urlStr)
+		t.Log(resp.Charset)
 		t.Log(langRes)
 		t.Log(fun.Timestamp(true) - start)
 	}
