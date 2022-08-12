@@ -12,7 +12,7 @@ import (
 
 func TestDomainDetect(t *testing.T) {
 	domains := []string{
-		"sohu.com",
+		"iqiyi.com",
 		// "suosi.com.cn",
 	}
 

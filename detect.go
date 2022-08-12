@@ -61,7 +61,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 	req := &HttpReq{
 		HttpReq: &fun.HttpReq{
 			MaxContentLength: 2 * 1024 * 1024,
-			MaxRedirect:      1,
+			MaxRedirect:      2,
 		},
 		ForceTextContentType: true,
 	}
@@ -87,19 +87,26 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 
 		if resp.Success && err == nil {
 			domainRes.Domain = domain
+
+			// 如果发生了跳转, 则重新设置 homeDomain, 前提是还是同一个主域名
 			domainRes.HomeDomain = homeDomain
-			domainRes.Charset = resp.Charset
-			domainRes.Scheme = scheme
+			requestHostname := resp.RequestURL.Hostname()
+			if domainRes.HomeDomain != requestHostname {
+				if !fun.HasSuffixCase(requestHostname, "."+domain) {
+					return domainRes, errors.New("ErrorJumpDomain")
+				}
+
+				domainRes.HomeDomain = requestHostname
+			}
 
 			// 如果发生了协议跳转, 则重新设置 scheme
+			domainRes.Scheme = scheme
 			if domainRes.Scheme != resp.RequestURL.Scheme {
 				domainRes.Scheme = resp.RequestURL.Scheme
 			}
 
-			// 如果发生了跳转, 则重新设置 homeDomain
-			if domainRes.HomeDomain != resp.RequestURL.Hostname() {
-				domainRes.HomeDomain = resp.RequestURL.Hostname()
-			}
+			// 字符集
+			domainRes.Charset = resp.Charset
 
 			// 解析 HTML
 			u, _ := url.Parse(urlStr)
@@ -127,13 +134,15 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 					domainRes.Category = category
 				}
 
-				// 标题
+				// 标题摘要
 				domainRes.Title = extract.WebTitle(doc, 0)
 				domainRes.TitleClean = extract.WebTitleClean(domainRes.Title, langRes.Lang)
 				domainRes.Description = extract.WebDescription(doc, 0)
 
+				// 站内链接
 				linkTitles, _ := extract.WebLinkTitles(doc, resp.RequestURL, true)
 
+				// 链接分类
 				links, subDomains := extract.LinkTypes(linkTitles, langRes.Lang, nil)
 
 				domainRes.ContentCount = len(links.Content)
