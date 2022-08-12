@@ -201,8 +201,8 @@ func LangFromTd(doc *goquery.Document, list bool) (string, string) {
 		// 截取后的字符长度
 		textCount := utf8.RuneCountInString(text)
 
-		if textCount >= 8 {
-			// 首先判断是否包含汉字, 中文和日语
+		if textCount >= 2 {
+			// 首先判断是否包含汉字
 			hanRegex := regexp.MustCompile(`\p{Han}`)
 			han := hanRegex.FindAllString(text, -1)
 			if han != nil {
@@ -211,8 +211,12 @@ func LangFromTd(doc *goquery.Document, list bool) (string, string) {
 
 				// 汉字比例
 				if hanRate >= 0.38 {
+
+					// 抽取内容验证是否有日语
+					bodyText := bodyTextForLang(doc, list)
+
 					jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
-					ja := jaRegex.FindAllString(text, -1)
+					ja := jaRegex.FindAllString(bodyText, -1)
 					if ja != nil {
 						jaCount := len(ja)
 						jaRate := float64(jaCount) / float64(hanCount)
@@ -353,12 +357,12 @@ func bodyTextForLang(doc *goquery.Document, list bool) string {
 		pTagSize := pTag.Size()
 		sliceMax := fun.Min(pTagSize, 64)
 		text = pTag.Slice(0, sliceMax).Text()
-	}
 
-	// 如果内容太少, 获取全部 body 文本
-	textCount := utf8.RuneCountInString(text)
-	if textCount < 64 {
-		text = doc.Find("body").Text()
+		// 如果内容太少, 获取全部 body 文本
+		textCount := utf8.RuneCountInString(text)
+		if textCount < 64 {
+			text = doc.Find("body").Text()
+		}
 	}
 
 	return text
