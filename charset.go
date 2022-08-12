@@ -106,21 +106,22 @@ func CharsetFromHtml(h []byte) string {
 		// 检测 HTML 标签
 		html := fun.String(h)
 
-		// 优先判断 HTML5 标签
-		matches := regexCharsetHtml5Pattern.FindStringSubmatch(html)
+		// 优先判断 HTML4 标签
+		matches := regexCharsetHtml4Pattern.FindStringSubmatch(html)
 		if len(matches) > 1 {
-			charset = matches[1]
+			matches = regexCharsetPattern.FindStringSubmatch(matches[1])
+			if len(matches) > 1 {
+				charset = matches[1]
+			}
 		}
 
 		// HTML4 标签
 		if charset == "" {
-			matches = regexCharsetHtml4Pattern.FindStringSubmatch(html)
+			matches = regexCharsetHtml5Pattern.FindStringSubmatch(html)
 			if len(matches) > 1 {
-				matches = regexCharsetPattern.FindStringSubmatch(matches[1])
-				if len(matches) > 1 {
-					charset = matches[1]
-				}
+				charset = matches[1]
 			}
+
 		}
 	}
 

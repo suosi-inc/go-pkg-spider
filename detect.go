@@ -11,35 +11,43 @@ import (
 )
 
 type DomainRes struct {
-	Domain     string
-	HomeDomain string
-	Scheme     string
-	Charset    CharsetRes
-	Lang       LangRes
-	Country    string
-	Province   string
-	Category   string
-	Title      string
-	TitleClean string
-	Icp        string
-	State      int
-	HttpCode   int
-	Articles   int
-	SubDomains map[string]bool
-	ErrorPos   string
+	Domain       string
+	HomeDomain   string
+	Scheme       string
+	Charset      CharsetRes
+	Lang         LangRes
+	Country      string
+	Province     string
+	Category     string
+	Title        string
+	TitleClean   string
+	Icp          string
+	State        bool
+	StatusCode   int
+	ContentCount int
+	ListCount    int
+	SubDomains   map[string]bool
+	ErrorPos     string
 }
 
+// DetectDomain 域名探测
+// DomainRes.State true 和 err nil 表示探测成功
+// DomainRes.State true 可能会返回 err, 如 doc 解析失败
+// DomainRes.State false 时根据 StatusCode 判断是请求是否成功或请求成功但响应失败(如404)
 func DetectDomain(domain string, timeout int, retry int) (*DomainRes, error) {
 	if retry == 0 {
 		retry = 1
 	}
+
 	for i := 0; i < retry; i++ {
 		domainRes, err := DetectDomainDo(domain, timeout)
-		if err == nil {
-			return domainRes, nil
+		if domainRes.StatusCode != 0 || err == nil {
+			return domainRes, err
 		}
 	}
-	return nil, errors.New("ErrorDomainDetect")
+
+	domainRes := &DomainRes{}
+	return domainRes, errors.New("ErrorDomainDetect")
 }
 
 func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
@@ -73,11 +81,12 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 		}
 
 		resp, err := HttpGetResp(urlStr, req, timeout)
+
+		domainRes.StatusCode = resp.StatusCode
+
 		if resp.Success && err == nil {
 			domainRes.Domain = domain
 			domainRes.HomeDomain = homeDomain
-			domainRes.State = 1
-			domainRes.HttpCode = resp.StatusCode
 			domainRes.Charset = resp.Charset
 			domainRes.Scheme = scheme
 
@@ -125,8 +134,11 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 
 				links, subDomains := extract.LinkTypes(linkTitles, langRes.Lang, nil)
 
-				domainRes.Articles = len(links.Content)
+				domainRes.ContentCount = len(links.Content)
+				domainRes.ListCount = len(links.List)
 				domainRes.SubDomains = subDomains
+
+				domainRes.State = true
 
 				return domainRes, nil
 			} else {
