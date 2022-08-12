@@ -57,21 +57,21 @@ func BenchmarkLinguaTest(b *testing.B) {
 func TestLang(t *testing.T) {
 
 	var urlStrs = []string{
-		// "https://www.163.com/news/article/HEJGEVFT000189FH.html",
-		// "https://www.163.com",
+		//"https://www.163.com/news/article/HEJGEVFT000189FH.html",
+		//"https://www.163.com",
 		//
-		// "https://english.news.cn",
-		// "https://jp.news.cn",
-		// "https://kr.news.cn",
-		// "https://german.news.cn/",
-		// "https://portuguese.news.cn/",
-		// "https://arabic.news.cn",
-		// "https://french.news.cn",
+		//"https://english.news.cn",
+		//"https://jp.news.cn",
+		//"https://kr.news.cn",
+		//"https://german.news.cn/",
+		//"https://portuguese.news.cn/",
+		//"https://arabic.news.cn",
+		//"https://french.news.cn",
 		//
-		"https://mn.cctv.com/",
-
-		"https://www.bbc.com",
-		"https://www.ft.com/",
+		//"https://mn.cctv.com/",
+		//
+		//"https://www.bbc.com",
+		//"https://www.ft.com/",
 
 		"http://government.ru",
 

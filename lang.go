@@ -201,30 +201,32 @@ func LangFromTd(doc *goquery.Document, list bool) (string, string) {
 		// 截取后的字符长度
 		textCount := utf8.RuneCountInString(text)
 
-		// 首先判断是否包含汉字, 中文和日语
-		hanRegex := regexp.MustCompile(`\p{Han}`)
-		han := hanRegex.FindAllString(text, -1)
-		if han != nil {
-			hanCount := len(han)
-			hanRate := float64(hanCount) / float64(textCount)
+		if textCount >= 8 {
+			// 首先判断是否包含汉字, 中文和日语
+			hanRegex := regexp.MustCompile(`\p{Han}`)
+			han := hanRegex.FindAllString(text, -1)
+			if han != nil {
+				hanCount := len(han)
+				hanRate := float64(hanCount) / float64(textCount)
 
-			// 汉字比例
-			if hanRate >= 0.38 {
-				jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
-				ja := jaRegex.FindAllString(text, -1)
-				if ja != nil {
-					jaCount := len(ja)
-					jaRate := float64(jaCount) / float64(hanCount)
+				// 汉字比例
+				if hanRate >= 0.38 {
+					jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
+					ja := jaRegex.FindAllString(text, -1)
+					if ja != nil {
+						jaCount := len(ja)
+						jaRate := float64(jaCount) / float64(hanCount)
 
-					// 日语占比
-					if jaRate > 0.1 {
-						lang = "ja"
-						return lang, LangPosTd
+						// 日语占比
+						if jaRate > 0.1 {
+							lang = "ja"
+							return lang, LangPosTd
+						}
 					}
-				}
 
-				lang = "zh"
-				return lang, LangPosTd
+					lang = "zh"
+					return lang, LangPosTd
+				}
 			}
 		}
 	}
@@ -237,10 +239,11 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	var text string
 
 	// 抽取内容
-	text = textForLang(doc, list)
+	text = bodyTextForLang(doc, list)
 
+	// 内容太少, 直接返回
 	textCount := utf8.RuneCountInString(text)
-	if textCount < 32 {
+	if textCount < 64 {
 		return "", ""
 	}
 
@@ -327,12 +330,12 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	return lang, ""
 }
 
-func textForLang(doc *goquery.Document, list bool) string {
+func bodyTextForLang(doc *goquery.Document, list bool) string {
 	var text string
 
 	// 列表页模式
 	if list {
-		// 优先获取网页中最多 64 个 a 标签, 如果没有 a 标签或过少，则放弃
+		// 优先获取网页中最多 64 个 a 标签, 如果没有 a 标签或过少，放弃
 		aTag := doc.Find("a")
 		aTagSize := aTag.Size()
 		if aTagSize >= 16 {
@@ -352,9 +355,9 @@ func textForLang(doc *goquery.Document, list bool) string {
 		text = pTag.Slice(0, sliceMax).Text()
 	}
 
-	// 如果内容太少, 获取 body 文本
+	// 如果内容太少, 获取全部 body 文本
 	textCount := utf8.RuneCountInString(text)
-	if textCount < 32 {
+	if textCount < 64 {
 		text = doc.Find("body").Text()
 	}
 
