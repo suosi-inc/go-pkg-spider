@@ -201,7 +201,7 @@ func LangFromTd(doc *goquery.Document, list bool) (string, string) {
 		// 截取后的字符长度
 		textCount := utf8.RuneCountInString(text)
 
-		if textCount >= 8 {
+		if textCount >= 2 {
 			// 首先判断是否包含汉字, 中文和日语
 			hanRegex := regexp.MustCompile(`\p{Han}`)
 			han := hanRegex.FindAllString(text, -1)
