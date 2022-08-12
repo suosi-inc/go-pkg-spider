@@ -60,25 +60,25 @@ func TestLang(t *testing.T) {
 		//"https://www.163.com/news/article/HEJGEVFT000189FH.html",
 		//"https://www.163.com",
 		//
-		//"https://english.news.cn",
-		//"https://jp.news.cn",
-		//"https://kr.news.cn",
-		//"https://german.news.cn/",
-		//"https://portuguese.news.cn/",
-		//"https://arabic.news.cn",
-		//"https://french.news.cn",
+		"https://english.news.cn",
+		"https://jp.news.cn",
+		"https://kr.news.cn",
+		"https://german.news.cn/",
+		"https://portuguese.news.cn/",
+		"https://arabic.news.cn",
+		"https://french.news.cn",
 		//
 		//"https://mn.cctv.com/",
 		//
 		//"https://www.bbc.com",
 		//"https://www.ft.com/",
-
-		"http://government.ru",
-
-		"https://www.gouvernement.fr",
-
-		"http://live.siammedia.org/",
-		"https://www.manchestereveningnews.co.uk/",
+		//
+		//"http://government.ru",
+		//
+		//"https://www.gouvernement.fr",
+		//
+		//"http://live.siammedia.org/",
+		//"https://www.manchestereveningnews.co.uk/",
 
 		"https://www.chinadaily.com.cn",
 		"http://cn.chinadaily.com.cn/",
