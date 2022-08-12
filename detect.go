@@ -60,7 +60,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 
 	req := &HttpReq{
 		HttpReq: &fun.HttpReq{
-			MaxContentLength: 2 * 1024 * 1024,
+			MaxContentLength: 4 * 1024 * 1024,
 			MaxRedirect:      2,
 		},
 		ForceTextContentType: true,

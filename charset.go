@@ -60,7 +60,9 @@ func CharsetFromHeaderHtml(h []byte, headers *http.Header) CharsetRes {
 	var c string
 
 	c = CharsetFromHeader(headers)
-	if c != "" {
+
+	// 某些网站为了同时支持 UTF-8 和 GBK 编码, 神奇的设置响应头为 ISO-88509
+	if c != "" && !fun.HasPrefixCase(c, "ISO-88509") {
 		res.Charset = c
 		res.CharsetPos = CharsetPosHeader
 		return res
