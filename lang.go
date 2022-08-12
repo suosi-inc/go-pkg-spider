@@ -53,8 +53,8 @@ var (
 	}
 
 	metaLangSelectors = []string{
-		"meta[http-equiv=content-language]",
-		"meta[name=lang]",
+		"meta[http-equiv='content-language' i]",
+		"meta[name='lang' i]",
 	}
 
 	linguaLanguages = []lingua.Language{

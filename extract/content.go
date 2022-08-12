@@ -6,9 +6,9 @@ import (
 
 var (
 	metaTitleSelectors = []string{
-		"meta[property=og:title]",
-		"meta[property=twitter:title]",
-		"meta[name=twitter:title]",
+		"meta[property='og:title' i]",
+		"meta[property='twitter:title' i]",
+		"meta[name='twitter:title' i]",
 	}
 )
 
