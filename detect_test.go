@@ -14,7 +14,7 @@ func TestDomainDetect(t *testing.T) {
 	domains := []string{
 		// "china-nengyuan.com",
 		// "suosi.com.cn",
-		"srzc.com",
+		"chinadaily.com.cn",
 	}
 
 	for _, domain := range domains {

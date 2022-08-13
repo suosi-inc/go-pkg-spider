@@ -100,7 +100,6 @@ const (
 	LangPosBody    = "body"
 	LangPosLingua  = "lingua"
 	LangPosTd      = "td"
-	LangPosHost    = "host"
 	BodyChunkSize  = 2048
 )
 
@@ -375,31 +374,4 @@ func bodyTextForLang(doc *goquery.Document, list bool) string {
 	}
 
 	return text
-}
-
-func LangFromHost(host string) string {
-	var lang string
-
-	host = strings.ToLower(host)
-	if strings.HasSuffix(host, ".fr") {
-		lang = "fr"
-	} else if strings.HasSuffix(host, ".de") {
-		lang = "de"
-	} else if strings.HasSuffix(host, ".es") {
-		lang = "es"
-	} else if strings.HasSuffix(host, ".ar") {
-		lang = "es"
-	} else if strings.HasSuffix(host, ".pt") {
-		lang = "pt"
-	} else if strings.HasSuffix(host, ".br") {
-		lang = "pt"
-	} else if strings.HasSuffix(host, ".ru") {
-		lang = "ru"
-	} else if strings.HasSuffix(host, ".pl") {
-		lang = "pt"
-	} else if strings.HasSuffix(host, ".in") {
-		lang = "hi"
-	}
-
-	return lang
 }
