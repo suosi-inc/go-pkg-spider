@@ -37,6 +37,10 @@ var (
 		"fr": "法语",
 		"es": "西班牙语",
 		"pt": "葡萄牙语",
+		"it": "意大利语",
+		"th": "泰语",
+		"vi": "越南语",
+		"my": "缅甸语",
 	}
 
 	LangZhEnMap = map[string]string{
@@ -51,6 +55,10 @@ var (
 		"法语":   "fr",
 		"西班牙语": "es",
 		"葡萄牙语": "pt",
+		"意大利语": "it",
+		"泰语":   "th",
+		"越南语":  "vi",
+		"缅甸语":  "my",
 	}
 
 	metaLangSelectors = []string{
@@ -109,6 +117,8 @@ type LangRes struct {
 	LangPos string
 }
 
+// Lang 探测语种
+//
 func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 	var res LangRes
 	var lang string

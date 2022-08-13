@@ -90,7 +90,7 @@ func TestLang(t *testing.T) {
 		//"https://xdkb.net/",
 		//"https://www.lifeweek.com.cn/",
 		//"http://gxbsrd.gov.cn/",
-		"https://ccfbits.org/",
+		"https://defence24.com/",
 	}
 
 	for _, urlStr := range urlStrs {
