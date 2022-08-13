@@ -122,6 +122,14 @@ func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 		}
 	}
 
+	// 优先判断Title是否包含中文, 辅助内容排除是否是日语
+	titleLang, pos := LangFromTitle(doc, list)
+	if titleLang != "" {
+		res.Lang = titleLang
+		res.LangPos = pos
+		return res
+	}
+
 	// 解析 Html 语言属性, 当不为空不为 en 时可信度比较高, 直接返回
 	lang = LangFromHtml(doc)
 	if lang != "" && lang != "en" {
@@ -132,15 +140,6 @@ func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 
 	// 当 utf 编码时, lang 为空或 en 可信度比较低, 进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
-		// 列表模式, 优先判断Title是否是中文, 辅助内容验证是否日语
-		tdLang, pos := LangFromTitle(doc, list)
-		if tdLang != "" {
-			res.Lang = tdLang
-			res.LangPos = pos
-			return res
-		}
-
-		// 标题不包含中文, 根据内容进行语种判断
 		bodyLang, pos := LangFromUtf8Body(doc, list)
 		if bodyLang != "" {
 			res.Lang = bodyLang
