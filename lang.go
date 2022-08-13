@@ -132,16 +132,15 @@ func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 
 	// 当 utf 编码时, lang 为空或 en 可信度比较低, 进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
-		// 列表模式, 优先判断TD是否是中文或日语
-
-		tdLang, pos := LangFromTd(doc, list)
+		// 列表模式, 优先判断Title是否是中文, 辅助内容验证是否日语
+		tdLang, pos := LangFromTitle(doc, list)
 		if tdLang != "" {
 			res.Lang = tdLang
 			res.LangPos = pos
 			return res
 		}
 
-		// 最后根据内容进行语种判断
+		// 标题不包含中文, 根据内容进行语种判断
 		bodyLang, pos := LangFromUtf8Body(doc, list)
 		if bodyLang != "" {
 			res.Lang = bodyLang
@@ -183,7 +182,7 @@ func LangFromHtml(doc *goquery.Document) string {
 
 	return lang
 }
-func LangFromTd(doc *goquery.Document, list bool) (string, string) {
+func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 	var lang string
 	var text string
 
@@ -191,11 +190,7 @@ func LangFromTd(doc *goquery.Document, list bool) (string, string) {
 	if list {
 		// 获取 TD
 		title := extract.WebTitle(doc, 0)
-		description := extract.WebDescription(doc, 0)
-		text = title + description
-
-		text = fun.RemoveSign(text)
-
+		text = fun.RemoveSign(title)
 		text = strings.TrimSpace(text)
 
 		// 截取后的字符长度
@@ -212,16 +207,32 @@ func LangFromTd(doc *goquery.Document, list bool) (string, string) {
 				// 汉字比例
 				if hanRate >= 0.38 {
 
-					// 抽取内容验证是否有日语
+					// 需要抽取内容验证是否是日语, 如(日本語_新華網)
 					bodyText := bodyTextForLang(doc, list)
+
+					// 去除换行(为了保留语义只替换多余的空格)
+					bodyText = fun.RemoveLines(bodyText)
+					bodyText = strings.ReplaceAll(bodyText, fun.TAB, "")
+					bodyText = strings.ReplaceAll(bodyText, "  ", "")
+
+					// 去除符号
+					m := regexp.MustCompile(`[\pP\pS]`)
+					bodyText = m.ReplaceAllString(bodyText, "")
+
+					// 最大截取 BodyChunkSize 个字符
+					bodyText = fun.SubString(bodyText, 0, BodyChunkSize)
+					bodyText = strings.TrimSpace(bodyText)
+
+					bodyTextCount := utf8.RuneCountInString(bodyText)
 
 					jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
 					ja := jaRegex.FindAllString(bodyText, -1)
 					if ja != nil {
 						jaCount := len(ja)
+						jaRate := float64(jaCount) / float64(bodyTextCount)
 
 						// 日语出现次数
-						if jaCount > 5 {
+						if jaRate > 0.1 {
 							lang = "ja"
 							return lang, LangPosTd
 						}
@@ -244,12 +255,6 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	// 抽取内容
 	text = bodyTextForLang(doc, list)
 
-	// 内容太少, 直接返回
-	textCount := utf8.RuneCountInString(text)
-	if textCount < 64 {
-		return "", ""
-	}
-
 	// 去除换行(为了保留语义只替换多余的空格)
 	text = fun.RemoveLines(text)
 	text = strings.ReplaceAll(text, fun.TAB, "")
@@ -264,7 +269,7 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	text = strings.TrimSpace(text)
 
 	// 截取后的字符长度
-	textCount = utf8.RuneCountInString(text)
+	textCount := utf8.RuneCountInString(text)
 
 	// 首先判断是否包含汉字, 中文和日语
 	hanRegex := regexp.MustCompile(`\p{Han}`)
