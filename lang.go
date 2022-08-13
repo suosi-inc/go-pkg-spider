@@ -192,19 +192,15 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 		text = fun.RemoveSign(title)
 		text = strings.TrimSpace(text)
 
-		// 截取后的字符长度
-		textCount := utf8.RuneCountInString(text)
-
-		if textCount >= 2 {
+		if text != "" {
 			// 首先判断是否包含汉字
 			hanRegex := regexp.MustCompile(`\p{Han}`)
 			han := hanRegex.FindAllString(text, -1)
 			if han != nil {
 				hanCount := len(han)
-				hanRate := float64(hanCount) / float64(textCount)
 
-				// 汉字比例
-				if hanRate >= 0.38 {
+				// 汉字数量 >=2
+				if hanCount >= 2 {
 
 					// 需要抽取内容验证是否是日语, 如(日本語_新華網)
 					bodyText := bodyTextForLang(doc, list)
