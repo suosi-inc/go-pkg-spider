@@ -57,21 +57,38 @@ func Charset(body []byte, headers *http.Header) CharsetRes {
 // CharsetFromHeaderHtml 解析 HTTP body、http.Header 中的 charset, 准确性高
 func CharsetFromHeaderHtml(h []byte, headers *http.Header) CharsetRes {
 	var res CharsetRes
-	var c string
 
-	c = CharsetFromHeader(headers)
+	cHeader := CharsetFromHeader(headers)
 
-	// 某些网站为了同时支持 UTF-8 和 GBK 编码, 神奇的设置响应头为 ISO-88509
-	if c != "" && !fun.HasPrefixCase(c, "ISO-88509") {
-		res.Charset = c
+	cHtml := CharsetFromHtml(h)
+
+	if cHeader != "" && cHtml == "" {
+		res.Charset = cHeader
 		res.CharsetPos = CharsetPosHeader
 		return res
 	}
 
-	c = CharsetFromHtml(h)
-	if c != "" {
-		res.Charset = c
+	if cHeader == "" && cHtml != "" {
+		res.Charset = cHtml
 		res.CharsetPos = CharsetPosHtml
+		return res
+	}
+
+	if cHeader != "" && cHtml != "" {
+		if strings.HasPrefix(cHeader, "UTF") && strings.HasPrefix(cHeader, "GB") {
+			res.Charset = cHeader
+			res.CharsetPos = CharsetPosHeader
+			return res
+		}
+
+		if strings.HasPrefix(cHeader, "ISO") || strings.HasPrefix(cHeader, "WINDOWS") {
+			res.Charset = cHtml
+			res.CharsetPos = CharsetPosHtml
+			return res
+		}
+
+		res.Charset = cHeader
+		res.CharsetPos = CharsetPosHeader
 		return res
 	}
 
