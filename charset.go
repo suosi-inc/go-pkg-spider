@@ -75,12 +75,6 @@ func CharsetFromHeaderHtml(h []byte, headers *http.Header) CharsetRes {
 	}
 
 	if cHeader != "" && cHtml != "" {
-		if strings.HasPrefix(cHeader, "UTF") && strings.HasPrefix(cHeader, "GB") {
-			res.Charset = cHeader
-			res.CharsetPos = CharsetPosHeader
-			return res
-		}
-
 		if strings.HasPrefix(cHeader, "ISO") || strings.HasPrefix(cHeader, "WINDOWS") {
 			res.Charset = cHtml
 			res.CharsetPos = CharsetPosHtml
