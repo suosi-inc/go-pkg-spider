@@ -99,7 +99,7 @@ const (
 	LangPosHtmlTag = "html"
 	LangPosBody    = "body"
 	LangPosLingua  = "lingua"
-	LangPosTd      = "td"
+	LangPosTd      = "title"
 	BodyChunkSize  = 2048
 	BodyMinSize    = 32
 )
@@ -197,13 +197,13 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 
 	// 列表模式
 	if list {
-		// 获取 TD
+		// 获取 Title
 		title := extract.WebTitle(doc, 0)
 		text = fun.RemoveSign(title)
 		text = strings.TrimSpace(text)
 
 		if text != "" {
-			// 首先判断是否包含汉字
+			// 首先判断标题是否包含汉字
 			hanRegex := regexp.MustCompile(`\p{Han}`)
 			han := hanRegex.FindAllString(text, -1)
 			if han != nil {
@@ -212,7 +212,7 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 				// 汉字数量 >=2
 				if hanCount >= 2 {
 
-					// 需要抽取内容验证是否是日语, 如(日本語_新華網)
+					// 需要抽取内容验证包含是日语, 如(日本語_新華網)
 					bodyText := bodyTextForLang(doc, list)
 
 					// 去除换行(为了保留语义只替换多余的空格)
