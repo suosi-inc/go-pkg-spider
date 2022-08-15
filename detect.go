@@ -131,8 +131,8 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 								return domainRes, errors.New("ErrorMetaJump:" + refreshTopDomain)
 							}
 						}
+						return domainRes, errors.New("ErrorMetaJump")
 					}
-					return domainRes, errors.New("ErrorMetaJump")
 				}
 
 				// 中国 ICP 解析
