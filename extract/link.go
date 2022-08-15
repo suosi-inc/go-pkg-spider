@@ -290,8 +290,7 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 		}
 	} else {
 		// 其他语种, 去除标点, 计算长度
-		m := regexp.MustCompile(`[\pP]`)
-		title = m.ReplaceAllString(title, "")
+		title = regexPuncPattern.ReplaceAllString(title, "")
 
 		titleLen := utf8.RuneCountInString(title)
 		if titleLen >= 10 {

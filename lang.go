@@ -99,9 +99,9 @@ const (
 	LangPosHtmlTag = "html"
 	LangPosBody    = "body"
 	LangPosLingua  = "lingua"
-	LangPosTd      = "title"
+	LangPosTd      = "td"
 	BodyChunkSize  = 2048
-	BodyMinSize    = 32
+	BodyMinSize    = 64
 )
 
 const (
@@ -110,6 +110,12 @@ const (
 
 var (
 	regexLangHtmlPattern = regexp.MustCompile(RegexLangHtml)
+	regexPuncsPattern    = regexp.MustCompile(`[\pP\pS]`)
+	regexEnPattern       = regexp.MustCompile(`[a-zA-Z]`)
+	regexLatinPattern    = regexp.MustCompile("[\u0080-\u00ff]")
+	regexZhPattern       = regexp.MustCompile(`\p{Han}`)
+	regexJaPattern       = regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
+	regexKoPattern       = regexp.MustCompile(`\p{Hangul}`)
 )
 
 type LangRes struct {
@@ -132,7 +138,7 @@ func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 		}
 	}
 
-	// 优先判断Title是否包含中文, 辅助内容排除是否是日语
+	// 优先判断Title是否包含中文, 辅助内容排除日韩
 	titleLang, pos := LangFromTitle(doc, list)
 	if titleLang != "" {
 		res.Lang = titleLang
@@ -204,25 +210,18 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 
 		if text != "" {
 			// 首先判断标题是否包含汉字
-			hanRegex := regexp.MustCompile(`\p{Han}`)
-			han := hanRegex.FindAllString(text, -1)
+			han := regexZhPattern.FindAllString(text, -1)
 			if han != nil {
 				hanCount := len(han)
 
 				// 汉字数量 >=2
 				if hanCount >= 2 {
 
-					// 需要抽取内容验证包含是日语, 如(日本語_新華網)
+					// 需要抽取内容验证包含有日语韩语, 如(日本語_新華網)
 					bodyText := bodyTextForLang(doc, list)
 
-					// 去除换行(为了保留语义只替换多余的空格)
-					bodyText = fun.RemoveLines(bodyText)
-					bodyText = strings.ReplaceAll(bodyText, fun.TAB, "")
-					bodyText = strings.ReplaceAll(bodyText, "  ", "")
-
-					// 去除符号
-					m := regexp.MustCompile(`[\pP\pS]`)
-					bodyText = m.ReplaceAllString(bodyText, "")
+					// 去除所有符号
+					bodyText = fun.RemoveSign(bodyText)
 
 					// 最大截取 BodyChunkSize 个字符
 					bodyText = fun.SubString(bodyText, 0, BodyChunkSize)
@@ -230,15 +229,28 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 
 					bodyTextCount := utf8.RuneCountInString(bodyText)
 
-					jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
-					ja := jaRegex.FindAllString(bodyText, -1)
+					// 包含一定的日语
+					ja := regexJaPattern.FindAllString(bodyText, -1)
 					if ja != nil {
 						jaCount := len(ja)
 						jaRate := float64(jaCount) / float64(bodyTextCount)
 
 						// 日语出现比例
-						if jaRate > 0.1 {
+						if jaRate > 0.2 {
 							lang = "ja"
+							return lang, LangPosTd
+						}
+					}
+
+					// 包含一定的韩语
+					ko := regexKoPattern.FindAllString(bodyText, -1)
+					if ko != nil {
+						koCount := len(ko)
+						koRate := float64(koCount) / float64(bodyTextCount)
+
+						// 日语出现比例
+						if koRate > 0.2 {
+							lang = "ko"
 							return lang, LangPosTd
 						}
 					}
@@ -266,8 +278,7 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	text = strings.ReplaceAll(text, "  ", "")
 
 	// 去除符号
-	m := regexp.MustCompile(`[\pP\pS]`)
-	text = m.ReplaceAllString(text, "")
+	text = regexPuncsPattern.ReplaceAllString(text, "")
 
 	// 最大截取 BodyChunkSize 个字符
 	text = fun.SubString(text, 0, BodyChunkSize)
@@ -282,21 +293,19 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	}
 
 	// 首先判断是否包含汉字, 中文和日语
-	hanRegex := regexp.MustCompile(`\p{Han}`)
-	han := hanRegex.FindAllString(text, -1)
+	han := regexZhPattern.FindAllString(text, -1)
 	if han != nil {
 		hanCount := len(han)
 		hanRate := float64(hanCount) / float64(textCount)
 
 		// 汉字比例
-		if hanRate >= 0.38 {
-			jaRegex := regexp.MustCompile(`[\p{Hiragana}|\p{Katakana}]`)
-			ja := jaRegex.FindAllString(text, -1)
+		if hanRate >= 0.3 {
+			ja := regexJaPattern.FindAllString(text, -1)
 			if ja != nil {
 				jaCount := len(ja)
 				jaRate := float64(jaCount) / float64(hanCount)
 
-				// 日语占比
+				// 日语在汉字中的占比
 				if jaRate > 0.1 {
 					lang = "ja"
 					return lang, LangPosBody
@@ -309,16 +318,14 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	}
 
 	// 其次判断拉丁语系, 分析主要的一些语种
-	englishRegexp := regexp.MustCompile(`[a-zA-Z]`)
-	english := englishRegexp.FindAllString(text, -1)
+	english := regexEnPattern.FindAllString(text, -1)
 	if english != nil {
 		englishCount := len(english)
 		englishRate := float64(englishCount) / float64(textCount)
-		if englishRate > 0.38 {
+		if englishRate > 0.618 {
 
 			// 包含拉丁补充字符集, 使用 lingua 分析主要的非英语拉丁语种
-			latinRegexp := regexp.MustCompile("[\u0080-\u00ff]")
-			latin := latinRegexp.FindAllString(text, -1)
+			latin := regexLatinPattern.FindAllString(text, -1)
 			if latin != nil {
 				latinCount := len(latin)
 

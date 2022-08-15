@@ -61,36 +61,37 @@ func TestLang(t *testing.T) {
 		//"https://www.bbc.com",
 		//"https://www.ft.com/",
 
-		"https://www.163.com/news/article/HEJGEVFT000189FH.html",
-		"https://www.163.com",
-
-		"https://english.news.cn",
-		"https://jp.news.cn",
-		"https://kr.news.cn",
-		"https://german.news.cn/",
-		"https://portuguese.news.cn/",
-		"https://arabic.news.cn",
-		"https://french.news.cn",
-
-		"https://mn.cctv.com/",
-
-		"http://government.ru",
-
-		"https://www.gouvernement.fr",
-
-		"http://live.siammedia.org/",
-		"https://www.manchestereveningnews.co.uk/",
-
-		"https://www.chinadaily.com.cn",
-		"http://cn.chinadaily.com.cn/",
-		"http://www.chinadaily.com.cn/chinawatch_fr/index.html",
-		"https://d1ev.com/",
-		"https://www.cngold.com.cn/",
-		"https://china.guidechem.com/",
-		"https://xdkb.net/",
-		"https://www.lifeweek.com.cn/",
-		"http://gxbsrd.gov.cn/",
-		"https://defence24.com/",
+		//"https://www.163.com/news/article/HEJGEVFT000189FH.html",
+		//"https://www.163.com",
+		//
+		//"https://english.news.cn",
+		//"https://jp.news.cn",
+		//"https://kr.news.cn",
+		//"https://german.news.cn/",
+		//"https://portuguese.news.cn/",
+		//"https://arabic.news.cn",
+		//"https://french.news.cn",
+		//
+		//"https://mn.cctv.com/",
+		//
+		//"http://government.ru",
+		//
+		//"https://www.gouvernement.fr",
+		//
+		//"http://live.siammedia.org/",
+		//"https://www.manchestereveningnews.co.uk/",
+		//
+		//"https://www.chinadaily.com.cn",
+		//"http://cn.chinadaily.com.cn/",
+		//"http://www.chinadaily.com.cn/chinawatch_fr/index.html",
+		//"https://d1ev.com/",
+		//"https://www.cngold.com.cn/",
+		//"https://china.guidechem.com/",
+		//"https://xdkb.net/",
+		//"https://www.lifeweek.com.cn/",
+		//"http://gxbsrd.gov.cn/",
+		//"https://defence24.com/",
+		"http://www.gmp.or.kr/",
 	}
 
 	for _, urlStr := range urlStrs {
