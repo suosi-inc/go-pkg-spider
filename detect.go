@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"net/url"
+	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/suosi-inc/go-pkg-spider/extract"
@@ -113,6 +114,13 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 			if docErr == nil {
 				doc.Find(DefaultDocRemoveTags).Remove()
+
+				bodyText := doc.Find("body").Text()
+				bodyText = fun.RemoveSign(bodyText)
+				bodyTextCount := utf8.RuneCountInString(bodyText)
+				if bodyTextCount < 64 {
+					return domainRes, errors.New("ErrorBodyLength:" + fun.ToString(bodyTextCount))
+				}
 
 				// 中国 ICP 解析
 				icp, province := extract.Icp(doc)

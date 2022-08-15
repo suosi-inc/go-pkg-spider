@@ -101,6 +101,7 @@ const (
 	LangPosLingua  = "lingua"
 	LangPosTd      = "td"
 	BodyChunkSize  = 2048
+	BodyMinSize    = 32
 )
 
 const (
@@ -235,7 +236,7 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 						jaCount := len(ja)
 						jaRate := float64(jaCount) / float64(bodyTextCount)
 
-						// 日语出现次数
+						// 日语出现比例
 						if jaRate > 0.1 {
 							lang = "ja"
 							return lang, LangPosTd
@@ -274,6 +275,11 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 
 	// 截取后的字符长度
 	textCount := utf8.RuneCountInString(text)
+
+	// 内容太少不足以判断语言, 放弃
+	if textCount < BodyMinSize {
+		return "", ""
+	}
 
 	// 首先判断是否包含汉字, 中文和日语
 	hanRegex := regexp.MustCompile(`\p{Han}`)
@@ -316,7 +322,7 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 			if latin != nil {
 				latinCount := len(latin)
 
-				if latinCount > 3 {
+				if latinCount > 5 {
 					detector := lingua.NewLanguageDetectorBuilder().FromLanguages(linguaLatinLanguages...).Build()
 					if language, exists := detector.DetectLanguageOf(text); exists {
 						key := strings.ToLower(language.String())
@@ -356,7 +362,7 @@ func bodyTextForLang(doc *goquery.Document, list bool) string {
 
 			// 如果 a 标签中包含过多的 {} 可能是动态渲染, 放弃
 			if strings.Count(text, "{") >= 5 && strings.Count(text, "}") >= 5 {
-				text = ""
+				return ""
 			}
 		}
 	} else {
@@ -368,7 +374,7 @@ func bodyTextForLang(doc *goquery.Document, list bool) string {
 
 		// 如果内容太少, 获取全部 body 文本
 		textCount := utf8.RuneCountInString(text)
-		if textCount < 64 {
+		if textCount < BodyMinSize {
 			text = doc.Find("body").Text()
 		}
 	}
