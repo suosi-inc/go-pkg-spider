@@ -28,7 +28,6 @@ type DomainRes struct {
 	StatusCode   int
 	ContentCount int
 	ListCount    int
-	Exception    string
 	SubDomains   map[string]bool
 }
 
