@@ -99,7 +99,7 @@ const (
 	LangPosHtmlTag = "html"
 	LangPosBody    = "body"
 	LangPosLingua  = "lingua"
-	LangPosTd      = "td"
+	LangPosTitleZh = "title"
 	BodyChunkSize  = 2048
 	BodyMinSize    = 64
 )
@@ -238,7 +238,7 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 						// 日语出现比例
 						if jaRate > 0.2 {
 							lang = "ja"
-							return lang, LangPosTd
+							return lang, LangPosTitleZh
 						}
 					}
 
@@ -251,12 +251,12 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 						// 日语出现比例
 						if koRate > 0.2 {
 							lang = "ko"
-							return lang, LangPosTd
+							return lang, LangPosTitleZh
 						}
 					}
 
 					lang = "zh"
-					return lang, LangPosTd
+					return lang, LangPosTitleZh
 				}
 			}
 		}
