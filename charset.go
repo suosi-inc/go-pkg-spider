@@ -62,18 +62,21 @@ func CharsetFromHeaderHtml(h []byte, headers *http.Header) CharsetRes {
 
 	cHtml := CharsetFromHtml(h)
 
+	// 只有 Header 则使用 Header
 	if cHeader != "" && cHtml == "" {
 		res.Charset = cHeader
 		res.CharsetPos = CharsetPosHeader
 		return res
 	}
 
+	// 只有 Html 则使用 Html
 	if cHeader == "" && cHtml != "" {
 		res.Charset = cHtml
 		res.CharsetPos = CharsetPosHtml
 		return res
 	}
 
+	// 同时有 Header 和 Html, 根据情况使用 Header 或 Html
 	if cHeader != "" && cHtml != "" {
 		if strings.HasPrefix(cHeader, "ISO") || strings.HasPrefix(cHeader, "WINDOWS") {
 			res.Charset = cHtml
