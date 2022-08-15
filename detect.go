@@ -89,7 +89,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 		if resp.Success && err == nil {
 			domainRes.Domain = domain
 
-			// 如果发生了跳转, 则重新设置 homeDomain, 前提是还是同一个主域名
+			// 如果发生了跳转, 则重新设置 homeDomain, 前提是还是同一个主域名, 否则记录错误
 			domainRes.HomeDomain = homeDomain
 			requestHostname := resp.RequestURL.Hostname()
 			if domainRes.HomeDomain != requestHostname {
@@ -116,16 +116,14 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			if docErr == nil {
 				doc.Find(DefaultDocRemoveTags).Remove()
 
-				// 具有 HTML 跳转属性, HTTP 无法处理, 直接返回
+				// 具有 HTML 跳转属性, HTTP 无法处理, 直接记录错误返回
 				if refresh, exists := doc.Find("meta[http-equiv='refresh' i]").Attr("content"); exists {
 					refreshMatch := regexp.MustCompile(`url=(.+)`).FindStringSubmatch(refresh)
 					if len(refreshMatch) > 1 {
 						refreshUrl := refreshMatch[1]
 						if u, err := fun.UrlParse(refreshUrl); err == nil {
 							jumpTopDomain := extract.DomainTop(u.Hostname())
-							if jumpTopDomain != domain {
-								return domainRes, errors.New("ErrorJump:" + jumpTopDomain)
-							}
+							return domainRes, errors.New("ErrorJump:" + jumpTopDomain)
 						}
 					}
 				}
