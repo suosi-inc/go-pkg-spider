@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"net/url"
+	"regexp"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/suosi-inc/go-pkg-spider/extract"
@@ -27,6 +28,7 @@ type DomainRes struct {
 	StatusCode   int
 	ContentCount int
 	ListCount    int
+	Exception    string
 	SubDomains   map[string]bool
 }
 
@@ -113,6 +115,20 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 			if docErr == nil {
 				doc.Find(DefaultDocRemoveTags).Remove()
+
+				// 具有 HTML 跳转属性, HTTP 无法处理, 直接返回
+				if refresh, exists := doc.Find("meta[http-equiv='refresh' i]").Attr("content"); exists {
+					refreshMatch := regexp.MustCompile(`url=(.+)`).FindStringSubmatch(refresh)
+					if len(refreshMatch) > 1 {
+						refreshUrl := refreshMatch[1]
+						if u, err := fun.UrlParse(refreshUrl); err == nil {
+							jumpTopDomain := extract.DomainTop(u.Hostname())
+							if jumpTopDomain != domain {
+								return domainRes, errors.New("ErrorJump:" + jumpTopDomain)
+							}
+						}
+					}
+				}
 
 				// 中国 ICP 解析
 				icp, province := extract.Icp(doc)
