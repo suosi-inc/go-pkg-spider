@@ -10,10 +10,6 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-const (
-	DetectDomainRemoveTags = "script,noscript,style,iframe,link,svg"
-)
-
 type DomainRes struct {
 	Domain       string
 	HomeDomain   string
