@@ -55,12 +55,12 @@ func Charset(body []byte, headers *http.Header) CharsetRes {
 }
 
 // CharsetFromHeaderHtml 解析 HTTP body、http.Header 中的 charset, 准确性高
-func CharsetFromHeaderHtml(h []byte, headers *http.Header) CharsetRes {
+func CharsetFromHeaderHtml(body []byte, headers *http.Header) CharsetRes {
 	var res CharsetRes
 
 	cHeader := CharsetFromHeader(headers)
 
-	cHtml := CharsetFromHtml(h)
+	cHtml := CharsetFromHtml(body)
 
 	// 只有 Header 则使用 Header
 	if cHeader != "" && cHtml == "" {
@@ -109,18 +109,12 @@ func CharsetFromHeader(headers *http.Header) string {
 }
 
 // CharsetFromHtml 解析 Html 中的 charset
-func CharsetFromHtml(h []byte) string {
+func CharsetFromHtml(body []byte) string {
 	var charset string
 
-	if len(h) >= 0 {
-		// 检测是否是 UTF-8
-		valid := utf8.Valid(h)
-		if valid {
-			return "UTF-8"
-		}
-
-		// 检测 HTML 标签
-		html := fun.String(h)
+	if len(body) >= 0 {
+		// 先检测 HTML 标签
+		html := fun.String(body)
 
 		// 优先判断 HTML4 标签
 		matches := regexCharsetHtml4Pattern.FindStringSubmatch(html)
@@ -131,13 +125,12 @@ func CharsetFromHtml(h []byte) string {
 			}
 		}
 
-		// HTML4 标签
+		// HTML5 标签
 		if charset == "" {
 			matches = regexCharsetHtml5Pattern.FindStringSubmatch(html)
 			if len(matches) > 1 {
 				charset = matches[1]
 			}
-
 		}
 	}
 
@@ -148,10 +141,17 @@ func CharsetFromHtml(h []byte) string {
 func CharsetGuess(body []byte) string {
 	var guessCharset string
 
+	// 检测是否是 UTF-8
+	valid := utf8.Valid(body)
+	if valid {
+		return "UTF-8"
+	}
+
+	// 如果没有
 	detector := chardet.NewHtmlDetector()
 	guess, err := detector.DetectBest(body)
 	if err == nil {
-		guessCharset = strings.ToLower(guess.Charset)
+		guessCharset = strings.ToUpper(guess.Charset)
 	}
 
 	return guessCharset
