@@ -124,7 +124,6 @@ type LangRes struct {
 }
 
 // Lang 探测语种
-//
 func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 	var res LangRes
 	var lang string
