@@ -78,7 +78,14 @@ func CharsetFromHeaderHtml(body []byte, headers *http.Header) CharsetRes {
 
 	// 同时有 Header 和 Html, 根据情况使用 Header 或 Html
 	if cHeader != "" && cHtml != "" {
-		if strings.HasPrefix(cHeader, "ISO") || strings.HasPrefix(cHeader, "WINDOWS") {
+		if cHeader == cHtml {
+			res.Charset = cHeader
+			res.CharsetPos = CharsetPosHeader
+			return res
+		}
+
+		// Header 和 Html 不一致下面情况以 Html 为准
+		if strings.HasPrefix(cHeader, "ISO-8859") || strings.HasPrefix(cHeader, "WINDOWS-") {
 			res.Charset = cHtml
 			res.CharsetPos = CharsetPosHtml
 			return res
@@ -116,20 +123,34 @@ func CharsetFromHtml(body []byte) string {
 		// 先检测 HTML 标签
 		html := fun.String(body)
 
-		// 优先判断 HTML4 标签
+		// 匹配 HTML4 标签
+		var charset4 string
 		matches := regexCharsetHtml4Pattern.FindStringSubmatch(html)
 		if len(matches) > 1 {
 			matches = regexCharsetPattern.FindStringSubmatch(matches[1])
 			if len(matches) > 1 {
-				charset = matches[1]
+				charset4 = matches[1]
 			}
 		}
 
-		// HTML5 标签
-		if charset == "" {
-			matches = regexCharsetHtml5Pattern.FindStringSubmatch(html)
-			if len(matches) > 1 {
-				charset = matches[1]
+		// 匹配 HTML5 标签
+		var charset5 string
+		matches = regexCharsetHtml5Pattern.FindStringSubmatch(html)
+		if len(matches) > 1 {
+			charset5 = matches[1]
+		}
+
+		if charset4 == "" {
+			charset = charset5
+		} else if charset5 != "" {
+			// 竟然两个都有, 以最先出现的为准
+			charset4Index := strings.Index(html, charset4)
+			charset5Index := strings.Index(html, charset5)
+
+			if charset4Index < charset5Index {
+				charset = charset4
+			} else {
+				charset = charset5
 			}
 		}
 	}
