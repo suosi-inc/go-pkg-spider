@@ -85,7 +85,7 @@ func CharsetFromHeaderHtml(body []byte, headers *http.Header) CharsetRes {
 		}
 
 		// Header 和 Html 不一致下面情况以 Html 为准
-		if strings.HasPrefix(cHeader, "ISO-8859") || strings.HasPrefix(cHeader, "WINDOWS-") {
+		if strings.HasPrefix(cHeader, "ISO") || strings.HasPrefix(cHeader, "WINDOWS") {
 			res.Charset = cHtml
 			res.CharsetPos = CharsetPosHtml
 			return res
