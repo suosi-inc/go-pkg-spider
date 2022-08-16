@@ -140,18 +140,29 @@ func CharsetFromHtml(body []byte) string {
 			charset5 = matches[1]
 		}
 
-		if charset4 == "" {
-			charset = charset5
-		} else if charset5 != "" {
-			// 竟然两个都有, 以最先出现的为准
-			charset4Index := strings.Index(html, charset4)
-			charset5Index := strings.Index(html, charset5)
+		if charset4 != "" && charset5 == "" {
+			charset = charset4
+		}
 
-			if charset4Index < charset5Index {
-				charset = charset4
-			} else {
+		if charset4 == "" && charset5 != "" {
+			charset = charset5
+		}
+
+		if charset4 != "" && charset5 != "" {
+			// 竟然两个都有, 以最先出现的为准
+			if charset4 == charset5 {
 				charset = charset5
+			} else {
+				charset4Index := strings.Index(html, charset4)
+				charset5Index := strings.Index(html, charset5)
+
+				if charset4Index < charset5Index {
+					charset = charset4
+				} else {
+					charset = charset5
+				}
 			}
+
 		}
 	}
 
