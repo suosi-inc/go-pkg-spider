@@ -22,6 +22,7 @@ func TestDomainParse(t *testing.T) {
 		"www.gov.cn",
 		"scopsr.gov.cn",
 		"usa.gov",
+		"bbc.co.uk",
 	}
 
 	for _, domain := range domains {
@@ -46,6 +47,7 @@ func TestDomainTop(t *testing.T) {
 		"www.gov.cn",
 		"scopsr.gov.cn",
 		"usa.gov",
+		"bbc.co.uk",
 	}
 
 	for _, domain := range domains {
