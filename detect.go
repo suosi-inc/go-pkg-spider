@@ -22,7 +22,6 @@ type DomainRes struct {
 	Category     string
 	Title        string
 	TitleClean   string
-	Description  string
 	Icp          string
 	State        bool
 	StatusCode   int
@@ -158,7 +157,6 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 				// 标题摘要
 				domainRes.Title = extract.WebTitle(doc, 0)
 				domainRes.TitleClean = extract.WebTitleClean(domainRes.Title, langRes.Lang)
-				domainRes.Description = extract.WebDescription(doc, 0)
 
 				// 站内链接
 				linkTitles, _ := extract.WebLinkTitles(doc, resp.RequestURL, true)
