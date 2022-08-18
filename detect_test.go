@@ -15,7 +15,7 @@ func TestDomainDetect(t *testing.T) {
 		// "china-nengyuan.com",
 		// "suosi.com.cn",
 		// "wanjiaxian.com",
-		"whonlines.cn",
+		"thestandard.com.hk",
 	}
 
 	for _, domain := range domains {
@@ -94,7 +94,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.washingtontimes.com/",
 		// "https://www.gamersky.com/",
 		// "https://www.cdns.com.tw/",
-		"https://khmers.cn/",
+		"https://www2.hkej.com/landing/index",
 	}
 
 	for _, urlStr := range urlStrs {
