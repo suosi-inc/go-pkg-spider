@@ -15,7 +15,7 @@ func TestDomainDetect(t *testing.T) {
 		// "china-nengyuan.com",
 		// "suosi.com.cn",
 		// "wanjiaxian.com",
-		"koreastardaily.com",
+		"whonlines.cn",
 	}
 
 	for _, domain := range domains {
@@ -72,7 +72,7 @@ func BenchmarkLinkTitles(b *testing.B) {
 
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
-		"https://www.qq.com",
+		// "https://www.qq.com",
 		// "https://www.people.com.cn",
 		// "https://www.36kr.com",
 		// "https://www.163.com",
@@ -93,6 +93,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://qiye.163.com/",
 		// "https://www.washingtontimes.com/",
 		// "https://www.gamersky.com/",
+		"https://www.cdns.com.tw/",
 	}
 
 	for _, urlStr := range urlStrs {
