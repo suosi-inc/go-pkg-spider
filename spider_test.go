@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/x-funs/go-fun"
@@ -77,4 +78,6 @@ func TestCount(t *testing.T) {
 	fmt.Println(regexLangHtmlPattern.MatchString("en"))
 	fmt.Println(regexLangHtmlPattern.MatchString("zh-cn"))
 	fmt.Println(regexLangHtmlPattern.MatchString("utf-8"))
+
+	fmt.Println(utf8.RuneCountInString("https://khmers.cn/2022/05/23/%e6%b4%aa%e6%a3%ae%e6%80%bb%e7%90%86%ef%bc%9a%e6%9f%ac%e5%9f%94%e5%af%a8%e7%b4%af%e8%ae%a1%e8%8e%b7%e5%be%97%e8%b6%85%e8%bf%875200%e4%b8%87%e5%89%82%e6%96%b0%e5%86%a0%e7%96%ab%e8%8b%97%ef%bc%8c/"))
 }

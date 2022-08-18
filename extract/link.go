@@ -217,7 +217,7 @@ func LinkIsContentByRegex(linkUrl *url.URL, rules LinkTypeRule) bool {
 func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType {
 	link := linkUrl.String()
 
-	if utf8.RuneCountInString(link) > 128 {
+	if utf8.RuneCountInString(link) > 255 {
 		return LinkTypeNone
 	}
 
