@@ -32,7 +32,7 @@ type DomainRes struct {
 }
 
 var (
-	regexMetaRefreshPatern = regexp.MustCompile(`(?i)url=(.+)`)
+	regexMetaRefreshPattern = regexp.MustCompile(`(?i)url=(.+)`)
 )
 
 // DetectDomain 域名探测
@@ -121,7 +121,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 
 				// 具有 HTML 跳转属性, HTTP 无法自动处理永远返回错误, 判断跳转后是否是同一个主域名, 记录并返回
 				if refresh, exists := doc.Find("meta[http-equiv='refresh' i]").Attr("content"); exists {
-					refreshMatch := regexMetaRefreshPatern.FindStringSubmatch(refresh)
+					refreshMatch := regexMetaRefreshPattern.FindStringSubmatch(refresh)
 					if len(refreshMatch) > 1 {
 						refreshUrl := refreshMatch[1]
 						if r, err := fun.UrlParse(refreshUrl); err == nil {

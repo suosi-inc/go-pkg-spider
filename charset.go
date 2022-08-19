@@ -84,7 +84,7 @@ func CharsetFromHeaderHtml(body []byte, headers *http.Header) CharsetRes {
 			return res
 		}
 
-		// Header 和 Html 不一致下面情况以 Html 为准
+		// Header 和 Html 不一致, 以下情况以 Html 为准
 		if strings.HasPrefix(cHeader, "ISO") || strings.HasPrefix(cHeader, "WINDOWS") {
 			res.Charset = cHtml
 			res.CharsetPos = CharsetPosHtml
@@ -140,6 +140,7 @@ func CharsetFromHtml(body []byte) string {
 			charset5 = matches[1]
 		}
 
+		// 只有其中一个
 		if charset4 != "" && charset5 == "" {
 			charset = charset4
 		}
@@ -179,7 +180,7 @@ func CharsetGuess(body []byte) string {
 		return "UTF-8"
 	}
 
-	// 如果没有
+	// 如果没有则 guess
 	detector := chardet.NewHtmlDetector()
 	guess, err := detector.DetectBest(body)
 	if err == nil {

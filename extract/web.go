@@ -28,7 +28,16 @@ var (
 
 // WebTitle 返回网页标题, 最大 128 个字符
 func WebTitle(doc *goquery.Document, maxLength int) string {
-	title := doc.Find("title").Text()
+	var title string
+	titleNode := doc.Find("title")
+	if titleNode.Size() > 1 {
+		// 竟然有多个 title, 只取第一个
+		title = titleNode.First().Text()
+	} else {
+		title = titleNode.Text()
+	}
+
+	title = fun.RemoveLines(title)
 	title = strings.TrimSpace(title)
 
 	if maxLength > 0 && maxLength < 128 {
@@ -81,6 +90,7 @@ func WebTitleClean(title string, lang string) string {
 // WebKeywords 返回网页 Keyword
 func WebKeywords(doc *goquery.Document) string {
 	keywords := doc.Find("meta[name='keywords' i]").AttrOr("content", "")
+	keywords = fun.RemoveLines(keywords)
 	keywords = strings.TrimSpace(keywords)
 
 	return keywords
@@ -89,6 +99,7 @@ func WebKeywords(doc *goquery.Document) string {
 // WebDescription 返回网页描述, 最大 384 个字符
 func WebDescription(doc *goquery.Document, maxLength int) string {
 	description := doc.Find("meta[name='description' i]").AttrOr("content", "")
+	description = fun.RemoveLines(description)
 	description = strings.TrimSpace(description)
 
 	if maxLength > 0 && maxLength < 384 {
