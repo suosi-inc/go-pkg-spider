@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/suosi-inc/go-pkg-spider/extract"
@@ -182,4 +183,97 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 	}
 
 	return domainRes, errors.New("ErrorDomainDetect")
+}
+
+func DetectFriendDomain(domain string, timeout int, retry int) (map[string]string, error) {
+	if retry == 0 {
+		retry = 1
+	}
+
+	friendDomains := make(map[string]string, 0)
+
+	for i := 0; i < retry; i++ {
+		friendDomains, err := DetectFriendDomainDo(domain, timeout)
+		if err == nil {
+			return friendDomains, err
+		}
+	}
+
+	return friendDomains, errors.New("ErrorDomainDetect")
+}
+
+func DetectFriendDomainDo(domain string, timeout int) (map[string]string, error) {
+	if timeout == 0 {
+		timeout = 10000
+	}
+
+	friendDomains := make(map[string]string, 0)
+
+	req := &HttpReq{
+		HttpReq: &fun.HttpReq{
+			MaxContentLength: 10 * 1024 * 1024,
+			MaxRedirect:      3,
+		},
+		ForceTextContentType: true,
+	}
+
+	scheme := "http"
+	homes := []string{"www", ""}
+
+	for _, home := range homes {
+
+		var urlStr string
+		var homeDomain string
+		if home != "" {
+			homeDomain = home + fun.DOT + domain
+			urlStr = scheme + "://" + homeDomain
+		} else {
+			homeDomain = domain
+			urlStr = scheme + "://" + homeDomain
+		}
+
+		resp, err := HttpGetResp(urlStr, req, timeout)
+
+		if resp.Success && err == nil {
+
+			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+			if docErr == nil {
+				doc.Find(DefaultDocRemoveTags).Remove()
+
+				// 非限制域名所有链接
+				linkTitles, _ := extract.WebLinkTitles(doc, resp.RequestURL, false)
+
+				if len(linkTitles) > 0 {
+					for link, title := range linkTitles {
+						u, e := fun.UrlParse(link)
+						if e != nil {
+							continue
+						}
+
+						if title == "" {
+							continue
+						}
+
+						pathDir := strings.TrimSpace(u.Path)
+						if pathDir == "" || pathDir == fun.SLASH || pathDir == "/index.html" || pathDir == "/index.htm" || pathDir == "/index.shtml" {
+							hostname := u.Hostname()
+							domainTop := extract.DomainTop(hostname)
+							baseDomainTop := domain
+							if domainTop != baseDomainTop {
+								friendDomains[domainTop] = title
+							}
+						}
+					}
+				}
+
+				return friendDomains, nil
+			} else {
+				return friendDomains, errors.New("ErrorDocParse")
+			}
+		} else {
+			return friendDomains, err
+		}
+	}
+
+	return friendDomains, errors.New("ErrorDomainDetect")
 }

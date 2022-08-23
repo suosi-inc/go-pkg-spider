@@ -226,3 +226,16 @@ func TestLangFromUtf8Body(t *testing.T) {
 
 	}
 }
+
+func TestDetectFriendDomainDo(t *testing.T) {
+	var domains = []string{
+		"northnews.cn",
+	}
+
+	for _, domain := range domains {
+		friendDomains, err := DetectFriendDomainDo(domain, 10000)
+
+		t.Log(err)
+		t.Log(friendDomains)
+	}
+}
