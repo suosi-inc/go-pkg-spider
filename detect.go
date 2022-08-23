@@ -250,6 +250,16 @@ func DetectFriendDomainDo(domain string, timeout int) (map[string]string, error)
 							continue
 						}
 
+						// 验证非常规端口
+						if u.Port() != "" {
+							continue
+						}
+
+						// 验证主机名
+						if fun.Matches(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`, u.Hostname()) {
+							continue
+						}
+
 						if title == "" {
 							continue
 						}
