@@ -4,10 +4,15 @@ import (
 	"errors"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/x-funs/go-fun"
+)
+
+const (
+	RegexHostnameIp = `\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`
 )
 
 var (
@@ -24,6 +29,8 @@ var (
 	zhSplits = []string{"_", "|", "-", "－", "｜", "—"}
 
 	enSplits = []string{" - ", " | "}
+
+	regexHostnameIpPattern = regexp.MustCompile(RegexHostnameIp)
 )
 
 // WebTitle 返回网页标题, 最大 128 个字符
@@ -194,6 +201,16 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	// 验证转换后是否是绝对路径
 	if !u.IsAbs() {
 		return urlStr, errors.New("invalid url with not absolute url")
+	}
+
+	// 验证非常规端口
+	if u.Port() != "" {
+		return urlStr, errors.New("invalid url with not 80 port")
+	}
+
+	// 验证主机名
+	if regexHostnameIpPattern.MatchString(u.Hostname()) {
+		return urlStr, errors.New("invalid url with ip hostname")
 	}
 
 	// 过滤掉明显错误的后缀
