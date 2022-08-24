@@ -15,12 +15,14 @@ func TestDomainDetect(t *testing.T) {
 		// "china-nengyuan.com",
 		// "suosi.com.cn",
 		// "wanjiaxian.com",
-		"wengan.gov.cn",
+		"cnet.com",
 	}
 
 	for _, domain := range domains {
 		domainRes, err := DetectDomain(domain, 10000, 1)
 		if err == nil {
+			t.Log(domainRes.Title)
+			t.Log(domainRes.TitleClean)
 			t.Log(domainRes)
 		} else {
 			t.Log(err)

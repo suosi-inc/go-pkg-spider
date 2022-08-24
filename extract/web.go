@@ -28,7 +28,7 @@ var (
 
 	zhSplits = []string{"_", "|", "-", "－", "｜", "—"}
 
-	enSplits = []string{" - ", " | "}
+	enSplits = []string{" - ", " | ", ":"}
 
 	regexHostnameIpPattern = regexp.MustCompile(RegexHostnameIp)
 )
@@ -58,6 +58,12 @@ func WebTitle(doc *goquery.Document, maxLength int) string {
 func WebTitleClean(title string, lang string) string {
 	// 中文网站, 查找中文网站的分割标记, 找到任意一个, 从尾部循环删除后返回
 	if lang == "zh" {
+
+		// 去除首页开头
+		if fun.HasPrefixCase(title, "首页") {
+			title = regexp.MustCompile("首页( |\\||-|_|－|—|｜)*").ReplaceAllString(title, "")
+		}
+
 		titleClean := title
 		for _, split := range zhSplits {
 			end := strings.LastIndex(titleClean, split)
@@ -74,6 +80,7 @@ func WebTitleClean(title string, lang string) string {
 			}
 		}
 
+		// 去除尾巴
 		if titleClean != "首页" {
 			titleClean = fun.RemoveSuffix(titleClean, "首页")
 		}
