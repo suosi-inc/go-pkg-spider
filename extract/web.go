@@ -26,7 +26,7 @@ var (
 
 	invalidCharsets = []string{"{", "}", "[", "]", "@", "$", "<", ">", "\""}
 
-	zhSplits = []string{"_", "|", "-", "－", "｜", "—"}
+	zhSplits = []string{"_", "|", "-", "－", "｜", "—", "＊", "：", ",", "，", ":", "·", ">>", "="}
 
 	enSplits = []string{" - ", " | ", ":"}
 
@@ -59,6 +59,12 @@ func WebTitleClean(title string, lang string) string {
 	// 中文网站, 查找中文网站的分割标记, 找到任意一个, 从尾部循环删除后返回
 	if lang == "zh" {
 
+		for _, split := range zhSplits {
+			if fun.HasPrefixCase(title, split) {
+				title = fun.RemovePrefix(title, split)
+			}
+		}
+
 		// 去除首页开头
 		if fun.HasPrefixCase(title, "首页") {
 			title = regexp.MustCompile("首页( |\\||-|_|－|—|｜)*").ReplaceAllString(title, "")
@@ -84,6 +90,8 @@ func WebTitleClean(title string, lang string) string {
 		if titleClean != "首页" {
 			titleClean = fun.RemoveSuffix(titleClean, "首页")
 		}
+
+		titleClean = fun.RemoveSign(titleClean)
 
 		return titleClean
 
