@@ -28,6 +28,8 @@ var (
 
 	zhSplits = []string{"_", "|", "-", "－", "｜", "—", "＊", "：", ",", "，", ":", "·", ">>", "="}
 
+	zhContentSplits = []string{"_", "|", "-", "－", "｜", "—"}
+
 	enSplits = []string{" - ", " | ", ":"}
 
 	regexHostnameIpPattern = regexp.MustCompile(RegexHostnameIp)
@@ -92,6 +94,49 @@ func WebTitleClean(title string, lang string) string {
 		}
 
 		titleClean = fun.RemoveSign(titleClean)
+
+		return titleClean
+
+	} else {
+		// 其他, 查找英文分割标记, 如果找到, 从尾部删除一次返回
+		for _, split := range enSplits {
+			end := strings.LastIndex(title, split)
+			if end != -1 {
+				titleClean := strings.TrimSpace(title[:end])
+				return titleClean
+			}
+		}
+	}
+
+	return title
+}
+
+// WebContentTitleClean 返回内容页尽量清洗后的网页标题
+func WebContentTitleClean(title string, lang string) string {
+	// 中文网站, 查找中文网站的分割标记, 找到任意一个, 从尾部循环删除后返回
+	if lang == "zh" {
+
+		for _, split := range zhContentSplits {
+			if fun.HasPrefixCase(title, split) {
+				title = fun.RemovePrefix(title, split)
+			}
+		}
+
+		titleClean := title
+		for _, split := range zhSplits {
+			end := strings.LastIndex(titleClean, split)
+			if end != -1 {
+				for {
+					titleClean = strings.TrimSpace(titleClean[:end])
+					end = strings.LastIndex(titleClean, split)
+
+					if end == -1 {
+						break
+					}
+				}
+
+			}
+		}
 
 		return titleClean
 
