@@ -32,8 +32,14 @@ type DomainRes struct {
 	SubDomains   map[string]bool
 }
 
+const (
+	RegexHostnameIp = `\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`
+)
+
 var (
 	regexMetaRefreshPattern = regexp.MustCompile(`(?i)url=(.+)`)
+
+	regexHostnameIpPattern = regexp.MustCompile(RegexHostnameIp)
 )
 
 // DetectDomain 域名探测
@@ -99,6 +105,15 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			if domainRes.HomeDomain != requestHostname {
 				requestTopDomain := extract.DomainTop(requestHostname)
 				if requestTopDomain != domain {
+					// 验证主机名
+					if regexHostnameIpPattern.MatchString(requestHostname) {
+						return domainRes, errors.New("ErrorRedirectHost")
+					}
+					// 验证非常规端口
+					if resp.RequestURL.Port() != "" {
+						return domainRes, errors.New("ErrorRedirectHost")
+					}
+
 					return domainRes, errors.New("ErrorRedirect:" + requestTopDomain)
 				}
 
@@ -129,6 +144,15 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 							refreshHostname := r.Hostname()
 							refreshTopDomain := extract.DomainTop(refreshHostname)
 							if refreshTopDomain != domain {
+								// 验证主机名
+								if regexHostnameIpPattern.MatchString(refreshHostname) {
+									return domainRes, errors.New("ErrorMetaJumpHost")
+								}
+								// 验证非常规端口
+								if r.Port() != "" {
+									return domainRes, errors.New("ErrorMetaJumpHost")
+								}
+
 								return domainRes, errors.New("ErrorMetaJump:" + refreshTopDomain)
 							}
 						}
