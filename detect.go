@@ -104,7 +104,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 			requestHostname := resp.RequestURL.Hostname()
 			if domainRes.HomeDomain != requestHostname {
 				requestTopDomain := extract.DomainTop(requestHostname)
-				if requestTopDomain != domain {
+				if requestTopDomain != "" && requestTopDomain != domain {
 					// 验证主机名
 					if regexHostnameIpPattern.MatchString(requestHostname) {
 						return domainRes, errors.New("ErrorRedirectHost")
@@ -143,7 +143,7 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 						if r, err := fun.UrlParse(refreshUrl); err == nil {
 							refreshHostname := r.Hostname()
 							refreshTopDomain := extract.DomainTop(refreshHostname)
-							if refreshTopDomain != domain {
+							if refreshTopDomain != "" && refreshTopDomain != domain {
 								// 验证主机名
 								if regexHostnameIpPattern.MatchString(refreshHostname) {
 									return domainRes, errors.New("ErrorMetaJumpHost")
