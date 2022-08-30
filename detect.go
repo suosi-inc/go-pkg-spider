@@ -52,7 +52,7 @@ func DetectDomain(domain string, timeout int, retry int) (*DomainRes, error) {
 	}
 
 	for i := 0; i < retry; i++ {
-		domainRes, err := DetectDomainDo(domain, timeout)
+		domainRes, err := DetectDomainDo(domain, true, timeout)
 		if domainRes.StatusCode != 0 || err == nil {
 			return domainRes, err
 		}
@@ -62,7 +62,27 @@ func DetectDomain(domain string, timeout int, retry int) (*DomainRes, error) {
 	return domainRes, errors.New("ErrorDomainDetect")
 }
 
-func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
+// DetectSubDomain 子域名探测
+// DomainRes.State true 和 err nil 表示探测成功
+// DomainRes.State true 可能会返回 err, 如 doc 解析失败
+// DomainRes.State false 时根据 StatusCode 判断是请求是否成功或请求成功但响应失败(如404)
+func DetectSubDomain(domain string, timeout int, retry int) (*DomainRes, error) {
+	if retry == 0 {
+		retry = 1
+	}
+
+	for i := 0; i < retry; i++ {
+		domainRes, err := DetectDomainDo(domain, false, timeout)
+		if domainRes.StatusCode != 0 || err == nil {
+			return domainRes, err
+		}
+	}
+
+	domainRes := &DomainRes{}
+	return domainRes, errors.New("ErrorDomainDetect")
+}
+
+func DetectDomainDo(domain string, home bool, timeout int) (*DomainRes, error) {
 	if timeout == 0 {
 		timeout = 10000
 	}
@@ -78,7 +98,14 @@ func DetectDomainDo(domain string, timeout int) (*DomainRes, error) {
 	}
 
 	scheme := "http"
-	homes := []string{"www", ""}
+
+	// 是否进行首页探测
+	var homes []string
+	if home {
+		homes = []string{"www", ""}
+	} else {
+		homes = []string{""}
+	}
 
 	for _, home := range homes {
 
