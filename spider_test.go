@@ -97,9 +97,13 @@ func TestContent(t *testing.T) {
 		// "http://suosi.com.cn/2019/14.shtml",
 		// "https://www.wangan.com/p/7fy78317feb66b37",
 		// "https://www.wangan.com/news/7fy78y38c7207bf0",
-		"http://env.people.com.cn/n1/2022/0901/c1010-32516651.html",
+		// "http://env.people.com.cn/n1/2022/0901/c1010-32516651.html",
+		// "http://www.changzhou.gov.cn/ns_news/827166202029392",
 		// "https://www.163.com/money/article/HG4TRBL1002580S6.html?clickfrom=w_yw_money",
 		// "https://mp.weixin.qq.com/s?__biz=MzUxODkxNTYxMA==&mid=2247484842&idx=1&sn=d9822ee4662523609aee7441066c2a96&chksm=f980d6dfcef75fc93cb1e7942cb16ec82a7fb7ec3c2d857c307766daff667bd63ab1b4941abd&exportkey=AXWfguuAyJjlOJgCHf10io8%3D&acctmode=0&pass_ticket=8eXqj",
+		// "https://www.bbc.com/news/world-asia-62744522",
+		// "https://www.sohu.com/a/581634395_121284943",
+		"https://edition.cnn.com/2022/01/30/europe/lithuania-took-on-china-intl-cmd/index.html",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -114,25 +118,30 @@ func TestContent(t *testing.T) {
 			// 语言
 			langRes := Lang(doc, resp.Charset.Charset, true)
 
+			start := fun.Timestamp(true)
+
+			// 正文抽取
 			content := extract.NewContent(doc, langRes.Lang)
 			news := content.News()
+			t.Log(fun.Timestamp(true) - start)
 			t.Log(news.Title)
 			t.Log(news.TitlePos)
+			t.Log(news.TimeLocal)
 			t.Log(news.Time)
 			t.Log(news.TimePos)
 			t.Log(news.Content)
 
-			// 内容节点
+			// 内容 html 节点
 			node := goquery.NewDocumentFromNode(news.ContentNode)
 			contentHtml, _ := node.Html()
-			t.Log(contentHtml)
+			t.Log(NormaliseLine(contentHtml))
 
-			// 仅保留 p img 标签
+			// 内容 html 节点清理, 仅保留 p img 标签
 			p := bluemonday.NewPolicy()
 			p.AllowElements("p")
 			p.AllowImages()
 			html := p.Sanitize(contentHtml)
-			t.Log(html)
+			t.Log(NormaliseLine(html))
 		}
 	}
 

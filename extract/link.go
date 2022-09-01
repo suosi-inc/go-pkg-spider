@@ -16,7 +16,7 @@ const (
 	LinkTypeList    LinkType = 2
 	LinkTypeUnknown LinkType = 3
 
-	RegexPublishDate = `20[2-3]\d{1}(0[1-9]|1[0-2]|[1-9])(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])?`
+	RegexUrlPublishDate = `20[2-3]\d{1}(0[1-9]|1[0-2]|[1-9])(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])?`
 )
 
 var (
@@ -25,10 +25,10 @@ var (
 
 	zhEnTitles = []string{"nba", "cba", "5g", "ai", "it", "ipo"}
 
-	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
-	regexZhPattern          = regexp.MustCompile(`\p{Han}`)
-	regexEnPattern          = regexp.MustCompile(`[a-zA-Z]`)
-	regexPuncPattern        = regexp.MustCompile(`\pP`)
+	regexUrlPublishDatePattern = regexp.MustCompile(RegexUrlPublishDate)
+	regexZhPattern             = regexp.MustCompile(`\p{Han}`)
+	regexEnPattern             = regexp.MustCompile(`[a-zA-Z]`)
+	regexPuncPattern           = regexp.MustCompile(`\pP`)
 )
 
 type LinkType int
@@ -74,7 +74,7 @@ func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*
 					// 内容页 URL path 时间特征统计
 					pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
 					pathClean := pathDirClean(pathDir)
-					if regexPublishDatePattern.MatchString(pathClean) {
+					if regexUrlPublishDatePattern.MatchString(pathClean) {
 						contentPublishCount++
 					}
 
@@ -138,7 +138,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 				linkUrl, _ := fun.UrlParse(link)
 				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
 				pathClean := pathDirClean(pathDir)
-				if regexPublishDatePattern.MatchString(pathClean) {
+				if regexUrlPublishDatePattern.MatchString(pathClean) {
 					linkRes.Content[link] = title
 					delete(linkRes.List, link)
 				}
@@ -149,7 +149,7 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 				linkUrl, _ := fun.UrlParse(link)
 				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
 				pathClean := pathDirClean(pathDir)
-				if regexPublishDatePattern.MatchString(pathClean) {
+				if regexUrlPublishDatePattern.MatchString(pathClean) {
 					linkRes.Content[link] = title
 				} else {
 					linkRes.List[link] = title

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"log"
 	"math"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"unicode/utf8"
@@ -16,7 +17,8 @@ import (
 )
 
 const (
-	ContentRemoveTags = "textarea"
+	ContentAddRemoveTags = "textarea"
+	RegexPublishDate     = "(202\\d{2}[-/年.])?(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\\s{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?"
 )
 
 var (
@@ -25,6 +27,10 @@ var (
 		"meta[property='twitter:title' i]",
 		"meta[name='twitter:title' i]",
 	}
+
+	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
+
+	metaDatetimeDicts = []string{"publish", "pubdate"}
 )
 
 type News struct {
@@ -33,8 +39,10 @@ type News struct {
 	// 标题依据
 	TitlePos string
 	// 发布时间
+	TimeLocal string
+	// 时间
 	Time string
-	// 发布时间依据
+	// 时间依据
 	TimePos string
 	// 正文纯文本
 	Content string
@@ -80,21 +88,43 @@ func NewContent(doc *goquery.Document, lang string) *Content {
 func (c *Content) News() *News {
 	news := &News{}
 
-	// 提取内容根结点
+	// 正文, 提取内容根结点
 	contentNode := c.getContentNode()
 	if contentNode != nil {
 		news.ContentNode = contentNode
 
 		node := goquery.NewDocumentFromNode(contentNode)
-		content := c.normaliseText(node.Selection)
+		content := c.formatContent(node.Text())
 		news.Content = content
 	}
 
+	// 标题
 	title := c.getTitle(contentNode)
 	news.Title = title
 	news.TitlePos = c.TitlePos
 
+	// 时间
+	time := c.getTime()
+	news.Time = time
+	news.TimePos = c.TimePos
+	news.TimeLocal = fun.Date(fun.StrToTime(time))
+
 	return news
+}
+
+// formatContent 正文格式化, 将多个换行符和空格均合并为一个
+func (c *Content) formatContent(str string) string {
+	lines := fun.SplitTrim(str, fun.LF)
+	if len(lines) > 0 {
+		for i, line := range lines {
+			lines[i] = fun.NormaliseSpace(line)
+		}
+		str = strings.Join(lines, fun.LF)
+	} else {
+		str = fun.NormaliseSpace(str)
+	}
+
+	return str
 }
 
 func (c *Content) getContentNode() *html.Node {
@@ -102,7 +132,7 @@ func (c *Content) getContentNode() *html.Node {
 	var contentNode *html.Node
 
 	// 取第一个 body 标签
-	c.Doc.Find(ContentRemoveTags).Remove()
+	c.Doc.Find(ContentAddRemoveTags).Remove()
 	bodyNodes := c.Doc.Find("body").Nodes
 	if len(bodyNodes) > 0 {
 		bodyNode := bodyNodes[0]
@@ -130,6 +160,58 @@ func (c *Content) getContentNode() *html.Node {
 }
 
 func (c *Content) getTime() string {
+	metaTime := c.getTimeByMeta()
+	if metaTime != "" {
+		c.TimePos = "meta"
+		return metaTime
+	}
+
+	return ""
+}
+
+func (c *Content) getTimeByMeta() string {
+	metaDates := make([]string, 0)
+	metas := c.Doc.Find("meta")
+	if metas.Size() > 0 {
+		metas.Each(func(i int, meta *goquery.Selection) {
+			content := meta.AttrOr("content", "")
+			if regexPublishDatePattern.MatchString(content) {
+				name := meta.AttrOr("name", "")
+				property := meta.AttrOr("property", "")
+				name = strings.ReplaceAll(name, "_", "")
+				name = strings.ReplaceAll(name, "-", "")
+				property = strings.ReplaceAll(property, "_", "")
+				property = strings.ReplaceAll(property, "-", "")
+
+				if fun.ContainsAny(name, metaDatetimeDicts...) {
+					metaDates = append(metaDates, content)
+				}
+
+				if fun.ContainsAny(property, metaDatetimeDicts...) {
+					metaDates = append(metaDates, content)
+				}
+			}
+		})
+	}
+
+	metaDatesLen := len(metaDates)
+	if metaDatesLen == 1 {
+		return metaDates[0]
+	}
+
+	// 多个返回最长的
+	if metaDatesLen > 1 {
+		var maxLen int
+		var maxLenDate string
+		for _, date := range metaDates {
+			length := utf8.RuneCountInString(date)
+			if length >= maxLen {
+				maxLenDate = date
+			}
+		}
+
+		return maxLenDate
+	}
 
 	return ""
 }
@@ -217,7 +299,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 		}
 	}
 
-	// 最后从正文中找最相似 metaTitle 的片段，最坏的情况，返回页面标题
+	// 最后从正文中找最相似 metaTitle 的片段, 最坏的情况是, 直接返回页面标题
 	title = c.getTitleByEditDistance(originMetaTitle)
 
 	return title
@@ -399,7 +481,7 @@ func (c *Content) normaliseText(s *goquery.Selection) string {
 	return buf.String()
 }
 
-func (c *Content) debug() {
+func (c *Content) Debug() {
 	for node, info := range c.InfoMap {
 		if node.Data == "div" {
 			for _, a := range node.Attr {
