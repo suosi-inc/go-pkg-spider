@@ -94,7 +94,8 @@ func (c *Content) News() *News {
 		news.ContentNode = contentNode
 
 		node := goquery.NewDocumentFromNode(contentNode)
-		content := c.formatContent(node.Text())
+		content := node.Text()
+		content = c.formatContent(content)
 		news.Content = content
 	}
 
