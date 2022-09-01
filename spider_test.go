@@ -9,6 +9,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/suosi-inc/go-pkg-spider/extract"
 	"github.com/x-funs/go-fun"
 )
 
@@ -80,4 +82,58 @@ func TestCount(t *testing.T) {
 	fmt.Println(regexLangHtmlPattern.MatchString("utf-8"))
 
 	fmt.Println(utf8.RuneCountInString("https://khmers.cn/2022/05/23/%e6%b4%aa%e6%a3%ae%e6%80%bb%e7%90%86%ef%bc%9a%e6%9f%ac%e5%9f%94%e5%af%a8%e7%b4%af%e8%ae%a1%e8%8e%b7%e5%be%97%e8%b6%85%e8%bf%875200%e4%b8%87%e5%89%82%e6%96%b0%e5%86%a0%e7%96%ab%e8%8b%97%ef%bc%8c/"))
+}
+
+func TestContent(t *testing.T) {
+
+	var urlStrs = []string{
+		// "http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
+		// "https://www.163.com/news/article/HG3DE7AQ000189FH.html",
+		// "http://suosi.com.cn/",
+		// "http://www.cankaoxiaoxi.com/world/20220831/2489267.shtml",
+		// "http://www.cankaoxiaoxi.com/photo/20220901/2489404.shtml",
+		// "http://column.cankaoxiaoxi.com/2022/0831/2489330.shtml",
+		// "http://www.gov.cn/xinwen/2022-08/31/content_5707661.htm",
+		// "http://suosi.com.cn/2019/14.shtml",
+		// "https://www.wangan.com/p/7fy78317feb66b37",
+		// "https://www.wangan.com/news/7fy78y38c7207bf0",
+		"http://env.people.com.cn/n1/2022/0901/c1010-32516651.html",
+		// "https://www.163.com/money/article/HG4TRBL1002580S6.html?clickfrom=w_yw_money",
+		// "https://mp.weixin.qq.com/s?__biz=MzUxODkxNTYxMA==&mid=2247484842&idx=1&sn=d9822ee4662523609aee7441066c2a96&chksm=f980d6dfcef75fc93cb1e7942cb16ec82a7fb7ec3c2d857c307766daff667bd63ab1b4941abd&exportkey=AXWfguuAyJjlOJgCHf10io8%3D&acctmode=0&pass_ticket=8eXqj",
+	}
+
+	for _, urlStr := range urlStrs {
+		resp, err := HttpGetResp(urlStr, nil, 10000)
+
+		if resp.Success && err == nil {
+			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+			if docErr == nil {
+				doc.Find(DefaultDocRemoveTags).Remove()
+			}
+
+			// 语言
+			langRes := Lang(doc, resp.Charset.Charset, true)
+
+			content := extract.NewContent(doc, langRes.Lang)
+			news := content.News()
+			t.Log(news.Title)
+			t.Log(news.TitlePos)
+			t.Log(news.Time)
+			t.Log(news.TimePos)
+			t.Log(news.Content)
+
+			// 内容节点
+			node := goquery.NewDocumentFromNode(news.ContentNode)
+			contentHtml, _ := node.Html()
+			t.Log(contentHtml)
+
+			// 仅保留 p img 标签
+			p := bluemonday.NewPolicy()
+			p.AllowElements("p")
+			p.AllowImages()
+			html := p.Sanitize(contentHtml)
+			t.Log(html)
+		}
+	}
+
 }
