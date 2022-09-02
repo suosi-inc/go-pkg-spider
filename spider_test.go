@@ -103,7 +103,11 @@ func TestContent(t *testing.T) {
 		// "https://mp.weixin.qq.com/s?__biz=MzUxODkxNTYxMA==&mid=2247484842&idx=1&sn=d9822ee4662523609aee7441066c2a96&chksm=f980d6dfcef75fc93cb1e7942cb16ec82a7fb7ec3c2d857c307766daff667bd63ab1b4941abd&exportkey=AXWfguuAyJjlOJgCHf10io8%3D&acctmode=0&pass_ticket=8eXqj",
 		// "https://www.bbc.com/news/world-asia-62744522",
 		// "https://www.sohu.com/a/581634395_121284943",
-		"https://edition.cnn.com/2022/01/30/europe/lithuania-took-on-china-intl-cmd/index.html",
+		// "https://edition.cnn.com/2022/01/30/europe/lithuania-took-on-china-intl-cmd/index.html",
+		// "https://www.36kr.com/p/1897541916043649",
+		// "https://www.huxiu.com/article/651531.html",
+		// "http://www.news.cn/politics/2022-09/02/c_1128969463.htm",
+		"https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -131,18 +135,25 @@ func TestContent(t *testing.T) {
 			t.Log(news.TimePos)
 			t.Log(news.Content)
 
-			// 内容 html 节点
-			node := goquery.NewDocumentFromNode(news.ContentNode)
-			contentHtml, _ := node.Html()
-			t.Log(NormaliseLine(contentHtml))
+			if news.ContentNode != nil {
+				// 内容 html 节点
+				node := goquery.NewDocumentFromNode(news.ContentNode)
+				contentHtml, _ := node.Html()
+				t.Log(fun.NormaliseLine(contentHtml))
 
-			// 内容 html 节点清理, 仅保留 p img 标签
-			p := bluemonday.NewPolicy()
-			p.AllowElements("p")
-			p.AllowImages()
-			html := p.Sanitize(contentHtml)
-			t.Log(NormaliseLine(html))
+				// 内容 html 节点清理, 仅保留 p img 标签
+				p := bluemonday.NewPolicy()
+				p.AllowElements("p")
+				p.AllowImages()
+				html := p.Sanitize(contentHtml)
+				t.Log(fun.NormaliseLine(html))
+			}
 		}
 	}
+}
 
+func TestDemo(t *testing.T) {
+	re := regexp.MustCompile(`^/index\.(html|shtml|htm|php|asp|aspx|jsp)$`)
+	res := re.MatchString("/indexhtmls")
+	t.Log(res)
 }

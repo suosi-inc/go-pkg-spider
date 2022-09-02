@@ -29,6 +29,8 @@ var (
 	regexZhPattern             = regexp.MustCompile(`\p{Han}`)
 	regexEnPattern             = regexp.MustCompile(`[a-zA-Z]`)
 	regexPuncPattern           = regexp.MustCompile(`\pP`)
+
+	regexIndexSuffixPattern = regexp.MustCompile(`^/index\.(html|shtml|htm|php|asp|aspx|jsp)$`)
 )
 
 type LinkType int
@@ -139,8 +141,12 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
 				pathClean := pathDirClean(pathDir)
 				if regexUrlPublishDatePattern.MatchString(pathClean) {
-					linkRes.Content[link] = title
-					delete(linkRes.List, link)
+					// 判断下长度才加入
+					titleLen := utf8.RuneCountInString(title)
+					if titleLen >= 2 {
+						linkRes.Content[link] = title
+						delete(linkRes.List, link)
+					}
 				}
 			}
 		}
@@ -150,7 +156,13 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 				pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
 				pathClean := pathDirClean(pathDir)
 				if regexUrlPublishDatePattern.MatchString(pathClean) {
-					linkRes.Content[link] = title
+					// 判断下长度才加入
+					titleLen := utf8.RuneCountInString(title)
+					if titleLen >= 2 {
+						linkRes.Content[link] = title
+					} else {
+						linkRes.List[link] = title
+					}
 				} else {
 					linkRes.List[link] = title
 				}
@@ -167,7 +179,13 @@ func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, conte
 			if len(paths) > 0 {
 				pathIndex := paths[0]
 				if fun.SliceContains(topPaths, pathIndex) {
-					linkRes.Content[link] = title
+					// 判断下长度才加入
+					titleLen := utf8.RuneCountInString(title)
+					if titleLen >= 2 {
+						linkRes.Content[link] = title
+					} else {
+						linkRes.List[link] = title
+					}
 				} else {
 					linkRes.List[link] = title
 				}
@@ -223,7 +241,7 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 
 	// 无 path 或者默认 path, 应当由 domain 处理
 	pathDir := strings.TrimSpace(linkUrl.Path)
-	if pathDir == "" || pathDir == fun.SLASH || pathDir == "/index.html" || pathDir == "/index.htm" || pathDir == "/index.shtml" {
+	if pathDir == "" || pathDir == fun.SLASH || regexIndexSuffixPattern.MatchString(pathDir) {
 		return LinkTypeNone
 	}
 

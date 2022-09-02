@@ -18,7 +18,11 @@ import (
 
 const (
 	ContentAddRemoveTags = "textarea"
-	RegexPublishDate     = "(202\\d{2}[-/年.])?(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\\s{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?"
+
+	// RegexPublishDate 完整发布时间正则
+	RegexPublishDate = "((202\\d{1}[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+
+	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
 )
 
 var (
@@ -28,9 +32,11 @@ var (
 		"meta[name='twitter:title' i]",
 	}
 
+	metaDatetimeDicts = []string{"publish", "pubdate"}
+
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 
-	metaDatetimeDicts = []string{"publish", "pubdate"}
+	regexTimePattern = regexp.MustCompile(RegexTime)
 )
 
 type News struct {
@@ -53,11 +59,11 @@ type News struct {
 type Content struct {
 	Doc     *goquery.Document
 	Lang    string
-	InfoMap map[*html.Node]CountInfo
+	infoMap map[*html.Node]CountInfo
 
-	BodyNode *html.Node
-	TitlePos string
-	TimePos  string
+	bodyNode *html.Node
+	titlePos string
+	timePos  string
 }
 
 type CountInfo struct {
@@ -82,7 +88,7 @@ type CountInfo struct {
 
 func NewContent(doc *goquery.Document, lang string) *Content {
 	infoMap := make(map[*html.Node]CountInfo, 0)
-	return &Content{Doc: doc, Lang: lang, InfoMap: infoMap}
+	return &Content{Doc: doc, Lang: lang, infoMap: infoMap}
 }
 
 func (c *Content) News() *News {
@@ -93,28 +99,38 @@ func (c *Content) News() *News {
 	if contentNode != nil {
 		news.ContentNode = contentNode
 
-		node := goquery.NewDocumentFromNode(contentNode)
-		content := node.Text()
-		content = c.formatContent(content)
+		content := c.formatContent(contentNode)
 		news.Content = content
 	}
 
 	// 标题
 	title := c.getTitle(contentNode)
 	news.Title = title
-	news.TitlePos = c.TitlePos
+	news.TitlePos = c.titlePos
 
-	// 时间
+	// 发布时间
 	time := c.getTime()
 	news.Time = time
-	news.TimePos = c.TimePos
-	news.TimeLocal = fun.Date(fun.StrToTime(time))
+	news.TimePos = c.timePos
+	if news.Time != "" {
+		news.TimeLocal = fun.Date(fun.StrToTime(time))
+	}
 
 	return news
 }
 
-// formatContent 正文格式化, 将多个换行符和空格均合并为一个
-func (c *Content) formatContent(str string) string {
+// formatContent 正文格式化, 处理 <p> 的换行, 最终将多个换行符和空格均合并为一个
+func (c *Content) formatContent(contentNode *html.Node) string {
+	// 先提取 HTML
+	node := goquery.NewDocumentFromNode(contentNode)
+	contentHtml, _ := node.Html()
+
+	// 给 <p>  则增加换行 \n
+	contentHtml = strings.ReplaceAll(contentHtml, "</p>", "</p>\n")
+	n, _ := goquery.NewDocumentFromReader(strings.NewReader(contentHtml))
+	str := n.Text()
+
+	// 最后合并多余的换行符
 	lines := fun.SplitTrim(str, fun.LF)
 	if len(lines) > 0 {
 		for i, line := range lines {
@@ -137,14 +153,14 @@ func (c *Content) getContentNode() *html.Node {
 	bodyNodes := c.Doc.Find("body").Nodes
 	if len(bodyNodes) > 0 {
 		bodyNode := bodyNodes[0]
-		c.BodyNode = bodyNode
+		c.bodyNode = bodyNode
 
 		// 遍历计算统计最后找得分最高节点
-		c.computeInfo(c.BodyNode)
+		c.computeInfo(c.bodyNode)
 
 		// c.debug()
 
-		for node, _ := range c.InfoMap {
+		for node, _ := range c.infoMap {
 			if node.Data == "a" || node == bodyNode {
 				continue
 			}
@@ -163,8 +179,57 @@ func (c *Content) getContentNode() *html.Node {
 func (c *Content) getTime() string {
 	metaTime := c.getTimeByMeta()
 	if metaTime != "" {
-		c.TimePos = "meta"
+		c.timePos = "meta"
 		return metaTime
+	}
+
+	contentTime := c.getTimeByBody()
+
+	return contentTime
+}
+
+func (c *Content) getTimeByBody() string {
+	bodyText := c.Doc.Find("body").Text()
+	bodyText = fun.NormaliseLine(bodyText)
+
+	// 带有年份的完整匹配
+	publishDates := regexPublishDatePattern.FindAllString(bodyText, -1)
+	if (publishDates) != nil {
+		// 只有一个
+		publishDatesLen := len(publishDates)
+		if publishDatesLen == 1 {
+			return publishDates[0]
+		}
+
+		// 根据是否有时间进行分组
+		hasTimes := make([]string, 0)
+		noTimes := make([]string, 0)
+		for _, date := range publishDates {
+			if regexTimePattern.MatchString(date) {
+				hasTimes = append(hasTimes, date)
+			} else {
+				noTimes = append(noTimes, date)
+			}
+		}
+
+		// 有时间的返回最长的
+		if len(hasTimes) > 0 {
+			if len(hasTimes) == 1 {
+				return hasTimes[0]
+			}
+
+			var maxLen int
+			var maxLenDate string
+			for _, date := range hasTimes {
+				length := utf8.RuneCountInString(date)
+				if length > maxLen {
+					maxLen = length
+					maxLenDate = date
+				}
+			}
+
+			return maxLenDate
+		}
 	}
 
 	return ""
@@ -206,7 +271,8 @@ func (c *Content) getTimeByMeta() string {
 		var maxLenDate string
 		for _, date := range metaDates {
 			length := utf8.RuneCountInString(date)
-			if length >= maxLen {
+			if length > maxLen {
+				maxLen = length
 				maxLenDate = date
 			}
 		}
@@ -261,7 +327,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 				}
 			}
 		}
-		traverse(c.BodyNode)
+		traverse(c.bodyNode)
 
 		// 从 h 标签中获取
 		index := int(atomic.LoadInt32(&contentIndex))
@@ -280,7 +346,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 			}
 
 			if maxIndex != -1 {
-				c.TitlePos = "headline"
+				c.titlePos = "headline"
 				tagNode := goquery.NewDocumentFromNode(titleList[maxIndex])
 				headTitle := c.normaliseText(tagNode.Selection)
 				return headTitle
@@ -295,7 +361,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 		selectorTitle := c.normaliseText(first)
 		titleLen := utf8.RuneCountInString(selectorTitle)
 		if titleLen > 5 && titleLen < 40 {
-			c.TitlePos = "selector"
+			c.titlePos = "selector"
 			return selectorTitle
 		}
 	}
@@ -333,14 +399,14 @@ func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 			}
 		}
 	}
-	traverse(c.BodyNode)
+	traverse(c.bodyNode)
 
 	if len(buf.String()) > 0 {
-		c.TitlePos = "text"
+		c.titlePos = "text"
 		return buf.String()
 	}
 
-	c.TitlePos = "title"
+	c.titlePos = "title"
 	return originMetaTitle
 }
 
@@ -360,10 +426,10 @@ func (c *Content) getTitleByMeta(metaTitle string) string {
 				titleLen := utf8.RuneCountInString(title)
 				metaTitleLen := utf8.RuneCountInString(metaTitle)
 				if titleLen < metaTitleLen {
-					c.TitlePos = "title"
+					c.titlePos = "title"
 					return title
 				} else {
-					c.TitlePos = "metaTitle"
+					c.titlePos = "metaTitle"
 					return metaTitle
 				}
 			}
@@ -403,7 +469,7 @@ func (c *Content) computeInfo(node *html.Node) CountInfo {
 			countInfo.Density = float64(pureLen) / float64(tagLen)
 		}
 
-		c.InfoMap[node] = countInfo
+		c.infoMap[node] = countInfo
 
 		return countInfo
 	} else if node.Type == html.TextNode {
@@ -421,7 +487,7 @@ func (c *Content) computeInfo(node *html.Node) CountInfo {
 }
 
 func (c *Content) computeScore(node *html.Node) float64 {
-	countInfo := c.InfoMap[node]
+	countInfo := c.infoMap[node]
 	value := c.computeVar(countInfo.LeafList) + 1
 	value = math.Sqrt(value)
 
@@ -483,7 +549,7 @@ func (c *Content) normaliseText(s *goquery.Selection) string {
 }
 
 func (c *Content) Debug() {
-	for node, info := range c.InfoMap {
+	for node, info := range c.infoMap {
 		if node.Data == "div" {
 			for _, a := range node.Attr {
 				if a.Key == "id" || a.Key == "class" {

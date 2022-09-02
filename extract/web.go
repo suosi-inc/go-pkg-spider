@@ -199,8 +199,7 @@ func WebLinkTitles(doc *goquery.Document, baseUrl *url.URL, strictDomain bool) (
 				tmpLink = strings.TrimSpace(tmpLink)
 
 				tmpTitle := s.Text()
-				tmpTitle = fun.RemoveLines(tmpTitle)
-				tmpTitle = strings.ReplaceAll(tmpTitle, fun.TAB, "")
+				tmpTitle = fun.NormaliseSpace(tmpTitle)
 				tmpTitle = strings.TrimSpace(tmpTitle)
 				if tmpLink != "" && tmpTitle != "" {
 					// 如果链接已存在, 保留长标题
