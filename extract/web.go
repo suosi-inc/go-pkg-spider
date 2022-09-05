@@ -123,7 +123,7 @@ func WebContentTitleClean(title string, lang string) string {
 		}
 
 		titleClean := title
-		for _, split := range zhSplits {
+		for _, split := range zhContentSplits {
 			end := strings.LastIndex(titleClean, split)
 			if end != -1 {
 				for {

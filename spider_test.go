@@ -108,7 +108,7 @@ func TestContent(t *testing.T) {
 		// "https://www.huxiu.com/article/651531.html",
 		// "http://www.news.cn/politics/2022-09/02/c_1128969463.htm",
 		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
-		"http://my.4399.com/zhuanti/hxjy/info-detail-tid-63019285",
+		"http://news.pconline.com.cn/1512/15124013.html",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -126,7 +126,7 @@ func TestContent(t *testing.T) {
 			start := fun.Timestamp(true)
 
 			// 正文抽取
-			content := extract.NewContent(doc, langRes.Lang)
+			content := extract.NewContent(doc, "", langRes.Lang)
 			news := content.News()
 			t.Log(fun.Timestamp(true) - start)
 			t.Log(news.Title)
