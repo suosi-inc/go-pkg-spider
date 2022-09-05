@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	ContentAddRemoveTags = "textarea"
+	ContentRemoveTags = "script,noscript,style,iframe,br,link,svg,textarea"
 
-	// RegexPublishDate 完整的发布时间
+	// RegexPublishDate 完整的发布时间正则
 	RegexPublishDate = "((202\\d{1}[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
-	// RegexTime 时间正则
+	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
 )
 
@@ -94,7 +94,7 @@ func NewContent(doc *goquery.Document, lang string, originTitle string) *Content
 func (c *Content) News() *News {
 	news := &News{}
 
-	// 提取正文, 提取内容结点
+	// 提取正文结点和正文
 	contentNode := c.getContentNode()
 	if contentNode != nil {
 		news.ContentNode = contentNode
@@ -150,7 +150,7 @@ func (c *Content) getContentNode() *html.Node {
 	var contentNode *html.Node
 
 	// 取第一个 body 标签
-	c.Doc.Find(ContentAddRemoveTags).Remove()
+	c.Doc.Find(ContentRemoveTags).Remove()
 	bodyNodes := c.Doc.Find("body").Nodes
 	if len(bodyNodes) > 0 {
 		bodyNode := bodyNodes[0]

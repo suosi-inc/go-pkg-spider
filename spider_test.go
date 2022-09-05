@@ -108,7 +108,7 @@ func TestContent(t *testing.T) {
 		// "https://www.huxiu.com/article/651531.html",
 		// "http://www.news.cn/politics/2022-09/02/c_1128969463.htm",
 		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
-		"http://news.pconline.com.cn/1512/15124013.html",
+		"http://news.4399.com/fzscjh/dilao/m/937008.html",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -116,6 +116,7 @@ func TestContent(t *testing.T) {
 
 		if resp.Success && err == nil {
 			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+			contentDoc := goquery.CloneDocument(doc)
 			if docErr == nil {
 				doc.Find(DefaultDocRemoveTags).Remove()
 			}
@@ -126,9 +127,10 @@ func TestContent(t *testing.T) {
 			start := fun.Timestamp(true)
 
 			// 正文抽取
-			content := extract.NewContent(doc, langRes.Lang, "")
-			news := content.News()
+			content := extract.NewContent(contentDoc, langRes.Lang, "")
 			t.Log(fun.Timestamp(true) - start)
+			news := content.News()
+
 			t.Log(news.Title)
 			t.Log(news.TitlePos)
 			t.Log(news.TimeLocal)
