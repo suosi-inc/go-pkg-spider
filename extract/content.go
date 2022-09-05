@@ -290,7 +290,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	titleSim := make([]float64, 0)
 	originMetaTitle := WebTitle(c.Doc, 255)
 
-	if !fun.Blank(originMetaTitle) {
+	if !fun.Blank(originMetaTitle) && contentNode != nil {
 		// 去除原始 metaTitle 最后一个尾巴（一般是站点名称），再进行相似判断
 		metaTitle := WebContentTitleClean(originMetaTitle, c.Lang)
 
