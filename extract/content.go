@@ -327,7 +327,9 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 				}
 			}
 		}
-		traverse(c.bodyNode)
+		if c.bodyNode != nil {
+			traverse(c.bodyNode)
+		}
 
 		// 从 h 标签中获取
 		index := int(atomic.LoadInt32(&contentIndex))
@@ -399,7 +401,9 @@ func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 			}
 		}
 	}
-	traverse(c.bodyNode)
+	if c.bodyNode != nil {
+		traverse(c.bodyNode)
+	}
 
 	if len(buf.String()) > 0 {
 		c.titlePos = "text"
