@@ -126,7 +126,7 @@ func TestContent(t *testing.T) {
 			start := fun.Timestamp(true)
 
 			// 正文抽取
-			content := extract.NewContent(doc, "", langRes.Lang)
+			content := extract.NewContent(doc, langRes.Lang, "")
 			news := content.News()
 			t.Log(fun.Timestamp(true) - start)
 			t.Log(news.Title)

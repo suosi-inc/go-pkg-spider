@@ -22,8 +22,6 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/suosi-inc/chardet v0.1.0 h1:AmAXYaZKPAXCpwthMeQG/ABwYreonxjP/BCbhOa7jfw=
 github.com/suosi-inc/chardet v0.1.0/go.mod h1:dhKdJO4yQeuLYMyu1QFjoNITgMJ/zyLhs4zwIUnQTKI=
-github.com/x-funs/go-fun v0.65.0 h1:aqBk7yBJAYTrTB0YWQSOyh7Bx0GSGuNoVS835B0jsWc=
-github.com/x-funs/go-fun v0.65.0/go.mod h1:748QizKd83Impm7SSV0Ra9ppHyZKXdgaXln57CfK0QQ=
 github.com/x-funs/go-fun v0.66.0 h1:cd62uU8hNWsJho/oW0kVZqTjggU2AmvFff+b4pzmvnI=
 github.com/x-funs/go-fun v0.66.0/go.mod h1:748QizKd83Impm7SSV0Ra9ppHyZKXdgaXln57CfK0QQ=
 golang.org/x/net v0.0.0-20210916014120-12bc252f5db8/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=

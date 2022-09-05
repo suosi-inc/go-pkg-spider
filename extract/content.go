@@ -1,5 +1,5 @@
-// Package extract 正文抽取, 针对论文 CEPF 算法实现做了一些优化
-// 基于标签路径特征融合的在线 Web 新闻内容抽取, (吴共庆等), Refer to: http://www.jos.org.cn/jos/article/abstract/4868
+// Package extract 新闻要素抽取, 基于标签路径特征融合新闻内容抽取的 CEPF 算法, (吴共庆等)
+// Refer to: http://www.jos.org.cn/jos/article/abstract/4868
 package extract
 
 import (
@@ -18,9 +18,9 @@ import (
 const (
 	ContentAddRemoveTags = "textarea"
 
-	// RegexPublishDate 完整发布时间正则
+	// RegexPublishDate 完整的发布时间
 	RegexPublishDate = "((202\\d{1}[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
-
+	// RegexTime 时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
 )
 
@@ -82,20 +82,19 @@ type CountInfo struct {
 	DensitySum float64
 	// <p> 标签数量
 	PCount int
-
 	// 叶子列表
 	LeafList []int
 }
 
-func NewContent(doc *goquery.Document, title string, lang string) *Content {
+func NewContent(doc *goquery.Document, lang string, originTitle string) *Content {
 	infoMap := make(map[*html.Node]CountInfo, 0)
-	return &Content{Doc: doc, OriginTitle: title, Lang: lang, infoMap: infoMap}
+	return &Content{Doc: doc, OriginTitle: originTitle, Lang: lang, infoMap: infoMap}
 }
 
 func (c *Content) News() *News {
 	news := &News{}
 
-	// 正文, 提取内容根结点
+	// 提取正文, 提取内容结点
 	contentNode := c.getContentNode()
 	if contentNode != nil {
 		news.ContentNode = contentNode
@@ -104,13 +103,13 @@ func (c *Content) News() *News {
 		news.Content = content
 	}
 
-	// 标题
+	// 提取标题
 	title := c.getTitle(contentNode)
 	news.Title = title
 	news.TitlePos = c.titlePos
 	c.title = title
 
-	// 发布时间
+	// 提取发布时间
 	time := c.getTime()
 	news.Time = time
 	news.TimePos = c.timePos
@@ -157,7 +156,7 @@ func (c *Content) getContentNode() *html.Node {
 		bodyNode := bodyNodes[0]
 		c.bodyNode = bodyNode
 
-		// 遍历计算统计最后找得分最高节点
+		// 递归遍历计算并统计, 最后找得分最高节点
 		c.computeInfo(c.bodyNode)
 
 		// c.debug()
@@ -180,24 +179,13 @@ func (c *Content) getContentNode() *html.Node {
 
 func (c *Content) getTime() string {
 	metaTime := c.getTimeByMeta()
-	contentTime := c.getTimeByBody()
-
-	if metaTime != "" && contentTime != "" {
-		metaTimeLen := utf8.RuneCountInString(metaTime)
-		contentTimeLen := utf8.RuneCountInString(contentTime)
-		if contentTimeLen > metaTimeLen {
-			c.timePos = "body"
-			return contentTime
-		} else {
-			c.timePos = "meta"
-			return metaTime
-		}
-	}
 
 	if metaTime != "" {
 		c.timePos = "meta"
 		return metaTime
 	}
+
+	contentTime := c.getTimeByBody()
 
 	if contentTime != "" {
 		c.timePos = "body"
@@ -253,7 +241,7 @@ func (c *Content) getTimeByBody() string {
 			}
 
 			// 找最靠近标题的那一个
-			if c.title != "" && c.titlePos != "origin" && c.titlePos != "title" {
+			if c.title != "" && c.titlePos != "title" {
 				titleIndex := strings.Index(bodyText, c.title)
 
 				minDistance := float64(math.MaxInt)
@@ -296,30 +284,41 @@ func (c *Content) getTimeByMeta() string {
 		})
 	}
 
+	// 多个返回最长的并且包含时间的
 	metaDatesLen := len(metaDates)
-	if metaDatesLen == 1 {
-		return metaDates[0]
-	}
-
-	// 多个返回最长的
 	if metaDatesLen > 1 {
-		var maxLen int
-		var maxLenDate string
+		// 根据是否有时间进行分组
+		hasTimes := make([]string, 0)
 		for _, date := range metaDates {
-			length := utf8.RuneCountInString(date)
-			if length > maxLen {
-				maxLen = length
-				maxLenDate = date
+			if regexTimePattern.MatchString(date) {
+				hasTimes = append(hasTimes, date)
 			}
 		}
 
-		return maxLenDate
+		// 有时间的情况
+		if len(hasTimes) > 0 {
+			if len(hasTimes) == 1 {
+				return hasTimes[0]
+			}
+
+			var maxLen int
+			var maxLenDate string
+			for _, date := range metaDates {
+				length := utf8.RuneCountInString(date)
+				if length > maxLen {
+					maxLen = length
+					maxLenDate = date
+				}
+			}
+
+			return maxLenDate
+		}
 	}
 
 	return ""
 }
 
-// getTitleByOrigin 获取页面的 H 标题, 找出和标题链接最像的
+// getTitleByOrigin 获取页面的 H[1-2] 标题, 找出 OriginTitle 最像的
 func (c *Content) getTitleByOrigin() string {
 	if !fun.Blank(c.OriginTitle) {
 		headlines := c.Doc.Find("h1,h2")
@@ -355,10 +354,10 @@ func (c *Content) getTitleByOrigin() string {
 func (c *Content) getTitle(contentNode *html.Node) string {
 	var title string
 
-	// 列表页 Title 判定
+	// 优先使用 originTitle 判定 headline
 	title = c.getTitleByOrigin()
 	if title != "" {
-		c.titlePos = "origin"
+		c.titlePos = "headline"
 		return title
 	}
 
@@ -377,7 +376,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 			return titleByMeta
 		}
 
-		// 从 body 开始遍历，一直遍历到内容区域，收集 h1->h2，并计算与 metaTitle 的相似度
+		// 从 body 开始遍历，收集 h1->h2，并计算与 metaTitle 的相似度
 		var traverse func(*html.Node)
 		traverse = func(n *html.Node) {
 
@@ -428,7 +427,19 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 		}
 	}
 
-	// 最后从正文中找最相似 metaTitle 的片段,
+	// 尝试从包含开头结尾 title 选择器中获取一个相似度高的
+	titles := c.Doc.Find("body").Find("*[id^=title],*[id$=title],*[class^=title],*[class$=title]")
+	if titles.Size() > 0 {
+		first := titles.First()
+		selectorTitle := c.normaliseText(first)
+		sim := fun.SimilarityText(originMetaTitle, selectorTitle)
+		if sim > 0.3 {
+			c.titlePos = "selector"
+			return selectorTitle
+		}
+	}
+
+	// 从正文中找最相似 metaTitle 的文本片段
 	title = c.getTitleByEditDistance(originMetaTitle)
 	if title != "" {
 		c.titlePos = "content"
@@ -453,12 +464,10 @@ func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 				node := goquery.NewDocumentFromNode(n)
 				text := c.normaliseText(node.Selection)
 				sim := fun.SimilarityText(text, originMetaTitle)
-				if sim > 0 {
-					if sim > max[0] {
-						max[0] = sim
-						buf.Reset()
-						buf.WriteString(text)
-					}
+				if sim > 0.3 && sim > max[0] {
+					max[0] = sim
+					buf.Reset()
+					buf.WriteString(text)
 				}
 			}
 
@@ -472,7 +481,6 @@ func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 	}
 
 	if len(buf.String()) > 0 {
-		c.titlePos = "text"
 		return buf.String()
 	}
 
