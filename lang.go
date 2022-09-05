@@ -200,63 +200,60 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 	var lang string
 	var text string
 
-	// 列表模式
-	if list {
-		// 获取 Title
-		title := extract.WebTitle(doc, 0)
-		text = fun.RemoveSign(title)
-		text = strings.TrimSpace(text)
+	// 获取 Title
+	title := extract.WebTitle(doc, 0)
+	text = fun.RemoveSign(title)
+	text = strings.TrimSpace(text)
 
-		if text != "" {
-			// 首先判断标题是否包含汉字
-			han := regexZhPattern.FindAllString(text, -1)
-			if han != nil {
-				hanCount := len(han)
+	if text != "" {
+		// 首先判断标题是否包含汉字
+		han := regexZhPattern.FindAllString(text, -1)
+		if han != nil {
+			hanCount := len(han)
 
-				// 汉字数量 >=2
-				if hanCount >= 2 {
+			// 汉字数量 >=2
+			if hanCount >= 2 {
 
-					// 需要抽取内容验证包含有日语韩语, 如(日本語_新華網)
-					bodyText := bodyTextForLang(doc, list)
+				// 需要抽取内容验证包含有日语韩语, 如(日本語_新華網)
+				bodyText := bodyTextForLang(doc, list)
 
-					// 去除所有符号
-					bodyText = fun.RemoveSign(bodyText)
+				// 去除所有符号
+				bodyText = fun.RemoveSign(bodyText)
 
-					// 最大截取 BodyChunkSize 个字符
-					bodyText = fun.SubString(bodyText, 0, BodyChunkSize)
-					bodyText = strings.TrimSpace(bodyText)
+				// 最大截取 BodyChunkSize 个字符
+				bodyText = fun.SubString(bodyText, 0, BodyChunkSize)
+				bodyText = strings.TrimSpace(bodyText)
 
-					bodyTextCount := utf8.RuneCountInString(bodyText)
+				bodyTextCount := utf8.RuneCountInString(bodyText)
 
-					// 包含一定的日语
-					ja := regexJaPattern.FindAllString(bodyText, -1)
-					if ja != nil {
-						jaCount := len(ja)
-						jaRate := float64(jaCount) / float64(bodyTextCount)
+				// 包含一定的日语
+				ja := regexJaPattern.FindAllString(bodyText, -1)
+				if ja != nil {
+					jaCount := len(ja)
+					jaRate := float64(jaCount) / float64(bodyTextCount)
 
-						// 日语出现比例
-						if jaRate > 0.2 {
-							lang = "ja"
-							return lang, LangPosTitleZh
-						}
+					// 日语出现比例
+					if jaRate > 0.2 {
+						lang = "ja"
+						return lang, LangPosTitleZh
 					}
-
-					// 包含一定的韩语
-					ko := regexKoPattern.FindAllString(bodyText, -1)
-					if ko != nil {
-						koCount := len(ko)
-						koRate := float64(koCount) / float64(bodyTextCount)
-
-						// 日语出现比例
-						if koRate > 0.2 {
-							lang = "ko"
-							return lang, LangPosTitleZh
-						}
-					}
-
-					lang = "zh"
-					return lang, LangPosTitleZh
 				}
+
+				// 包含一定的韩语
+				ko := regexKoPattern.FindAllString(bodyText, -1)
+				if ko != nil {
+					koCount := len(ko)
+					koRate := float64(koCount) / float64(bodyTextCount)
+
+					// 日语出现比例
+					if koRate > 0.2 {
+						lang = "ko"
+						return lang, LangPosTitleZh
+					}
+				}
+
+				lang = "zh"
+				return lang, LangPosTitleZh
 			}
 		}
 	}

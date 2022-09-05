@@ -103,11 +103,11 @@ func TestContent(t *testing.T) {
 		// "https://mp.weixin.qq.com/s?__biz=MzUxODkxNTYxMA==&mid=2247484842&idx=1&sn=d9822ee4662523609aee7441066c2a96&chksm=f980d6dfcef75fc93cb1e7942cb16ec82a7fb7ec3c2d857c307766daff667bd63ab1b4941abd&exportkey=AXWfguuAyJjlOJgCHf10io8%3D&acctmode=0&pass_ticket=8eXqj",
 		// "https://www.bbc.com/news/world-asia-62744522",
 		// "https://www.sohu.com/a/581634395_121284943",
-		// "https://edition.cnn.com/2022/01/30/europe/lithuania-took-on-china-intl-cmd/index.html",
+		"https://edition.cnn.com/2022/01/30/europe/lithuania-took-on-china-intl-cmd/index.html",
 		// "https://www.36kr.com/p/1897541916043649",
 		// "https://www.huxiu.com/article/651531.html",
 		// "http://www.news.cn/politics/2022-09/02/c_1128969463.htm",
-		"https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
+		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
 	}
 
 	for _, urlStr := range urlStrs {

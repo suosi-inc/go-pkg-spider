@@ -92,7 +92,8 @@ func TestLang(t *testing.T) {
 		// "http://gxbsrd.gov.cn/",
 		// "https://defence24.com/",
 		// "http://www.gmp.or.kr/",
-		"http://rdfmj.com/",
+		// "http://rdfmj.com/",
+		"http://liuyan.people.com.cn/threads/content?tid=15759990",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -104,7 +105,7 @@ func TestLang(t *testing.T) {
 
 		// 语言
 		start := fun.Timestamp(true)
-		langRes := Lang(doc, resp.Charset.Charset, true)
+		langRes := Lang(doc, resp.Charset.Charset, false)
 
 		t.Log(urlStr)
 		t.Log(resp.Charset)
