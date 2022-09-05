@@ -241,7 +241,7 @@ func (c *Content) getTimeByBody() string {
 			}
 
 			// 找最靠近标题的那一个
-			if c.title != "" && c.titlePos != "title" {
+			if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
 				titleIndex := strings.Index(bodyText, c.title)
 
 				minDistance := float64(math.MaxInt)
@@ -303,7 +303,7 @@ func (c *Content) getTimeByMeta() string {
 
 			var maxLen int
 			var maxLenDate string
-			for _, date := range metaDates {
+			for _, date := range hasTimes {
 				length := utf8.RuneCountInString(date)
 				if length > maxLen {
 					maxLen = length
