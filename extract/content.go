@@ -23,7 +23,7 @@ const (
 	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
 	// RegexZhPublishPrefix 中文的发布时间前缀
-	RegexZhPublishPrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期|于)"
+	RegexZhPublishPrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期)"
 )
 
 var (
@@ -223,6 +223,8 @@ func (c *Content) getTimeByLang(bodyText string) string {
 				return c.pickPublishDates(bodyText, publishDates)
 			}
 		}
+	} else if c.Lang == "en" {
+
 	}
 
 	return ""
@@ -392,13 +394,23 @@ func (c *Content) getTimeByMeta() string {
 		}
 	}
 
+	// <time> 标签
+	timeTags := c.Doc.Find("time")
+	if timeTags.Size() > 0 {
+		firstTimeTags := timeTags.First()
+		dataTime := firstTimeTags.AttrOr("datetime", "")
+		if dataTime != "" && regexPublishDatePattern.MatchString(dataTime) {
+			return dataTime
+		}
+	}
+
 	return ""
 }
 
 // getTitleByOrigin 获取页面的 H[1-2] 标题, 找出 OriginTitle 最像的
 func (c *Content) getTitleByOrigin() string {
 	if !fun.Blank(c.OriginTitle) {
-		headlines := c.Doc.Find("h1,h2,h3")
+		headlines := c.Doc.Find("h1,h2")
 		if headlines.Size() > 0 {
 			titles := make([]string, 0)
 			titleSim := make([]float64, 0)

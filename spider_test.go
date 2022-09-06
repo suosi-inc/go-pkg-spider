@@ -108,7 +108,7 @@ func TestContent(t *testing.T) {
 		// "https://www.huxiu.com/article/651531.html",
 		// "http://www.news.cn/politics/2022-09/02/c_1128969463.htm",
 		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
-		"http://news.4399.com/jlp/zhua/827413.html",
+		"https://www.hjenglish.com/new/p704263/",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -122,7 +122,7 @@ func TestContent(t *testing.T) {
 			}
 
 			// 语言
-			langRes := Lang(doc, resp.Charset.Charset, true)
+			langRes := Lang(doc, resp.Charset.Charset, false)
 
 			start := fun.Timestamp(true)
 
