@@ -407,9 +407,6 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 
 				return noTimes[minIndex]
 			}
-
-			// 没找到或标题不是正文区域, 最后返回第一个
-			return hasTimes[0]
 		}
 	}
 
