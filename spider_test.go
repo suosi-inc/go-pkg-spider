@@ -110,7 +110,7 @@ func TestContent(t *testing.T) {
 		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
 		// "https://new.qq.com/omn/20200701/20200701A04H7500",
 		// "http://v.china.com.cn/2022-09/06/content_78407150.html",
-		"https://tech.tgbus.com/news/165515",
+		"https://thj.mysteel.com/22/0902/17/F5FCA7BDFE08EBEA.html",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -159,5 +159,5 @@ func TestContent(t *testing.T) {
 }
 
 func TestDemo(t *testing.T) {
-
+	t.Log(fun.Date(fun.StrToTime("2022-04-10T18:24:00")))
 }

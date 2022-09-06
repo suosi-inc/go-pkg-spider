@@ -419,7 +419,8 @@ func (c *Content) getTimeByMeta() string {
 	if metas.Size() > 0 {
 		metas.Each(func(i int, meta *goquery.Selection) {
 			content := meta.AttrOr("content", "")
-			if regexPublishDatePattern.MatchString(content) {
+			dateStr := regexPublishDatePattern.FindString(content)
+			if dateStr != "" {
 				name := meta.AttrOr("name", "")
 				property := meta.AttrOr("property", "")
 				name = strings.ReplaceAll(name, "_", "")
@@ -428,12 +429,12 @@ func (c *Content) getTimeByMeta() string {
 				property = strings.ReplaceAll(property, "-", "")
 
 				if fun.ContainsAny(property, metaDatetimeDicts...) {
-					dateStr := strings.TrimSpace(content)
+					dateStr = strings.TrimSpace(dateStr)
 					metaDates = append(metaDates, dateStr)
 				}
 
 				if fun.ContainsAny(name, metaDatetimeDicts...) {
-					dateStr := strings.TrimSpace(content)
+					dateStr = strings.TrimSpace(dateStr)
 					metaDates = append(metaDates, dateStr)
 				}
 			}
