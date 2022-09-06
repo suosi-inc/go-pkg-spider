@@ -110,7 +110,7 @@ func TestContent(t *testing.T) {
 		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
 		// "https://new.qq.com/omn/20200701/20200701A04H7500",
 		// "http://v.china.com.cn/2022-09/06/content_78407150.html",
-		"http://www.sc168.com/content.jsp?uuid=6070000491513",
+		"https://tech.tgbus.com/news/165515",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -159,7 +159,5 @@ func TestContent(t *testing.T) {
 }
 
 func TestDemo(t *testing.T) {
-	re := regexp.MustCompile(`^/index\.(html|shtml|htm|php|asp|aspx|jsp)$`)
-	res := re.MatchString("/indexhtmls")
-	t.Log(res)
+
 }

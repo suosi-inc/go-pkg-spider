@@ -7,7 +7,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.19
 	github.com/pemistahl/lingua-go v1.0.5
 	github.com/suosi-inc/chardet v0.1.0
-	github.com/x-funs/go-fun v0.68.0
+	github.com/x-funs/go-fun v0.69.0
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 )
 

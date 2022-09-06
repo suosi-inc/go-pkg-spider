@@ -16,23 +16,32 @@ import (
 )
 
 const (
-	ContentRemoveTags = "noscript,style,iframe,br,link,svg,textarea"
+	ContentRemoveTags = "script,noscript,style,iframe,br,link,svg,textarea"
 
 	// RegexPublishDate 完整的发布时间正则
-	RegexPublishDate = "(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+	RegexPublishDate = "(((20[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 
-	// RegexTime 仅时间正则
-	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
+	// RegexPublishShortDate 年份缩写发布时间正则
+	RegexPublishShortDate = "(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 
 	// RegexPublishDateNoYear 不包含年的发布时间(优先级低)
 	RegexPublishDateNoYear = "((0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?)?)"
 
+	// RegexTime 仅时间正则
+	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?"
+
 	// RegexZhPublishPrefix 中文的发布时间前缀
 	RegexZhPublishPrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期)"
 
+	// RegexScriptTitle Script 中的标题
 	RegexScriptTitle = `(?i)"title"\x20*:\x20*"(.*)"`
 
-	RegexScriptTime = `(?i)"[\w_\-]*pub.*"\x20*:\x20*"(((20[1-3]\d{1}|[1-3]\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\.\d{3})?)(z|Z|[\+-]\d{2}[:]?\d{2})?))"`
+	// RegexScriptTime Script 中的发布时间
+	RegexScriptTime = `(?i)"[\w_\-]*pub.*"\x20*:\x20*"(((20[1-3]\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\.\d{3})?)(z|Z|[\+-]\d{2}[:]?\d{2})?))"`
+
+	RegexFormatTime3 = `[:分]\d{3}$`
+
+	RegexFormatTime4 = `[:分]\d{4}$`
 )
 
 var (
@@ -46,6 +55,8 @@ var (
 
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 
+	regexPublishShortDatePattern = regexp.MustCompile(RegexPublishShortDate)
+
 	regexPublishDateNoYearPattern = regexp.MustCompile(RegexPublishDateNoYear)
 
 	regexTimePattern = regexp.MustCompile(RegexTime)
@@ -53,6 +64,9 @@ var (
 	regexScriptTitlePattern = regexp.MustCompile(RegexScriptTitle)
 
 	regexScriptTimePattern = regexp.MustCompile(RegexScriptTime)
+
+	regexFormatTime3 = regexp.MustCompile(RegexFormatTime3)
+	regexFormatTime4 = regexp.MustCompile(RegexFormatTime4)
 )
 
 type News struct {
@@ -132,6 +146,7 @@ func (c *Content) News() *News {
 	// 提取发布时间
 	time := c.getTime()
 	if time != "" {
+		// 格式化时间
 		if fun.ContainsAny(time, "T", "t", "Z", "z") {
 			time = strings.ReplaceAll(time, " ", "")
 		}
@@ -233,13 +248,13 @@ func (c *Content) getTime() string {
 
 func (c *Content) getTimeByLang(bodyText string) string {
 	if c.Lang == "zh" {
-		regexStr := RegexZhPublishPrefix + ".{0,32}" + RegexPublishDate
+		regexStr := RegexZhPublishPrefix + ".{0,32}" + RegexPublishShortDate
 		allRegexs := regexp.MustCompile(regexStr).FindAllString(bodyText, -1)
 
 		if allRegexs != nil {
 			publishDates := make([]string, 0)
 			for _, regex := range allRegexs {
-				regexDate := regexPublishDatePattern.FindString(regex)
+				regexDate := regexPublishShortDatePattern.FindString(regex)
 				if regexDate != "" {
 					publishDates = append(publishDates, regexDate)
 				}
@@ -258,7 +273,7 @@ func (c *Content) getTimeByLang(bodyText string) string {
 
 func (c *Content) getTimeByBody(bodyText string) string {
 	// 带有年份的完整匹配
-	publishDates := regexPublishDatePattern.FindAllString(bodyText, -1)
+	publishDates := regexPublishShortDatePattern.FindAllString(bodyText, -1)
 	if (publishDates) != nil {
 		return c.pickPublishDates(bodyText, publishDates, false)
 	}
@@ -293,6 +308,17 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 	for _, date := range publishDates {
 		dateStr := strings.TrimSpace(date)
 		if regexTimePattern.MatchString(dateStr) {
+			// 去除非法的尾巴
+			if regexFormatTime3.MatchString(dateStr) {
+				timeRunes := []rune(dateStr)
+				timeRunes = timeRunes[:len(timeRunes)-1]
+				dateStr = string(timeRunes)
+			}
+			if regexFormatTime4.MatchString(dateStr) {
+				timeRunes := []rune(dateStr)
+				timeRunes = timeRunes[:len(timeRunes)-2]
+				dateStr = string(timeRunes)
+			}
 			hasTimes = append(hasTimes, dateStr)
 		} else {
 			noTimes = append(noTimes, dateStr)
@@ -321,7 +347,7 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 		}
 
 		// 找最靠近标题的那一个
-		if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
+		if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline" || c.titlePos == "content") {
 			titleIndex := strings.Index(bodyText, c.title)
 
 			minDistance := float64(math.MaxInt)
