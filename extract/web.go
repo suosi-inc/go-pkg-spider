@@ -74,8 +74,10 @@ func WebTitleClean(title string, lang string) string {
 
 		titleClean := title
 		for _, split := range zhSplits {
+			var exists bool
 			end := strings.LastIndex(titleClean, split)
 			if end != -1 {
+				exists = true
 				for {
 					titleClean = strings.TrimSpace(titleClean[:end])
 					end = strings.LastIndex(titleClean, split)
@@ -84,7 +86,9 @@ func WebTitleClean(title string, lang string) string {
 						break
 					}
 				}
-
+				if exists {
+					break
+				}
 			}
 		}
 
@@ -124,8 +128,10 @@ func WebContentTitleClean(title string, lang string) string {
 
 		titleClean := title
 		for _, split := range zhContentSplits {
+			var exists bool
 			end := strings.LastIndex(titleClean, split)
 			if end != -1 {
+				exists = true
 				for {
 					titleClean = strings.TrimSpace(titleClean[:end])
 					end = strings.LastIndex(titleClean, split)
@@ -134,7 +140,9 @@ func WebContentTitleClean(title string, lang string) string {
 						break
 					}
 				}
-
+				if exists {
+					break
+				}
 			}
 		}
 

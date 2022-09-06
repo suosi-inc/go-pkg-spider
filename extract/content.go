@@ -22,6 +22,8 @@ const (
 	RegexPublishDate = "((20[1-2]\\d{1}[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
+
+	RegexZhTimePrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期|于)"
 )
 
 var (
@@ -185,6 +187,12 @@ func (c *Content) getTime() string {
 		return metaTime
 	}
 
+	langTime := c.getTimeByLang()
+	if langTime != "" {
+		c.timePos = "lang"
+		return langTime
+	}
+
 	contentTime := c.getTimeByBody()
 
 	if contentTime != "" {
@@ -195,9 +203,13 @@ func (c *Content) getTime() string {
 	return ""
 }
 
+func (c *Content) getTimeByLang() string {
+	return ""
+}
+
 func (c *Content) getTimeByBody() string {
 	bodyText := c.Doc.Find("body").Text()
-	bodyText = fun.NormaliseLine(bodyText)
+	bodyText = fun.NormaliseSpace(bodyText)
 
 	// 带有年份的完整匹配
 	publishDates := regexPublishDatePattern.FindAllString(bodyText, -1)
@@ -311,6 +323,11 @@ func (c *Content) getTimeByMeta() string {
 				property = strings.ReplaceAll(property, "_", "")
 				property = strings.ReplaceAll(property, "-", "")
 
+				if fun.ContainsAny(property, metaDatetimeDicts...) {
+					dateStr := strings.TrimSpace(content)
+					metaDates = append(metaDates, dateStr)
+				}
+
 				if fun.ContainsAny(name, metaDatetimeDicts...) {
 					dateStr := strings.TrimSpace(content)
 					metaDates = append(metaDates, dateStr)
@@ -321,7 +338,7 @@ func (c *Content) getTimeByMeta() string {
 
 	// 多个返回最长的并且包含时间的
 	metaDatesLen := len(metaDates)
-	if metaDatesLen > 1 {
+	if metaDatesLen > 0 {
 		// 根据是否有时间进行分组
 		hasTimes := make([]string, 0)
 		for _, date := range metaDates {
@@ -401,9 +418,10 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	titleSim := make([]float64, 0)
 	originMetaTitle := WebTitle(c.Doc, 255)
 
+	// 去除原始 metaTitle 最后一个尾巴（一般是站点名称），再进行相似判断
+	metaTitle := WebContentTitleClean(originMetaTitle, c.Lang)
+
 	if !fun.Blank(originMetaTitle) && contentNode != nil {
-		// 去除原始 metaTitle 最后一个尾巴（一般是站点名称），再进行相似判断
-		metaTitle := WebContentTitleClean(originMetaTitle, c.Lang)
 
 		// 从 Meta 中提取相似 <title> 的标题，优先级较高，返回短的那个
 		titleByMeta := c.getTitleByMeta(metaTitle)
@@ -467,7 +485,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	if titles.Size() > 0 {
 		first := titles.First()
 		selectorTitle := c.normaliseText(first)
-		sim := fun.SimilarityText(originMetaTitle, selectorTitle)
+		sim := fun.SimilarityText(metaTitle, selectorTitle)
 		if sim > 0.3 {
 			c.titlePos = "selector"
 			return selectorTitle
@@ -475,7 +493,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	}
 
 	// 从正文中找最相似 metaTitle 的文本片段
-	title = c.getTitleByEditDistance(originMetaTitle)
+	title = c.getTitleByEditDistance(metaTitle)
 	if title != "" {
 		c.titlePos = "content"
 		return title
@@ -483,7 +501,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 
 	// 最坏的情况是, 直接返回页面标题
 	c.titlePos = "title"
-	return originMetaTitle
+	return metaTitle
 }
 
 // getTitleByEditDistance 从正文中找最相似 metaTitle 的片段，最坏的情况，返回页面标题
