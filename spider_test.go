@@ -108,7 +108,7 @@ func TestContent(t *testing.T) {
 		// "https://www.huxiu.com/article/651531.html",
 		// "http://www.news.cn/politics/2022-09/02/c_1128969463.htm",
 		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
-		"http://dv.dzwww.com/vxt/201905/t20190509_18706447.htm",
+		"http://www.rjxj.com.cn/sspl/20190809/Content_824882.shtml",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -131,6 +131,7 @@ func TestContent(t *testing.T) {
 			news := content.News()
 			t.Log(fun.Timestamp(true) - start)
 
+			t.Log(resp.Charset)
 			t.Log(news.Title)
 			t.Log(news.TitlePos)
 			t.Log(news.TimeLocal)

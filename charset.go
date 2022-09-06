@@ -14,6 +14,7 @@ const (
 	CharsetPosHeader = "header"
 	CharsetPosHtml   = "html"
 	CharsetPosGuess  = "guess"
+	CharsetPosValid  = "valid"
 )
 
 const (
@@ -37,6 +38,14 @@ type CharsetRes struct {
 func Charset(body []byte, headers *http.Header) CharsetRes {
 	var charsetRes CharsetRes
 	var guessCharset string
+
+	// 优先检测是否是有效的 UTF-8
+	valid := utf8.Valid(body)
+	if valid {
+		charsetRes.Charset = "UTF-8"
+		charsetRes.CharsetPos = CharsetPosValid
+		return charsetRes
+	}
 
 	// 根据 Content-Type、Body Html 标签探测编码
 	charsetRes = CharsetFromHeaderHtml(body, headers)
@@ -174,13 +183,6 @@ func CharsetFromHtml(body []byte) string {
 func CharsetGuess(body []byte) string {
 	var guessCharset string
 
-	// 检测是否是 UTF-8
-	valid := utf8.Valid(body)
-	if valid {
-		return "UTF-8"
-	}
-
-	// 如果没有则 guess
 	detector := chardet.NewHtmlDetector()
 	guess, err := detector.DetectBest(body)
 	if err == nil {

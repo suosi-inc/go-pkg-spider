@@ -356,7 +356,7 @@ func (c *Content) getTimeByMeta() string {
 // getTitleByOrigin 获取页面的 H[1-2] 标题, 找出 OriginTitle 最像的
 func (c *Content) getTitleByOrigin() string {
 	if !fun.Blank(c.OriginTitle) {
-		headlines := c.Doc.Find("h1,h2")
+		headlines := c.Doc.Find("h1,h2,h3")
 		if headlines.Size() > 0 {
 			titles := make([]string, 0)
 			titleSim := make([]float64, 0)
