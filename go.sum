@@ -22,8 +22,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/suosi-inc/chardet v0.1.0 h1:AmAXYaZKPAXCpwthMeQG/ABwYreonxjP/BCbhOa7jfw=
 github.com/suosi-inc/chardet v0.1.0/go.mod h1:dhKdJO4yQeuLYMyu1QFjoNITgMJ/zyLhs4zwIUnQTKI=
-github.com/x-funs/go-fun v0.67.0 h1:pcl2AOVOCZfPBYychIUW79cigTGId8jlzIA3xdNbcL4=
-github.com/x-funs/go-fun v0.67.0/go.mod h1:748QizKd83Impm7SSV0Ra9ppHyZKXdgaXln57CfK0QQ=
+github.com/x-funs/go-fun v0.68.0 h1:nttgFjNsDXOxereNpfj4qUThBlRKU+vDXdc5ufOk1L0=
+github.com/x-funs/go-fun v0.68.0/go.mod h1:748QizKd83Impm7SSV0Ra9ppHyZKXdgaXln57CfK0QQ=
 golang.org/x/net v0.0.0-20210916014120-12bc252f5db8/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b h1:ZmngSVLe/wycRns9MKikG9OWIEjGcGAkacif7oYQaUY=
 golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b/go.mod h1:YDH+HFinaLZZlnHAfSS6ZXJJ9M9t4Dl22yv3iI2vPwk=
