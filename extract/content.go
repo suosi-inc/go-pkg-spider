@@ -19,11 +19,11 @@ const (
 	ContentRemoveTags = "script,noscript,style,iframe,br,link,svg,textarea"
 
 	// RegexPublishDate 完整的发布时间正则
-	RegexPublishDate = "((20[1-2]\\d{1}[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+	RegexPublishDate = "(((20[1-2]\\d{1}|2\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
-
-	RegexZhTimePrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期|于)"
+	// RegexZhPublishPrefix 中文的发布时间前缀
+	RegexZhPublishPrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期|于)"
 )
 
 var (
@@ -187,14 +187,16 @@ func (c *Content) getTime() string {
 		return metaTime
 	}
 
-	langTime := c.getTimeByLang()
+	bodyText := c.Doc.Find("body").Text()
+	bodyText = fun.NormaliseSpace(bodyText)
+
+	langTime := c.getTimeByLang(bodyText)
 	if langTime != "" {
 		c.timePos = "lang"
 		return langTime
 	}
 
-	contentTime := c.getTimeByBody()
-
+	contentTime := c.getTimeByBody(bodyText)
 	if contentTime != "" {
 		c.timePos = "body"
 		return contentTime
@@ -203,106 +205,129 @@ func (c *Content) getTime() string {
 	return ""
 }
 
-func (c *Content) getTimeByLang() string {
+func (c *Content) getTimeByLang(bodyText string) string {
+	if c.Lang == "zh" {
+		regexStr := RegexZhPublishPrefix + ".{0,32}" + RegexPublishDate
+		allRegexs := regexp.MustCompile(regexStr).FindAllString(bodyText, -1)
+
+		if allRegexs != nil {
+			publishDates := make([]string, 0)
+			for _, regex := range allRegexs {
+				regexDate := regexPublishDatePattern.FindString(regex)
+				if regexDate != "" {
+					publishDates = append(publishDates, regexDate)
+				}
+			}
+
+			if len(publishDates) > 0 {
+				return c.pickPublishDates(bodyText, publishDates)
+			}
+		}
+	}
+
 	return ""
 }
 
-func (c *Content) getTimeByBody() string {
-	bodyText := c.Doc.Find("body").Text()
-	bodyText = fun.NormaliseSpace(bodyText)
-
+func (c *Content) getTimeByBody(bodyText string) string {
 	// 带有年份的完整匹配
 	publishDates := regexPublishDatePattern.FindAllString(bodyText, -1)
 	if (publishDates) != nil {
-		// 根据是否有时间进行分组
-		hasTimes := make([]string, 0)
-		noTimes := make([]string, 0)
-		for _, date := range publishDates {
-			dateStr := strings.TrimSpace(date)
-			if regexTimePattern.MatchString(dateStr) {
-				hasTimes = append(hasTimes, dateStr)
-			} else {
-				noTimes = append(noTimes, dateStr)
+		return c.pickPublishDates(bodyText, publishDates)
+	}
+
+	return ""
+}
+
+func (c *Content) pickPublishDates(bodyText string, publishDates []string) string {
+	// 根据是否有时间进行分组
+	hasTimes := make([]string, 0)
+	noTimes := make([]string, 0)
+	for _, date := range publishDates {
+		dateStr := strings.TrimSpace(date)
+		if regexTimePattern.MatchString(dateStr) {
+			hasTimes = append(hasTimes, dateStr)
+		} else {
+			noTimes = append(noTimes, dateStr)
+		}
+	}
+
+	// 有时间的情况
+	if len(hasTimes) > 0 {
+		if len(hasTimes) == 1 {
+			return hasTimes[0]
+		}
+
+		// 判断第一个是不是最长的, 如果最长就直接返回
+		var maxLen int
+		var maxIndex int
+		for i, date := range hasTimes {
+			length := utf8.RuneCountInString(date)
+			if length > maxLen {
+				maxLen = length
+				maxIndex = i
 			}
 		}
 
-		// 有时间的情况
-		if len(hasTimes) > 0 {
-			if len(hasTimes) == 1 {
-				return hasTimes[0]
-			}
+		if maxIndex == 0 {
+			return hasTimes[0]
+		}
 
-			// 判断第一个是不是最长的, 如果最长就直接返回
-			var maxLen int
-			var maxIndex int
+		// 找最靠近标题的那一个
+		if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
+			titleIndex := strings.Index(bodyText, c.title)
+
+			minDistance := float64(math.MaxInt)
+			var minIndex int
 			for i, date := range hasTimes {
-				length := utf8.RuneCountInString(date)
-				if length > maxLen {
-					maxLen = length
-					maxIndex = i
+				dateIndex := strings.Index(bodyText, date)
+				abs := math.Abs(float64(dateIndex) - float64(titleIndex))
+				if abs < minDistance {
+					minDistance = abs
+					minIndex = i
 				}
 			}
 
-			if maxIndex == 0 {
-				return hasTimes[0]
-			}
+			return hasTimes[minIndex]
+		}
+	}
 
-			// 找最靠近标题的那一个
-			if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
-				titleIndex := strings.Index(bodyText, c.title)
+	// 没有时间的情况
+	if len(noTimes) > 0 {
+		if len(noTimes) == 1 {
+			return noTimes[0]
+		}
 
-				minDistance := float64(math.MaxInt)
-				var minIndex int
-				for i, date := range hasTimes {
-					dateIndex := strings.Index(bodyText, date)
-					abs := math.Abs(float64(dateIndex) - float64(titleIndex))
-					if abs < minDistance {
-						minDistance = abs
-						minIndex = i
-					}
-				}
-
-				return hasTimes[minIndex]
+		// 判断第一个是不是最长的, 如果最长就直接返回
+		var maxLen int
+		var maxIndex int
+		for i, date := range noTimes {
+			length := utf8.RuneCountInString(date)
+			if length > maxLen {
+				maxLen = length
+				maxIndex = i
 			}
 		}
 
-		if len(noTimes) > 0 {
-			if len(noTimes) == 1 {
-				return noTimes[0]
-			}
+		if maxIndex == 0 {
+			return noTimes[0]
+		}
 
-			// 判断第一个是不是最长的, 如果最长就直接返回
-			var maxLen int
-			var maxIndex int
+		// 找最靠近标题的那一个
+		if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
+			titleIndex := strings.Index(bodyText, c.title)
+
+			minDistance := float64(math.MaxInt)
+			var minIndex int
 			for i, date := range noTimes {
-				length := utf8.RuneCountInString(date)
-				if length > maxLen {
-					maxLen = length
-					maxIndex = i
+				dateIndex := strings.Index(bodyText, date)
+				abs := math.Abs(float64(dateIndex) - float64(titleIndex))
+				if abs < minDistance {
+					minDistance = abs
+					minIndex = i
 				}
 			}
 
-			if maxIndex == 0 {
-				return noTimes[0]
-			}
-
-			// 找最靠近标题的那一个
-			if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
-				titleIndex := strings.Index(bodyText, c.title)
-
-				minDistance := float64(math.MaxInt)
-				var minIndex int
-				for i, date := range noTimes {
-					dateIndex := strings.Index(bodyText, date)
-					abs := math.Abs(float64(dateIndex) - float64(titleIndex))
-					if abs < minDistance {
-						minDistance = abs
-						minIndex = i
-					}
-				}
-
-				return noTimes[minIndex]
-			}
+			return noTimes[minIndex]
 		}
 	}
 
