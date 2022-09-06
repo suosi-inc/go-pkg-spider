@@ -331,7 +331,7 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 			return hasTimes[0]
 		}
 
-		// 判断第一个是不是最长的, 如果最长就直接返回
+		// 判断第一个是不是最长的, 如果最长就优先返回
 		var maxLen int
 		var maxIndex int
 		for i, date := range hasTimes {
@@ -363,6 +363,9 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 
 			return hasTimes[minIndex]
 		}
+
+		// 没找到或标题不是正文区域, 最后返回第一个
+		return hasTimes[0]
 	}
 
 	// 没有时间的情况
@@ -404,6 +407,9 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 
 				return noTimes[minIndex]
 			}
+
+			// 没找到或标题不是正文区域, 最后返回第一个
+			return hasTimes[0]
 		}
 	}
 
