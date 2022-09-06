@@ -16,14 +16,23 @@ import (
 )
 
 const (
-	ContentRemoveTags = "script,noscript,style,iframe,br,link,svg,textarea"
+	ContentRemoveTags = "noscript,style,iframe,br,link,svg,textarea"
 
 	// RegexPublishDate 完整的发布时间正则
 	RegexPublishDate = "(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+
 	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
+
+	// RegexPublishDateNoYear 不包含年的发布时间(优先级低)
+	RegexPublishDateNoYear = "((0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?)?)"
+
 	// RegexZhPublishPrefix 中文的发布时间前缀
 	RegexZhPublishPrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期)"
+
+	RegexScriptTitle = `(?i)"title"\x20*:\x20*"(.*)"`
+
+	RegexScriptTime = `(?i)"[\w_\-]*pub.*"\x20*:\x20*"(((20[1-3]\d{1}|[1-3]\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\.\d{3})?)(z|Z|[\+-]\d{2}[:]?\d{2})?))"`
 )
 
 var (
@@ -37,7 +46,13 @@ var (
 
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 
+	regexPublishDateNoYearPattern = regexp.MustCompile(RegexPublishDateNoYear)
+
 	regexTimePattern = regexp.MustCompile(RegexTime)
+
+	regexScriptTitlePattern = regexp.MustCompile(RegexScriptTitle)
+
+	regexScriptTimePattern = regexp.MustCompile(RegexScriptTime)
 )
 
 type News struct {
@@ -58,6 +73,7 @@ type News struct {
 }
 
 type Content struct {
+	OriginDoc   *goquery.Document
 	Doc         *goquery.Document
 	OriginTitle string
 	Lang        string
@@ -90,7 +106,9 @@ type CountInfo struct {
 
 func NewContent(doc *goquery.Document, lang string, originTitle string) *Content {
 	infoMap := make(map[*html.Node]CountInfo, 0)
-	return &Content{Doc: doc, OriginTitle: originTitle, Lang: lang, infoMap: infoMap}
+	originDoc := goquery.CloneDocument(doc)
+	doc.Find(ContentRemoveTags).Remove()
+	return &Content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, Lang: lang, infoMap: infoMap}
 }
 
 func (c *Content) News() *News {
@@ -152,7 +170,6 @@ func (c *Content) getContentNode() *html.Node {
 	var contentNode *html.Node
 
 	// 取第一个 body 标签
-	c.Doc.Find(ContentRemoveTags).Remove()
 	bodyNodes := c.Doc.Find("body").Nodes
 	if len(bodyNodes) > 0 {
 		bodyNode := bodyNodes[0]
@@ -196,6 +213,12 @@ func (c *Content) getTime() string {
 		return langTime
 	}
 
+	scriptTime := c.getTimeByScript(bodyText)
+	if scriptTime != "" {
+		c.timePos = "script"
+		return scriptTime
+	}
+
 	contentTime := c.getTimeByBody(bodyText)
 	if contentTime != "" {
 		c.timePos = "body"
@@ -220,7 +243,7 @@ func (c *Content) getTimeByLang(bodyText string) string {
 			}
 
 			if len(publishDates) > 0 {
-				return c.pickPublishDates(bodyText, publishDates)
+				return c.pickPublishDates(bodyText, publishDates, false)
 			}
 		}
 	} else if c.Lang == "en" {
@@ -234,13 +257,33 @@ func (c *Content) getTimeByBody(bodyText string) string {
 	// 带有年份的完整匹配
 	publishDates := regexPublishDatePattern.FindAllString(bodyText, -1)
 	if (publishDates) != nil {
-		return c.pickPublishDates(bodyText, publishDates)
+		return c.pickPublishDates(bodyText, publishDates, false)
+	}
+
+	// 不带年份的匹配, 中文
+	if c.Lang == "zh" {
+		publishNoYearDates := regexPublishDateNoYearPattern.FindAllString(bodyText, -1)
+		if publishNoYearDates != nil {
+			noYear := c.pickPublishDates(bodyText, publishNoYearDates, true)
+			if noYear != "" {
+				if strings.Contains(noYear, "月") {
+					year := fun.Date("2006年")
+					return year + noYear
+				} else {
+					noYear = strings.NewReplacer("/", "-", ".", "-").Replace(noYear)
+					year := fun.Date("2006-")
+					return year + noYear
+				}
+			}
+
+			return noYear
+		}
 	}
 
 	return ""
 }
 
-func (c *Content) pickPublishDates(bodyText string, publishDates []string) string {
+func (c *Content) pickPublishDates(bodyText string, publishDates []string, requireTime bool) string {
 	// 根据是否有时间进行分组
 	hasTimes := make([]string, 0)
 	noTimes := make([]string, 0)
@@ -294,42 +337,44 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string) strin
 	}
 
 	// 没有时间的情况
-	if len(noTimes) > 0 {
-		if len(noTimes) == 1 {
-			return noTimes[0]
-		}
-
-		// 判断第一个是不是最长的, 如果最长就直接返回
-		var maxLen int
-		var maxIndex int
-		for i, date := range noTimes {
-			length := utf8.RuneCountInString(date)
-			if length > maxLen {
-				maxLen = length
-				maxIndex = i
+	if !requireTime {
+		if len(noTimes) > 0 {
+			if len(noTimes) == 1 {
+				return noTimes[0]
 			}
-		}
 
-		if maxIndex == 0 {
-			return noTimes[0]
-		}
-
-		// 找最靠近标题的那一个
-		if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
-			titleIndex := strings.Index(bodyText, c.title)
-
-			minDistance := float64(math.MaxInt)
-			var minIndex int
+			// 判断第一个是不是最长的, 如果最长就直接返回
+			var maxLen int
+			var maxIndex int
 			for i, date := range noTimes {
-				dateIndex := strings.Index(bodyText, date)
-				abs := math.Abs(float64(dateIndex) - float64(titleIndex))
-				if abs < minDistance {
-					minDistance = abs
-					minIndex = i
+				length := utf8.RuneCountInString(date)
+				if length > maxLen {
+					maxLen = length
+					maxIndex = i
 				}
 			}
 
-			return noTimes[minIndex]
+			if maxIndex == 0 {
+				return noTimes[0]
+			}
+
+			// 找最靠近标题的那一个
+			if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
+				titleIndex := strings.Index(bodyText, c.title)
+
+				minDistance := float64(math.MaxInt)
+				var minIndex int
+				for i, date := range noTimes {
+					dateIndex := strings.Index(bodyText, date)
+					abs := math.Abs(float64(dateIndex) - float64(titleIndex))
+					if abs < minDistance {
+						minDistance = abs
+						minIndex = i
+					}
+				}
+
+				return noTimes[minIndex]
+			}
 		}
 	}
 
@@ -451,13 +496,20 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	}
 
 	// 页面 Title
-	titleList := make([]*html.Node, 0)
-	titleSim := make([]float64, 0)
 	originMetaTitle := WebTitle(c.Doc, 255)
 
 	// 去除原始 metaTitle 最后一个尾巴（一般是站点名称），再进行相似判断
 	metaTitle := WebContentTitleClean(originMetaTitle, c.Lang)
 
+	// 提取页面 Script 寻找是否包含有 title 的字段
+	title = c.getTitleByScript(metaTitle)
+	if title != "" {
+		c.titlePos = "script"
+		return title
+	}
+
+	titleList := make([]*html.Node, 0)
+	titleSim := make([]float64, 0)
 	if !fun.Blank(originMetaTitle) && contentNode != nil {
 
 		// 从 Meta 中提取相似 <title> 的标题，优先级较高，返回短的那个
@@ -726,4 +778,50 @@ func (c *Content) Debug() {
 			}
 		}
 	}
+}
+
+func (c *Content) getTitleByScript(metaTitle string) string {
+	scripts := c.OriginDoc.Find("script")
+	if scripts.Size() > 0 {
+		var title string
+		scripts.Each(func(i int, script *goquery.Selection) {
+			scriptText := fun.NormaliseLine(script.Text())
+			titleStrs := regexScriptTitlePattern.FindStringSubmatch(scriptText)
+			if titleStrs != nil {
+				titleStr := strings.TrimSpace(titleStrs[1])
+				sim := fun.SimilarityText(metaTitle, titleStr)
+				if sim > 0.3 {
+					title = titleStr
+					return
+				}
+			}
+		})
+
+		if title != "" {
+			return title
+		}
+	}
+
+	return ""
+}
+
+func (c *Content) getTimeByScript(metaTitle string) string {
+	scripts := c.OriginDoc.Find("script")
+	if scripts.Size() > 0 {
+		var time string
+		scripts.Each(func(i int, script *goquery.Selection) {
+			scriptText := fun.NormaliseLine(script.Text())
+			dateStrs := regexScriptTimePattern.FindStringSubmatch(scriptText)
+			if dateStrs != nil {
+				dateStr := strings.TrimSpace(dateStrs[1])
+				time = dateStr
+			}
+		})
+
+		if time != "" {
+			return time
+		}
+	}
+
+	return ""
 }
