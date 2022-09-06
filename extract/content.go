@@ -19,7 +19,7 @@ const (
 	ContentRemoveTags = "script,noscript,style,iframe,br,link,svg,textarea"
 
 	// RegexPublishDate 完整的发布时间正则
-	RegexPublishDate = "((202\\d{1}[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+	RegexPublishDate = "((20[1-2]\\d{1}[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日T]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)"
 )
@@ -202,20 +202,15 @@ func (c *Content) getTimeByBody() string {
 	// 带有年份的完整匹配
 	publishDates := regexPublishDatePattern.FindAllString(bodyText, -1)
 	if (publishDates) != nil {
-		// 只有一个
-		publishDatesLen := len(publishDates)
-		if publishDatesLen == 1 {
-			return publishDates[0]
-		}
-
 		// 根据是否有时间进行分组
 		hasTimes := make([]string, 0)
 		noTimes := make([]string, 0)
 		for _, date := range publishDates {
-			if regexTimePattern.MatchString(date) {
-				hasTimes = append(hasTimes, date)
+			dateStr := strings.TrimSpace(date)
+			if regexTimePattern.MatchString(dateStr) {
+				hasTimes = append(hasTimes, dateStr)
 			} else {
-				noTimes = append(noTimes, date)
+				noTimes = append(noTimes, dateStr)
 			}
 		}
 
@@ -258,6 +253,45 @@ func (c *Content) getTimeByBody() string {
 				return hasTimes[minIndex]
 			}
 		}
+
+		if len(noTimes) > 0 {
+			if len(noTimes) == 1 {
+				return noTimes[0]
+			}
+
+			// 判断第一个是不是最长的, 如果最长就直接返回
+			var maxLen int
+			var maxIndex int
+			for i, date := range noTimes {
+				length := utf8.RuneCountInString(date)
+				if length > maxLen {
+					maxLen = length
+					maxIndex = i
+				}
+			}
+
+			if maxIndex == 0 {
+				return noTimes[0]
+			}
+
+			// 找最靠近标题的那一个
+			if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
+				titleIndex := strings.Index(bodyText, c.title)
+
+				minDistance := float64(math.MaxInt)
+				var minIndex int
+				for i, date := range noTimes {
+					dateIndex := strings.Index(bodyText, date)
+					abs := math.Abs(float64(dateIndex) - float64(titleIndex))
+					if abs < minDistance {
+						minDistance = abs
+						minIndex = i
+					}
+				}
+
+				return noTimes[minIndex]
+			}
+		}
 	}
 
 	return ""
@@ -278,7 +312,8 @@ func (c *Content) getTimeByMeta() string {
 				property = strings.ReplaceAll(property, "-", "")
 
 				if fun.ContainsAny(name, metaDatetimeDicts...) {
-					metaDates = append(metaDates, content)
+					dateStr := strings.TrimSpace(content)
+					metaDates = append(metaDates, dateStr)
 				}
 			}
 		})
