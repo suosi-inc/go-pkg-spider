@@ -43,6 +43,8 @@ const (
 
 	RegexFormatTime4 = `[:分]\d{4}$`
 
+	RegexZone = `(([\+-]\d{2})[:]?\d{2})$`
+
 	TitleSimZh = 0.3
 
 	TitleSimWord = 0.5
@@ -72,6 +74,8 @@ var (
 	regexFormatTime3 = regexp.MustCompile(RegexFormatTime3)
 
 	regexFormatTime4 = regexp.MustCompile(RegexFormatTime4)
+
+	regexZonePattern = regexp.MustCompile(RegexZone)
 )
 
 type News struct {
@@ -161,9 +165,9 @@ func (c *Content) News() *News {
 	time := c.getTime()
 	if time != "" {
 		// 格式化时间
-		time = c.formatTime(time)
 		news.Time = time
 		news.TimePos = c.timePos
+		time = c.formatTime(time)
 		ts := fun.StrToTime(time)
 		if ts > 0 {
 			news.TimeLocal = fun.Date(ts)
@@ -175,9 +179,17 @@ func (c *Content) News() *News {
 
 // formatTime 时间格式化, 尽可能的
 func (c *Content) formatTime(time string) string {
+	// 当包含时区信息时格式化空格
 	if fun.ContainsAny(time, "T", "t", "Z", "z") {
 		time = strings.ReplaceAll(time, " ", "")
 	}
+	// 当包含时区T时又没有偏移, 按本地时间处理
+	if fun.ContainsAny(time, "T") {
+		if !fun.ContainsAny("Z", "z") && !regexZonePattern.MatchString(time) {
+			time = strings.ReplaceAll(time, "T", " ")
+		}
+	}
+	// 尾巴处理
 	if fun.Contains(time, ":") && !fun.ContainsAny(time, "时", "点") {
 		time = strings.TrimSuffix(time, "分")
 	}
