@@ -269,12 +269,6 @@ func (c *Content) getTime() string {
 	bodyText := c.Doc.Find("body").Text()
 	bodyText = fun.NormaliseSpace(bodyText)
 
-	langTime := c.getTimeByLang(bodyText)
-	if langTime != "" {
-		c.timePos = "lang"
-		return langTime
-	}
-
 	scriptTime := c.getTimeByScript()
 	if scriptTime != "" {
 		c.timePos = "script"
@@ -285,6 +279,12 @@ func (c *Content) getTime() string {
 	if contentTime != "" {
 		c.timePos = "body"
 		return contentTime
+	}
+
+	langTime := c.getTimeByLang(bodyText)
+	if langTime != "" {
+		c.timePos = "lang"
+		return langTime
 	}
 
 	return ""
