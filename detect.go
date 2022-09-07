@@ -31,59 +31,6 @@ type DomainRes struct {
 	SubDomains   map[string]bool
 }
 
-func DetectLinkRes(urlStr string, timeout int, retry int) (*extract.LinkRes, error) {
-	if retry == 0 {
-		retry = 1
-	}
-
-	for i := 0; i < retry; i++ {
-		res, err := DetectLinkResDo(urlStr, timeout)
-		if res != nil {
-			return res, err
-		}
-	}
-
-	return nil, errors.New("ErrorLinkRes")
-}
-
-func DetectLinkResDo(urlStr string, timeout int) (*extract.LinkRes, error) {
-	if timeout == 0 {
-		timeout = 10000
-	}
-
-	req := &HttpReq{
-		HttpReq: &fun.HttpReq{
-			MaxContentLength: 10 * 1024 * 1024,
-			MaxRedirect:      3,
-		},
-		ForceTextContentType: true,
-	}
-
-	resp, err := HttpGetResp(urlStr, req, timeout)
-	if resp.Success && err == nil {
-		// 解析 HTML
-		doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-		if docErr == nil {
-			doc.Find(DefaultDocRemoveTags).Remove()
-
-			// 语言
-			langRes := Lang(doc, resp.Charset.Charset, false)
-
-			// 站内链接
-			linkTitles, _ := extract.WebLinkTitles(doc, resp.RequestURL, true)
-
-			// 链接分类
-			links, _ := extract.LinkTypes(linkTitles, langRes.Lang, nil)
-
-			return links, nil
-		}
-	} else {
-		return nil, errors.New("ErrorLinkRes")
-	}
-
-	return nil, errors.New("ErrorLinkRes")
-}
-
 // DetectDomain 域名探测
 // DomainRes.State true 和 err nil 表示探测成功
 // DomainRes.State true 可能会返回 err, 如 doc 解析失败

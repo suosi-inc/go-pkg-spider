@@ -17,7 +17,7 @@ func TestLinkRes(t *testing.T) {
 	}
 
 	for _, urlStr := range urlStrs {
-		if res, err := DetectLinkRes(urlStr, 10000, 1); err == nil {
+		if res, err := GetLinkRes(urlStr, 10000, 1); err == nil {
 			t.Log(res.Content)
 		}
 	}
