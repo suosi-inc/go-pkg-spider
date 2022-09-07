@@ -24,15 +24,15 @@ var (
 		".mp3", ".mp4", ".rm", ".rmvb", ".mov", ".ogv", ".flv",
 	}
 
-	invalidCharsets = []string{"{", "}", "[", "]", "@", "$", "<", ">", "\""}
+	invalidUrlCharsets = []string{"{", "}", "[", "]", "@", "$", "<", ">", "\""}
 
-	zhSplits = []string{"_", "|", "-", "－", "｜", "—", "＊", "：", ",", "，", ":", "·", ">>", "="}
+	titleZhSplits = []string{"_", "|", "-", "－", "｜", "—", "＊", "：", ",", "，", ":", "·", ">>", "="}
 
-	zhContentSplits = []string{"_", "|", "-", "－", "｜", "—"}
+	titleZhContentSplits = []string{"_", "|", "-", "－", "｜", "—"}
 
-	enSplits = []string{" - ", " | ", ":"}
+	titleEnSplits = []string{" - ", " | ", ":"}
 
-	regexHostnameIpPattern = regexp.MustCompile(RegexHostnameIp)
+	RegexHostnameIpPattern = regexp.MustCompile(RegexHostnameIp)
 )
 
 // WebTitle 返回网页标题, 最大 128 个字符
@@ -61,7 +61,7 @@ func WebTitleClean(title string, lang string) string {
 	// 中文网站, 查找中文网站的分割标记, 找到任意一个, 从尾部循环删除后返回
 	if lang == "zh" {
 
-		for _, split := range zhSplits {
+		for _, split := range titleZhSplits {
 			if fun.HasPrefixCase(title, split) {
 				title = fun.RemovePrefix(title, split)
 			}
@@ -73,7 +73,7 @@ func WebTitleClean(title string, lang string) string {
 		}
 
 		titleClean := title
-		for _, split := range zhSplits {
+		for _, split := range titleZhSplits {
 			var exists bool
 			end := strings.LastIndex(titleClean, split)
 			if end != -1 {
@@ -103,7 +103,7 @@ func WebTitleClean(title string, lang string) string {
 
 	} else {
 		// 其他, 查找英文分割标记, 如果找到, 从尾部删除一次返回
-		for _, split := range enSplits {
+		for _, split := range titleEnSplits {
 			end := strings.LastIndex(title, split)
 			if end != -1 {
 				titleClean := strings.TrimSpace(title[:end])
@@ -120,14 +120,14 @@ func WebContentTitleClean(title string, lang string) string {
 	// 中文网站, 查找中文网站的分割标记, 找到任意一个, 从尾部循环删除后返回
 	if lang == "zh" {
 
-		for _, split := range zhContentSplits {
+		for _, split := range titleZhContentSplits {
 			if fun.HasPrefixCase(title, split) {
 				title = fun.RemovePrefix(title, split)
 			}
 		}
 
 		titleClean := title
-		for _, split := range zhContentSplits {
+		for _, split := range titleZhContentSplits {
 			var exists bool
 			end := strings.LastIndex(titleClean, split)
 			if end != -1 {
@@ -150,7 +150,7 @@ func WebContentTitleClean(title string, lang string) string {
 
 	} else {
 		// 其他, 查找英文分割标记, 如果找到, 从尾部删除一次返回
-		for _, split := range enSplits {
+		for _, split := range titleEnSplits {
 			end := strings.LastIndex(title, split)
 			if end != -1 {
 				titleClean := strings.TrimSpace(title[:end])
@@ -244,7 +244,7 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	var urlStr string
 
 	// 过滤掉链接中包含特殊字符的
-	if fun.ContainsAny(link, invalidCharsets...) {
+	if fun.ContainsAny(link, invalidUrlCharsets...) {
 		return link, errors.New("invalid url with illegal characters")
 	}
 
@@ -276,7 +276,7 @@ func filterUrl(link string, baseUrl *url.URL, strictDomain bool) (string, error)
 	}
 
 	// 验证主机名
-	if regexHostnameIpPattern.MatchString(u.Hostname()) {
+	if RegexHostnameIpPattern.MatchString(u.Hostname()) {
 		return urlStr, errors.New("invalid url with ip hostname")
 	}
 

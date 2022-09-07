@@ -61,7 +61,7 @@ var (
 		"缅甸语":  "my",
 	}
 
-	metaLangSelectors = []string{
+	langMetaSelectors = []string{
 		"meta[http-equiv='content-language' i]",
 		"meta[name='lang' i]",
 	}
@@ -184,7 +184,7 @@ func LangFromHtml(doc *goquery.Document) string {
 		}
 
 	}
-	for _, selector := range metaLangSelectors {
+	for _, selector := range langMetaSelectors {
 		if lang, exists := doc.Find(selector).Attr("content"); exists {
 			lang = strings.TrimSpace(lang)
 			if regexLangHtmlPattern.MatchString(lang) {

@@ -51,13 +51,13 @@ const (
 )
 
 var (
-	metaTitleSelectors = []string{
+	contentMetaTitleSelectors = []string{
 		"meta[property='og:title' i]",
 		"meta[property='twitter:title' i]",
 		"meta[name='twitter:title' i]",
 	}
 
-	metaDatetimeDicts = []string{"publish", "pubdate", "pubtime"}
+	contentMetaDatetimeDicts = []string{"publish", "pubdate", "pubtime"}
 
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 
@@ -486,12 +486,12 @@ func (c *Content) getTimeByMeta() string {
 				property = strings.ReplaceAll(property, "_", "")
 				property = strings.ReplaceAll(property, "-", "")
 
-				if fun.ContainsAny(property, metaDatetimeDicts...) {
+				if fun.ContainsAny(property, contentMetaDatetimeDicts...) {
 					dateStr = strings.TrimSpace(dateStr)
 					metaDates = append(metaDates, dateStr)
 				}
 
-				if fun.ContainsAny(name, metaDatetimeDicts...) {
+				if fun.ContainsAny(name, contentMetaDatetimeDicts...) {
 					dateStr = strings.TrimSpace(dateStr)
 					metaDates = append(metaDates, dateStr)
 				}
@@ -712,7 +712,7 @@ func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 
 func (c *Content) getTitleByMeta(metaTitle string) string {
 	var titles []string
-	for _, metaSelector := range metaTitleSelectors {
+	for _, metaSelector := range contentMetaTitleSelectors {
 		title := strings.TrimSpace(c.Doc.Find(metaSelector).AttrOr("content", ""))
 		if !fun.Blank(title) {
 			titles = append(titles, title)

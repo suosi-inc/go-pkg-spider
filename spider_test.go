@@ -10,7 +10,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/suosi-inc/go-pkg-spider/extract"
 	"github.com/x-funs/go-fun"
 )
 
@@ -87,7 +86,7 @@ func TestCount(t *testing.T) {
 func TestContent(t *testing.T) {
 
 	var urlStrs = []string{
-		// "http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
+		"http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
 		// "https://www.163.com/news/article/HG3DE7AQ000189FH.html",
 		// "http://suosi.com.cn/",
 		// "http://www.cankaoxiaoxi.com/world/20220831/2489267.shtml",
@@ -111,29 +110,11 @@ func TestContent(t *testing.T) {
 		// "https://new.qq.com/omn/20200701/20200701A04H7500",
 		// "http://v.china.com.cn/2022-09/06/content_78407150.html",
 		// "http://www.chinagwy.org.cn/content-cat-10/143162.html",
-		"https://www.startribune.com/what-need-know-covid-delta-variant-mask-minnesota-vaccine-virus-booster-kids-breakthrough-omicron/600084793/",
+		// "https://news.52pk.com/xwlm/201912/7366710.shtml",
 	}
 
 	for _, urlStr := range urlStrs {
-		resp, err := HttpGetResp(urlStr, nil, 10000)
-
-		if resp.Success && err == nil {
-			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
-			contentDoc := goquery.CloneDocument(doc)
-			if docErr == nil {
-				doc.Find(DefaultDocRemoveTags).Remove()
-			}
-
-			// 语言
-			langRes := Lang(doc, resp.Charset.Charset, false)
-
-			start := fun.Timestamp(true)
-
-			// 正文抽取
-			content := extract.NewContent(contentDoc, langRes.Lang, "")
-			news := content.News()
-			t.Log(fun.Timestamp(true) - start)
-
+		if news, resp, err := GetNews(urlStr, "", 10000); err == nil {
 			t.Log(resp.Charset)
 			t.Log(news.Title)
 			t.Log(news.TitlePos)

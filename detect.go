@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -31,16 +30,6 @@ type DomainRes struct {
 	ListCount    int
 	SubDomains   map[string]bool
 }
-
-const (
-	RegexHostnameIp = `\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`
-)
-
-var (
-	regexMetaRefreshPattern = regexp.MustCompile(`(?i)url=(.+)`)
-
-	regexHostnameIpPattern = regexp.MustCompile(RegexHostnameIp)
-)
 
 func DetectLinkRes(urlStr string, timeout int, retry int) (*extract.LinkRes, error) {
 	if retry == 0 {
@@ -186,7 +175,7 @@ func DetectDomainDo(domain string, isTop bool, timeout int) (*DomainRes, error) 
 				requestTopDomain := extract.DomainTop(requestHostname)
 				if requestTopDomain != "" && requestTopDomain != domain {
 					// 验证主机名
-					if regexHostnameIpPattern.MatchString(requestHostname) {
+					if RegexHostnameIpPattern.MatchString(requestHostname) {
 						return domainRes, errors.New("ErrorRedirectHost")
 					}
 					// 验证非常规端口
@@ -225,7 +214,7 @@ func DetectDomainDo(domain string, isTop bool, timeout int) (*DomainRes, error) 
 							refreshTopDomain := extract.DomainTop(refreshHostname)
 							if refreshTopDomain != "" && refreshTopDomain != domain {
 								// 验证主机名
-								if regexHostnameIpPattern.MatchString(refreshHostname) {
+								if RegexHostnameIpPattern.MatchString(refreshHostname) {
 									return domainRes, errors.New("ErrorMetaJumpHost")
 								}
 								// 验证非常规端口

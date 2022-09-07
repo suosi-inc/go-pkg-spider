@@ -18,7 +18,9 @@ const (
 
 	RegexUrlPublishDate = `20[2-3]\d{1}(0[1-9]|1[0-2]|[1-9])(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])?`
 
-	RegexZhBlackTitle = "(经营|制作|信息服务|出版|出版服务|演出|视听节目|新闻|视听|新网)许可证"
+	RegexIndexSuffix = `^/index\.(html|shtml|htm|php|asp|aspx|jsp)$`
+
+	RegexTitleZhBlack = "(经营|制作|信息服务|出版|出版服务|演出|视听节目|新闻|视听|新网)许可证"
 )
 
 var (
@@ -32,9 +34,9 @@ var (
 	regexEnPattern             = regexp.MustCompile(`[a-zA-Z]`)
 	regexPuncPattern           = regexp.MustCompile(`\pP`)
 
-	regexZhBlackTitlePattern = regexp.MustCompile(RegexZhBlackTitle)
+	regexTitleZhBlackPattern = regexp.MustCompile(RegexTitleZhBlack)
 
-	regexIndexSuffixPattern = regexp.MustCompile(`^/index\.(html|shtml|htm|php|asp|aspx|jsp)$`)
+	regexIndexSuffixPattern = regexp.MustCompile(RegexIndexSuffix)
 )
 
 type LinkType int
@@ -123,7 +125,7 @@ func linkClean(linkRes *LinkRes, lang string) *LinkRes {
 		contentCount := len(linkRes.Content)
 		if contentCount > 0 {
 			for link, title := range linkRes.Content {
-				if regexZhBlackTitlePattern.MatchString(title) {
+				if regexTitleZhBlackPattern.MatchString(title) {
 					linkRes.None[link] = title
 					delete(linkRes.Content, link)
 				}
