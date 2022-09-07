@@ -42,6 +42,10 @@ const (
 	RegexFormatTime3 = `[:分]\d{3}$`
 
 	RegexFormatTime4 = `[:分]\d{4}$`
+
+	TitleSimZh = 0.3
+
+	TitleSimWord = 0.5
 )
 
 var (
@@ -66,6 +70,7 @@ var (
 	regexScriptTimePattern = regexp.MustCompile(RegexScriptTime)
 
 	regexFormatTime3 = regexp.MustCompile(RegexFormatTime3)
+
 	regexFormatTime4 = regexp.MustCompile(RegexFormatTime4)
 )
 
@@ -91,12 +96,13 @@ type Content struct {
 	Doc         *goquery.Document
 	OriginTitle string
 	Lang        string
-	infoMap     map[*html.Node]CountInfo
 
+	infoMap  map[*html.Node]CountInfo
 	bodyNode *html.Node
 	title    string
 	titlePos string
 	timePos  string
+	titleSim float64
 }
 
 type CountInfo struct {
@@ -119,10 +125,18 @@ type CountInfo struct {
 }
 
 func NewContent(doc *goquery.Document, lang string, originTitle string) *Content {
-	infoMap := make(map[*html.Node]CountInfo, 0)
 	originDoc := goquery.CloneDocument(doc)
 	doc.Find(ContentRemoveTags).Remove()
-	return &Content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, Lang: lang, infoMap: infoMap}
+
+	// 标题相似度阈值
+	titleSim := TitleSimZh
+	if fun.SliceContains(wordLangs, lang) {
+		titleSim = TitleSimWord
+	}
+
+	infoMap := make(map[*html.Node]CountInfo, 0)
+
+	return &Content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, Lang: lang, infoMap: infoMap, titleSim: titleSim}
 }
 
 func (c *Content) News() *News {
@@ -147,15 +161,27 @@ func (c *Content) News() *News {
 	time := c.getTime()
 	if time != "" {
 		// 格式化时间
-		if fun.ContainsAny(time, "T", "t", "Z", "z") {
-			time = strings.ReplaceAll(time, " ", "")
-		}
+		time = c.formatTime(time)
 		news.Time = time
 		news.TimePos = c.timePos
-		news.TimeLocal = fun.Date(fun.StrToTime(time))
+		ts := fun.StrToTime(time)
+		if ts > 0 {
+			news.TimeLocal = fun.Date(ts)
+		}
 	}
 
 	return news
+}
+
+// formatTime 时间格式化, 尽可能的
+func (c *Content) formatTime(time string) string {
+	if fun.ContainsAny(time, "T", "t", "Z", "z") {
+		time = strings.ReplaceAll(time, " ", "")
+	}
+	if fun.Contains(time, ":") && !fun.ContainsAny(time, "时", "点") {
+		time = strings.TrimSuffix(time, "分")
+	}
+	return time
 }
 
 // formatContent 正文格式化, 处理 <p> 的换行, 最终将多个换行符和空格均合并为一个
@@ -222,6 +248,12 @@ func (c *Content) getTime() string {
 		return metaTime
 	}
 
+	tagTime := c.getTimeByTag()
+	if tagTime != "" {
+		c.timePos = "tag"
+		return tagTime
+	}
+
 	bodyText := c.Doc.Find("body").Text()
 	bodyText = fun.NormaliseSpace(bodyText)
 
@@ -248,7 +280,7 @@ func (c *Content) getTime() string {
 
 func (c *Content) getTimeByLang(bodyText string) string {
 	if c.Lang == "zh" {
-		regexStr := RegexZhPublishPrefix + ".{0,32}" + RegexPublishShortDate
+		regexStr := RegexZhPublishPrefix + "[\\pP ]{1,8}" + RegexPublishShortDate
 		allRegexs := regexp.MustCompile(regexStr).FindAllString(bodyText, -1)
 
 		if allRegexs != nil {
@@ -413,6 +445,20 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 	return ""
 }
 
+func (c *Content) getTimeByTag() string {
+	// <time> 标签
+	timeTags := c.Doc.Find("time")
+	if timeTags.Size() > 0 {
+		firstTimeTags := timeTags.First()
+		dataTime := firstTimeTags.AttrOr("datetime", "")
+		if dataTime != "" && regexPublishDatePattern.MatchString(dataTime) {
+			return dataTime
+		}
+	}
+
+	return ""
+}
+
 func (c *Content) getTimeByMeta() string {
 	metaDates := make([]string, 0)
 	metas := c.Doc.Find("meta")
@@ -472,16 +518,6 @@ func (c *Content) getTimeByMeta() string {
 		}
 	}
 
-	// <time> 标签
-	timeTags := c.Doc.Find("time")
-	if timeTags.Size() > 0 {
-		firstTimeTags := timeTags.First()
-		dataTime := firstTimeTags.AttrOr("datetime", "")
-		if dataTime != "" && regexPublishDatePattern.MatchString(dataTime) {
-			return dataTime
-		}
-	}
-
 	return ""
 }
 
@@ -495,7 +531,7 @@ func (c *Content) getTitleByOrigin() string {
 			headlines.Each(func(i int, headline *goquery.Selection) {
 				text := fun.NormaliseSpace(headline.Text())
 				sim := fun.SimilarityText(c.OriginTitle, text)
-				if sim > 0.3 {
+				if sim > c.titleSim {
 					titleSim = append(titleSim, sim)
 					titles = append(titles, text)
 				}
@@ -586,7 +622,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 
 			// 这里他设置了一个 (i+1) 的权重因子，大意是越靠近后面权重越高
 			for i := 0; i < index; i++ {
-				score := titleSim[i] * float64(i+1)
+				score := titleSim[i]
 				if score > maxScore {
 					maxScore = score
 					maxIndex = i
@@ -608,7 +644,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 		first := titles.First()
 		selectorTitle := c.normaliseText(first)
 		sim := fun.SimilarityText(metaTitle, selectorTitle)
-		if sim > 0.3 {
+		if sim > c.titleSim {
 			c.titlePos = "selector"
 			return selectorTitle
 		}
@@ -639,7 +675,7 @@ func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 				node := goquery.NewDocumentFromNode(n)
 				text := c.normaliseText(node.Selection)
 				sim := fun.SimilarityText(text, originMetaTitle)
-				if sim > 0.3 && sim > max[0] {
+				if sim > c.titleSim && sim > max[0] {
 					max[0] = sim
 					buf.Reset()
 					buf.WriteString(text)
@@ -674,7 +710,7 @@ func (c *Content) getTitleByMeta(metaTitle string) string {
 	if len(titles) > 0 {
 		for _, title := range titles {
 			sim := fun.SimilarityText(title, metaTitle)
-			if sim > 0.3 {
+			if sim > c.titleSim {
 				titleLen := utf8.RuneCountInString(title)
 				metaTitleLen := utf8.RuneCountInString(metaTitle)
 				if titleLen < metaTitleLen {
@@ -823,7 +859,7 @@ func (c *Content) getTitleByScript(metaTitle string) string {
 			if titleStrs != nil {
 				titleStr := strings.TrimSpace(titleStrs[1])
 				sim := fun.SimilarityText(metaTitle, titleStr)
-				if sim > 0.3 {
+				if sim > c.titleSim {
 					title = titleStr
 					return
 				}

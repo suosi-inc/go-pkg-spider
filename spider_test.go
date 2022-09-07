@@ -110,7 +110,8 @@ func TestContent(t *testing.T) {
 		// "https://www.ccdi.gov.cn/yaowenn/202209/t20220901_215343.html",
 		// "https://new.qq.com/omn/20200701/20200701A04H7500",
 		// "http://v.china.com.cn/2022-09/06/content_78407150.html",
-		"https://thj.mysteel.com/22/0902/17/F5FCA7BDFE08EBEA.html",
+		// "http://www.chinagwy.org.cn/content-cat-10/143162.html",
+		"http://yz.kuakao.com/swjtu/tm/70957.html",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -160,4 +161,7 @@ func TestContent(t *testing.T) {
 
 func TestDemo(t *testing.T) {
 	t.Log(fun.Date(fun.StrToTime("2022-04-10T18:24:00")))
+
+	regex := "(?i)(发布|创建|出版|发表|编辑)?(时间|日期|于)[\\pP ]{0,8}(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+	t.Log(regexp.MustCompile(regex).MatchString("发布于 : 2016-03-04"))
 }
