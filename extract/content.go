@@ -184,8 +184,8 @@ func (c *Content) formatTime(time string) string {
 		time = strings.ReplaceAll(time, " ", "")
 	}
 	// 当包含时区T时又没有偏移, 按本地时间处理
-	if fun.ContainsAny(time, "T") {
-		if !fun.ContainsAny("Z", "z") && !regexZonePattern.MatchString(time) {
+	if fun.Contains(time, "T") && !fun.ContainsCase(time, "z") {
+		if !regexZonePattern.MatchString(time) {
 			time = strings.ReplaceAll(time, "T", " ")
 		}
 	}

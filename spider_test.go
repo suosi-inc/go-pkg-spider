@@ -111,7 +111,7 @@ func TestContent(t *testing.T) {
 		// "https://new.qq.com/omn/20200701/20200701A04H7500",
 		// "http://v.china.com.cn/2022-09/06/content_78407150.html",
 		// "http://www.chinagwy.org.cn/content-cat-10/143162.html",
-		"https://www.maiche.com/news/detail/2802525.html",
+		"https://www.startribune.com/what-need-know-covid-delta-variant-mask-minnesota-vaccine-virus-booster-kids-breakthrough-omicron/600084793/",
 	}
 
 	for _, urlStr := range urlStrs {
