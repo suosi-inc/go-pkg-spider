@@ -17,6 +17,8 @@ const (
 	LinkTypeUnknown LinkType = 3
 
 	RegexUrlPublishDate = `20[2-3]\d{1}(0[1-9]|1[0-2]|[1-9])(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])?`
+
+	RegexZhBlackTitle = "(经营|制作|信息服务|出版|出版服务|演出|视听节目|新闻|视听|新网)许可证"
 )
 
 var (
@@ -29,6 +31,8 @@ var (
 	regexZhPattern             = regexp.MustCompile(`\p{Han}`)
 	regexEnPattern             = regexp.MustCompile(`[a-zA-Z]`)
 	regexPuncPattern           = regexp.MustCompile(`\pP`)
+
+	regexZhBlackTitlePattern = regexp.MustCompile(RegexZhBlackTitle)
 
 	regexIndexSuffixPattern = regexp.MustCompile(`^/index\.(html|shtml|htm|php|asp|aspx|jsp)$`)
 )
@@ -108,7 +112,26 @@ func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*
 		linkRes = linkTypePathProcess(linkRes, contentTopPaths, contentPublishCount)
 	}
 
+	// 最后的清洗
+	linkRes = linkClean(linkRes, lang)
+
 	return linkRes, subDomains
+}
+
+func linkClean(linkRes *LinkRes, lang string) *LinkRes {
+	if lang == "zh" {
+		contentCount := len(linkRes.Content)
+		if contentCount > 0 {
+			for link, title := range linkRes.Content {
+				if regexZhBlackTitlePattern.MatchString(title) {
+					linkRes.None[link] = title
+					delete(linkRes.Content, link)
+				}
+			}
+		}
+	}
+
+	return linkRes
 }
 
 func linkTypePathProcess(linkRes *LinkRes, contentTopPaths map[string]int, contentPublishCount int) *LinkRes {

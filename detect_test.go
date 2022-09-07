@@ -87,7 +87,7 @@ func BenchmarkLinkTitles(b *testing.B) {
 
 func TestLinkTitles(t *testing.T) {
 	var urlStrs = []string{
-		// "https://www.qq.com",
+		"https://www.1905.com",
 		// "https://www.people.com.cn",
 		// "https://www.36kr.com",
 		// "https://www.163.com",
@@ -109,7 +109,7 @@ func TestLinkTitles(t *testing.T) {
 		// "https://www.washingtontimes.com/",
 		// "https://www.gamersky.com/",
 		// "https://www.cdns.com.tw/",
-		"http://www.xzmg.gov.cn/",
+		// "http://www.163.com/",
 	}
 
 	for _, urlStr := range urlStrs {
