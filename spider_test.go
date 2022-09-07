@@ -111,7 +111,7 @@ func TestContent(t *testing.T) {
 		// "https://new.qq.com/omn/20200701/20200701A04H7500",
 		// "http://v.china.com.cn/2022-09/06/content_78407150.html",
 		// "http://www.chinagwy.org.cn/content-cat-10/143162.html",
-		"http://yz.kuakao.com/swjtu/tm/70957.html",
+		"https://www.maiche.com/news/detail/2802525.html",
 	}
 
 	for _, urlStr := range urlStrs {

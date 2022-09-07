@@ -629,7 +629,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 				}
 			}
 
-			if maxIndex != -1 {
+			if maxIndex != -1 && maxScore > c.titleSim {
 				c.titlePos = "headline"
 				tagNode := goquery.NewDocumentFromNode(titleList[maxIndex])
 				headTitle := c.normaliseText(tagNode.Selection)
