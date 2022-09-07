@@ -25,24 +25,97 @@ var (
 	regexMetaRefreshPattern = regexp.MustCompile(RegexMetaRefresh)
 )
 
-func GetNews(link string, title string, timeout int) (*extract.News, *HttpResp, error) {
-	return GetNewsDo(link, title, timeout, true)
+// GetLinkRes 获取页面链接分组
+func GetLinkRes(urlStr string, timeout int, retry int) (*extract.LinkRes, map[string]string, error) {
+	if retry <= 0 {
+		retry = 1
+	}
+
+	for i := 0; i < retry; i++ {
+		res, filters, err := GetLinkResDo(urlStr, timeout)
+		if err == nil {
+			return res, filters, err
+		}
+	}
+
+	return nil, nil, errors.New("ErrorLinkRes")
 }
 
-func GetNewsDo(link string, title string, timeout int, top bool) (*extract.News, *HttpResp, error) {
+// GetLinkResDo 获取页面链接分组
+func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]string, error) {
+	if timeout == 0 {
+		timeout = 10000
+	}
+
+	req := &HttpReq{
+		HttpReq: &fun.HttpReq{
+			MaxContentLength: HttpDefaultMaxContentLength,
+			MaxRedirect:      3,
+		},
+		ForceTextContentType: true,
+	}
+
+	resp, err := HttpGetResp(urlStr, req, timeout)
+	if resp.Success && err == nil {
+		// 解析 HTML
+		doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
+		if docErr == nil {
+			doc.Find(DefaultDocRemoveTags).Remove()
+
+			// 语言
+			langRes := Lang(doc, resp.Charset.Charset, true)
+
+			// 站内链接
+			linkTitles, filters := extract.WebLinkTitles(doc, resp.RequestURL, true)
+
+			// 链接分类
+			links, _ := extract.LinkTypes(linkTitles, langRes.Lang, nil)
+
+			return links, filters, nil
+		} else {
+			return nil, nil, errors.New("ErrorDocParse")
+		}
+	}
+
+	return nil, nil, errors.New("ErrorRequest")
+}
+
+// GetNews 获取正文
+func GetNews(urlStr string, title string, timeout int, retry int) (*extract.News, *HttpResp, error) {
+	if retry <= 0 {
+		retry = 1
+	}
+
+	for i := 0; i < retry; i++ {
+		news, resp, err := GetNewsDo(urlStr, title, timeout)
+		if err == nil {
+			return news, resp, nil
+		}
+	}
+
+	return nil, nil, errors.New("ErrorRequest")
+}
+
+// GetNewsDo 获取正文
+func GetNewsDo(urlStr string, title string, timeout int) (*extract.News, *HttpResp, error) {
+	return getNewsDoTop(urlStr, title, timeout, true)
+}
+
+// getNewsDoTop 获取正文
+func getNewsDoTop(urlStr string, title string, timeout int, top bool) (*extract.News, *HttpResp, error) {
 	if timeout == 0 {
 		timeout = HttpDefaultTimeOut
 	}
 
 	req := &HttpReq{
 		HttpReq: &fun.HttpReq{
-			MaxContentLength: 10 * 1024 * 1024,
-			MaxRedirect:      1,
+			MaxContentLength: HttpDefaultMaxContentLength,
+			MaxRedirect:      2,
 		},
 		ForceTextContentType: true,
 	}
 
-	resp, err := HttpGetResp(link, req, timeout)
+	resp, err := HttpGetResp(urlStr, req, timeout)
 
 	if resp.Success && err == nil {
 		doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
@@ -62,7 +135,7 @@ func GetNewsDo(link string, title string, timeout int, top bool) (*extract.News,
 							refreshHostname := r.Hostname()
 							refreshTopDomain := extract.DomainTop(refreshHostname)
 							if refreshTopDomain != "" && refreshTopDomain == requestTopDomain {
-								return GetNewsDo(refreshUrl, title, timeout, false)
+								return getNewsDoTop(refreshUrl, title, timeout, false)
 							}
 						}
 					}
@@ -78,7 +151,7 @@ func GetNewsDo(link string, title string, timeout int, top bool) (*extract.News,
 
 			return news, resp, nil
 		} else {
-			return nil, resp, errors.New("ErrorParse")
+			return nil, resp, errors.New("ErrorDocParse")
 		}
 	}
 

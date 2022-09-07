@@ -10,19 +10,6 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-func TestLinkRes(t *testing.T) {
-	var urlStrs = []string{
-		// "http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
-		"https://www.163.com",
-	}
-
-	for _, urlStr := range urlStrs {
-		if res, err := GetLinkRes(urlStr, 10000, 1); err == nil {
-			t.Log(res.Content)
-		}
-	}
-}
-
 func TestDomainDetect(t *testing.T) {
 	domains := []string{
 		// "china-nengyuan.com",

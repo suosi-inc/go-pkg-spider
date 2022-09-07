@@ -83,7 +83,71 @@ func TestCount(t *testing.T) {
 	fmt.Println(utf8.RuneCountInString("https://khmers.cn/2022/05/23/%e6%b4%aa%e6%a3%ae%e6%80%bb%e7%90%86%ef%bc%9a%e6%9f%ac%e5%9f%94%e5%af%a8%e7%b4%af%e8%ae%a1%e8%8e%b7%e5%be%97%e8%b6%85%e8%bf%875200%e4%b8%87%e5%89%82%e6%96%b0%e5%86%a0%e7%96%ab%e8%8b%97%ef%bc%8c/"))
 }
 
-func TestContent(t *testing.T) {
+func TestGetLinkRes(t *testing.T) {
+	var urlStrs = []string{
+		// "https://www.1905.com",
+		"https://www.people.com.cn",
+		// "https://www.36kr.com",
+		// "https://www.163.com",
+		// "https://news.163.com/",
+		// "http://jyj.suqian.gov.cn",
+		// "https://www.huxiu.com/",
+		// "http://www.news.cn/politicspro/",
+		// "http://www.cankaoxiaoxi.com",
+		// "http://www.bbc.com",
+		// "https://www.ft.com",
+		// "https://www.reuters.com/",
+		// "https://nypost.com/",
+		// "http://www.mengcheng.gov.cn/",
+		// "https://www.chunichi.co.jp",
+		// "https://www.donga.com/",
+		// "https://people.com/",
+		// "https://czql.gov.cn/",
+		// "https://qiye.163.com/",
+		// "https://www.washingtontimes.com/",
+		// "https://www.gamersky.com/",
+		// "https://www.cdns.com.tw/",
+		// "http://www.163.com/",
+	}
+
+	for _, urlStr := range urlStrs {
+
+		if linkRes, filters, err := GetLinkResDo(urlStr, 10000); err == nil {
+			fmt.Println("content:", len(linkRes.Content))
+			fmt.Println("list:", len(linkRes.List))
+			fmt.Println("unknown:", len(linkRes.Unknown))
+			fmt.Println("none:", len(linkRes.None))
+
+			i := 0
+			for a, title := range filters {
+				i = i + 1
+				fmt.Println(i, "filter:"+a+"\t=>\t"+title)
+			}
+			i = 0
+			for a, title := range linkRes.Content {
+				i = i + 1
+				fmt.Println(i, "content:"+a+"\t=>\t"+title)
+			}
+			i = 0
+			for a, title := range linkRes.Unknown {
+				i = i + 1
+				fmt.Println(i, "unknown:"+a+"\t=>\t"+title)
+			}
+			i = 0
+			for a, title := range linkRes.List {
+				i = i + 1
+				fmt.Println(i, "list:"+a+"\t=>\t"+title)
+			}
+			i = 0
+			for a, title := range linkRes.None {
+				i = i + 1
+				fmt.Println(i, "none:"+a+"\t=>\t"+title)
+			}
+		}
+	}
+}
+
+func TestGetNews(t *testing.T) {
 
 	var urlStrs = []string{
 		"http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
@@ -114,7 +178,7 @@ func TestContent(t *testing.T) {
 	}
 
 	for _, urlStr := range urlStrs {
-		if news, resp, err := GetNews(urlStr, "", 10000); err == nil {
+		if news, resp, err := GetNewsDo(urlStr, "", 10000); err == nil {
 			t.Log(resp.Charset)
 			t.Log(news.Title)
 			t.Log(news.TitlePos)
