@@ -112,7 +112,7 @@ func TestGetLinkRes(t *testing.T) {
 
 	for _, urlStr := range urlStrs {
 
-		if linkRes, filters, err := GetLinkResDo(urlStr, 10000); err == nil {
+		if linkRes, filters, err := GetLinkRes(urlStr, 10000, 1); err == nil {
 			fmt.Println("content:", len(linkRes.Content))
 			fmt.Println("list:", len(linkRes.List))
 			fmt.Println("unknown:", len(linkRes.Unknown))
@@ -178,7 +178,7 @@ func TestGetNews(t *testing.T) {
 	}
 
 	for _, urlStr := range urlStrs {
-		if news, resp, err := GetNewsDo(urlStr, "", 10000); err == nil {
+		if news, resp, err := GetNews(urlStr, "", 10000, 1); err == nil {
 			t.Log(resp.Charset)
 			t.Log(news.Title)
 			t.Log(news.TitlePos)

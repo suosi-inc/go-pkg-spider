@@ -69,7 +69,7 @@ func WebTitleClean(title string, lang string) string {
 
 		// 去除首页开头
 		if fun.HasPrefixCase(title, "首页") {
-			title = regexp.MustCompile("首页( |\\||-|_|－|—|｜)*").ReplaceAllString(title, "")
+			title = regexp.MustCompile("首页([ |\\-_－—｜])*").ReplaceAllString(title, "")
 		}
 
 		titleClean := title

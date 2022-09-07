@@ -143,7 +143,7 @@ func NewContent(doc *goquery.Document, lang string, originTitle string) *Content
 	return &Content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, Lang: lang, infoMap: infoMap, titleSim: titleSim}
 }
 
-func (c *Content) News() *News {
+func (c *Content) ExtractNews() *News {
 	news := &News{}
 
 	// 提取正文结点和正文
@@ -236,7 +236,7 @@ func (c *Content) getContentNode() *html.Node {
 
 		// c.debug()
 
-		for node, _ := range c.infoMap {
+		for node := range c.infoMap {
 			if node.Data == "a" || node == bodyNode {
 				continue
 			}
@@ -275,7 +275,7 @@ func (c *Content) getTime() string {
 		return langTime
 	}
 
-	scriptTime := c.getTimeByScript(bodyText)
+	scriptTime := c.getTimeByScript()
 	if scriptTime != "" {
 		c.timePos = "script"
 		return scriptTime
@@ -886,7 +886,7 @@ func (c *Content) getTitleByScript(metaTitle string) string {
 	return ""
 }
 
-func (c *Content) getTimeByScript(metaTitle string) string {
+func (c *Content) getTimeByScript() string {
 	scripts := c.OriginDoc.Find("script")
 	if scripts.Size() > 0 {
 		var time string
