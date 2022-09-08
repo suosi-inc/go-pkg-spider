@@ -812,27 +812,25 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	// 去除原始 metaTitle 最后一个尾巴（一般是站点名称），再进行相似判断
 	metaTitle := WebContentTitleClean(originMetaTitle, c.Lang)
 
+	// 从 Meta 中提取相似 <title> 的标题，优先级较高，返回短的那个
+	titleByMeta := c.getTitleByMeta(metaTitle)
+	if titleByMeta != "" {
+		return titleByMeta
+	}
+
 	// 提取页面 Script 寻找是否包含有 title 的字段
-	title = c.getTitleByScript(metaTitle)
-	if title != "" {
+	titleScript := c.getTitleByScript(metaTitle)
+	if titleScript != "" {
 		c.titlePos = "script"
-		return title
+		return titleScript
 	}
 
 	titleList := make([]*html.Node, 0)
 	titleSim := make([]float64, 0)
 	if !fun.Blank(originMetaTitle) && contentNode != nil {
-
-		// 从 Meta 中提取相似 <title> 的标题，优先级较高，返回短的那个
-		titleByMeta := c.getTitleByMeta(metaTitle)
-		if titleByMeta != "" {
-			return titleByMeta
-		}
-
 		// 从 body 开始遍历，收集 h1->h2，并计算与 metaTitle 的相似度
 		var traverse func(*html.Node)
 		traverse = func(n *html.Node) {
-
 			if n.FirstChild != nil {
 				if n.Type == html.ElementNode {
 					// 计算 h1->h2 的相似度
@@ -950,19 +948,23 @@ func (c *Content) getTitleByMeta(metaTitle string) string {
 	}
 
 	if len(titles) > 0 {
-		for _, title := range titles {
-			sim := fun.SimilarityText(title, metaTitle)
-			if sim > c.titleSim {
-				titleLen := utf8.RuneCountInString(title)
-				metaTitleLen := utf8.RuneCountInString(metaTitle)
-				if titleLen < metaTitleLen {
-					c.titlePos = "title"
-					return title
-				} else {
-					c.titlePos = "metaTitle"
-					return metaTitle
+		if metaTitle != "" {
+			for _, title := range titles {
+				sim := fun.SimilarityText(title, metaTitle)
+				if sim > c.titleSim {
+					titleLen := utf8.RuneCountInString(title)
+					metaTitleLen := utf8.RuneCountInString(metaTitle)
+					if titleLen < metaTitleLen {
+						c.titlePos = "title"
+						return title
+					} else {
+						c.titlePos = "metaTitle"
+						return metaTitle
+					}
 				}
 			}
+		} else {
+			return titles[0]
 		}
 	}
 
