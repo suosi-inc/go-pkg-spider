@@ -44,7 +44,7 @@ const (
 	RegexScriptTitle = `(?i)"title"\x20*:\x20*"(.*)"`
 
 	// RegexScriptTime Script 中的发布时间
-	RegexScriptTime = `(?i)"[\w_\-]*pub.*"\x20*:\x20*"(((20[1-3]\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\.\d{3})?)(z|Z|[\+-]\d{2}[:]?\d{2})?))"`
+	RegexScriptTime = `(?i)"[\w_\-]*pub.*"[\t ]{0,4}:[\t ]{0,4}"(((20[1-3]\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\.\d{3})?)(z|Z|[\+-]\d{2}[:]?\d{2})?))"`
 
 	RegexFormatTime3 = `[:分]\d{3}$`
 
@@ -270,34 +270,54 @@ func (c *Content) getContentNode() *html.Node {
 }
 
 func (c *Content) getTime() string {
-	metaTime := c.getTimeByMeta()
-
-	if metaTime != "" {
+	// meta
+	regexZhPatterns := []*regexp.Regexp{
+		regexPublishDatePattern,
+	}
+	metaZhTime := c.getTimeByMeta(regexZhPatterns)
+	if metaZhTime != "" {
 		c.timePos = "meta"
-		return metaTime
+		return metaZhTime
 	}
 
+	if c.Lang != "zh" {
+		regexEnPatterns := []*regexp.Regexp{
+			regexEnPublishDatePattern1,
+			regexEnPublishDatePattern2,
+		}
+		metaEnTime := c.getTimeByMetaEn(regexEnPatterns)
+		if metaEnTime != "" {
+			c.timePos = "meta"
+			c.timeEnFormat = true
+			return metaEnTime
+		}
+	}
+
+	// <time> 标签
 	tagTime := c.getTimeByTag()
 	if tagTime != "" {
 		c.timePos = "tag"
 		return tagTime
 	}
 
-	bodyText := c.Doc.Find("body").Text()
-	bodyText = fun.NormaliseSpace(bodyText)
-
+	// <script> 标签, 必须包含时间
 	scriptTime := c.getTimeByScript()
 	if scriptTime != "" {
 		c.timePos = "script"
 		return scriptTime
 	}
 
+	bodyText := c.Doc.Find("body").Text()
+	bodyText = fun.NormaliseSpace(bodyText)
+
+	// <body>
 	contentTime := c.getTimeByBody(bodyText)
 	if contentTime != "" {
 		c.timePos = "body"
 		return contentTime
 	}
 
+	// 特定专属
 	langTime := c.getTimeByLang(bodyText)
 	if langTime != "" {
 		c.timePos = "lang"
@@ -510,7 +530,6 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 }
 
 func (c *Content) getTimeByTag() string {
-	// <time> 标签
 	timeTags := c.Doc.Find("time")
 	if timeTags.Size() > 0 {
 		firstTimeTags := timeTags.First()
@@ -523,12 +542,14 @@ func (c *Content) getTimeByTag() string {
 			if dateTime != "" && regexEnPublishDatePattern1.MatchString(dateTime) {
 				dateTime = fun.NormaliseSpace(dateTime)
 				dateTime = strings.ReplaceAll(dateTime, ",", " ")
+				c.timeEnFormat = true
 				return dateTime
 			}
 
 			if dateTime != "" && regexEnPublishDatePattern2.MatchString(dateTime) {
 				dateTime = fun.NormaliseSpace(dateTime)
 				dateTime = strings.ReplaceAll(dateTime, ",", " ")
+				c.timeEnFormat = true
 				return dateTime
 			}
 		}
@@ -537,21 +558,13 @@ func (c *Content) getTimeByTag() string {
 	return ""
 }
 
-func (c *Content) getTimeByMeta() string {
+func (c *Content) getTimeByMeta(regexPatterns []*regexp.Regexp) string {
 	metaDates := make([]string, 0)
 	metas := c.Doc.Find("meta")
 	if metas.Size() > 0 {
 		metas.Each(func(i int, meta *goquery.Selection) {
 			content := meta.AttrOr("content", "")
-
-			// 正则表达式组
-			regexPatterns := []*regexp.Regexp{
-				regexPublishDatePattern,
-				regexEnPublishDatePattern1,
-				regexEnPublishDatePattern2,
-			}
-
-			for index, regexPattern := range regexPatterns {
+			for _, regexPattern := range regexPatterns {
 				dateStr := regexPattern.FindString(content)
 				if dateStr != "" {
 					name := meta.AttrOr("name", "")
@@ -563,19 +576,105 @@ func (c *Content) getTimeByMeta() string {
 
 					if fun.ContainsAny(property, contentMetaDatetimeDicts...) {
 						dateStr = strings.TrimSpace(dateStr)
-						if index > 0 {
-							dateStr = fun.NormaliseSpace(dateStr)
-							dateStr = strings.ReplaceAll(dateStr, ",", " ")
-						}
 						metaDates = append(metaDates, dateStr)
 					}
 
 					if fun.ContainsAny(name, contentMetaDatetimeDicts...) {
 						dateStr = strings.TrimSpace(dateStr)
-						if index > 0 {
-							dateStr = fun.NormaliseSpace(dateStr)
-							dateStr = strings.ReplaceAll(dateStr, ",", " ")
-						}
+						metaDates = append(metaDates, dateStr)
+					}
+
+					break
+				}
+			}
+		})
+	}
+
+	metaDatesLen := len(metaDates)
+	if metaDatesLen > 0 {
+		// 根据是否有时间进行分组
+		hasTimes := make([]string, 0)
+		noTimes := make([]string, 0)
+		for _, date := range metaDates {
+			if regexTimePattern.MatchString(date) {
+				// 去除非法的尾巴
+				hasTimes = append(hasTimes, date)
+			} else {
+				noTimes = append(noTimes, date)
+			}
+		}
+
+		// 有时间的情况, 返回最长的
+		if len(hasTimes) > 0 {
+			if len(hasTimes) == 1 {
+				return hasTimes[0]
+			}
+
+			var maxLen int
+			var maxLenDate string
+			for _, date := range hasTimes {
+				length := utf8.RuneCountInString(date)
+				if length > maxLen {
+					maxLen = length
+					maxLenDate = date
+				}
+			}
+
+			return maxLenDate
+		}
+
+		// 返回最长的
+		if c.Lang != "zh" {
+			if len(noTimes) > 0 {
+				if len(noTimes) == 1 {
+					return noTimes[0]
+				}
+
+				var maxLen int
+				var maxLenDate string
+				for _, date := range noTimes {
+					length := utf8.RuneCountInString(date)
+					if length > maxLen {
+						maxLen = length
+						maxLenDate = date
+					}
+				}
+
+				return maxLenDate
+			}
+		}
+	}
+
+	return ""
+}
+
+func (c *Content) getTimeByMetaEn(regexPatterns []*regexp.Regexp) string {
+	metaDates := make([]string, 0)
+	metas := c.Doc.Find("meta")
+	if metas.Size() > 0 {
+		metas.Each(func(i int, meta *goquery.Selection) {
+			content := meta.AttrOr("content", "")
+			for _, regexPattern := range regexPatterns {
+				dateStr := regexPattern.FindString(content)
+				if dateStr != "" {
+					name := meta.AttrOr("name", "")
+					property := meta.AttrOr("property", "")
+					name = strings.ReplaceAll(name, "_", "")
+					name = strings.ReplaceAll(name, "-", "")
+					property = strings.ReplaceAll(property, "_", "")
+					property = strings.ReplaceAll(property, "-", "")
+
+					if fun.ContainsAny(property, contentMetaDatetimeDicts...) {
+						dateStr = strings.TrimSpace(dateStr)
+						dateStr = fun.NormaliseSpace(dateStr)
+						dateStr = strings.ReplaceAll(dateStr, ",", " ")
+						metaDates = append(metaDates, dateStr)
+					}
+
+					if fun.ContainsAny(name, contentMetaDatetimeDicts...) {
+						dateStr = strings.TrimSpace(dateStr)
+						dateStr = fun.NormaliseSpace(dateStr)
+						dateStr = strings.ReplaceAll(dateStr, ",", " ")
 						metaDates = append(metaDates, dateStr)
 					}
 

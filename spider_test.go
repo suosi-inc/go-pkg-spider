@@ -177,7 +177,7 @@ func TestGetNews(t *testing.T) {
 		// "https://news.52pk.com/xwlm/201912/7366710.shtml",
 		// "https://www.business-standard.com/article/finance/govt-rbi-propose-action-plan-for-facilitating-special-rupee-accounts-122090701260_1.html",
 		// "https://www.squirepattonboggs.com/en/news/2022/09/squire-patton-boggs-advises-new-wave-group-ab-on-uk-acquisition",
-		"https://www.biospectrumindia.com/news/23/21888/novo-holdings-leads-50-m-investment-in-medgenome.html",
+		"https://www.deccanchronicle.com/world/asia/020922/myanmar-court-sentences-suu-kyi-to-three-years-of-imprisonment-for-vot.html",
 	}
 
 	for _, urlStr := range urlStrs {
@@ -209,7 +209,4 @@ func TestGetNews(t *testing.T) {
 
 func TestDemo(t *testing.T) {
 	t.Log(fun.Date(fun.StrToTime("2022-04-10T18:24:00")))
-
-	regex := "(?i)(发布|创建|出版|发表|编辑)?(时间|日期|于)[\\pP ]{0,8}(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
-	t.Log(regexp.MustCompile(regex).MatchString("发布于 : 2016-03-04"))
 }
