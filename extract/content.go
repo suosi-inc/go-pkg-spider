@@ -27,11 +27,18 @@ const (
 	// RegexPublishDateNoYear 不包含年的发布时间(优先级低)
 	RegexPublishDateNoYear = "((0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?)?)"
 
+	// RegexEnPublishDate1 英文格式的正则: 02 Sep 2022 11:40:53 pm
+	RegexEnPublishDate1 = "(?i)((?:(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])(?:st|nd|rd|th)?)[, ]{0,4}(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[, ]{0,4}(20[1-3]\\d{1})([, ]{0,4}([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:]([0-5][0-9]|[0-9])([:]([0-5][0-9]|[0-9]))?([, ]{0,4}(am|pm))?)?)"
+
+	RegexEnPublishDate2 = "(?i)((january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[, ]{0,4}(?:(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])(?:st|nd|rd|th)?)[, ]{0,4}(20[1-3]\\d{1})([, ]{0,4}([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:]([0-5][0-9]|[0-9])([:]([0-5][0-9]|[0-9]))?([, ]{0,4}(am|pm))?)?)"
+
 	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?"
 
 	// RegexZhPublishPrefix 中文的发布时间前缀
 	RegexZhPublishPrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期)"
+
+	RegexZhPublishDate = RegexZhPublishPrefix + "[\\pP ]{1,8}" + RegexPublishShortDate
 
 	// RegexScriptTitle Script 中的标题
 	RegexScriptTitle = `(?i)"title"\x20*:\x20*"(.*)"`
@@ -64,6 +71,12 @@ var (
 	regexPublishShortDatePattern = regexp.MustCompile(RegexPublishShortDate)
 
 	regexPublishDateNoYearPattern = regexp.MustCompile(RegexPublishDateNoYear)
+
+	regexZhPublishDatePattern = regexp.MustCompile(RegexZhPublishDate)
+
+	regexEnPublishDatePattern1 = regexp.MustCompile(RegexEnPublishDate1)
+
+	regexEnPublishDatePattern2 = regexp.MustCompile(RegexEnPublishDate2)
 
 	regexTimePattern = regexp.MustCompile(RegexTime)
 
@@ -101,12 +114,13 @@ type Content struct {
 	OriginTitle string
 	Lang        string
 
-	infoMap  map[*html.Node]CountInfo
-	bodyNode *html.Node
-	title    string
-	titlePos string
-	timePos  string
-	titleSim float64
+	infoMap      map[*html.Node]CountInfo
+	bodyNode     *html.Node
+	title        string
+	titlePos     string
+	timePos      string
+	timeEnFormat bool
+	titleSim     float64
 }
 
 type CountInfo struct {
@@ -179,16 +193,19 @@ func (c *Content) ExtractNews() *News {
 
 // formatTime 时间格式化, 尽可能的
 func (c *Content) formatTime(time string) string {
-	// 当包含时区信息时格式化空格
-	if fun.ContainsAny(time, "T", "t", "Z", "z") {
-		time = strings.ReplaceAll(time, " ", "")
-	}
-	// 当包含时区T时又没有偏移, 按本地时间处理
-	if fun.Contains(time, "T") && !fun.ContainsCase(time, "z") {
-		if !regexZonePattern.MatchString(time) {
-			time = strings.ReplaceAll(time, "T", " ")
+	if !c.timeEnFormat {
+		// 当包含时区信息时格式化空格
+		if fun.ContainsAny(time, "T", "t", "Z", "z") {
+			time = strings.ReplaceAll(time, " ", "")
+		}
+		// 当包含时区T时又没有偏移, 按本地时间处理
+		if fun.Contains(time, "T") && !fun.ContainsCase(time, "z") {
+			if !regexZonePattern.MatchString(time) {
+				time = strings.ReplaceAll(time, "T", " ")
+			}
 		}
 	}
+
 	// 尾巴处理
 	if fun.Contains(time, ":") && !fun.ContainsAny(time, "时", "点") {
 		time = strings.TrimSuffix(time, "分")
@@ -292,8 +309,7 @@ func (c *Content) getTime() string {
 
 func (c *Content) getTimeByLang(bodyText string) string {
 	if c.Lang == "zh" {
-		regexStr := RegexZhPublishPrefix + "[\\pP ]{1,8}" + RegexPublishShortDate
-		allRegexs := regexp.MustCompile(regexStr).FindAllString(bodyText, -1)
+		allRegexs := regexZhPublishDatePattern.FindAllString(bodyText, -1)
 
 		if allRegexs != nil {
 			publishDates := make([]string, 0)
@@ -308,8 +324,42 @@ func (c *Content) getTimeByLang(bodyText string) string {
 				return c.pickPublishDates(bodyText, publishDates, false)
 			}
 		}
-	} else if c.Lang == "en" {
+	} else {
+		// 第一种
+		allRegexs := regexEnPublishDatePattern1.FindAllString(bodyText, -1)
+		if allRegexs != nil {
+			publishDates := make([]string, 0)
+			for _, regex := range allRegexs {
+				dateStr := strings.TrimSpace(regex)
+				dateStr = fun.NormaliseSpace(dateStr)
+				dateStr = strings.ReplaceAll(dateStr, ",", " ")
+				publishDates = append(publishDates, dateStr)
 
+			}
+
+			if len(publishDates) > 0 {
+				c.timeEnFormat = true
+				return c.pickPublishDates(bodyText, publishDates, false)
+			}
+		}
+
+		// 第二种
+		allRegexs = regexEnPublishDatePattern2.FindAllString(bodyText, -1)
+		if allRegexs != nil {
+			publishDates := make([]string, 0)
+			for _, regex := range allRegexs {
+				dateStr := strings.TrimSpace(regex)
+				dateStr = fun.NormaliseSpace(dateStr)
+				dateStr = strings.ReplaceAll(dateStr, ",", " ")
+				publishDates = append(publishDates, dateStr)
+
+			}
+
+			if len(publishDates) > 0 {
+				c.timeEnFormat = true
+				return c.pickPublishDates(bodyText, publishDates, false)
+			}
+		}
 	}
 
 	return ""
@@ -464,9 +514,23 @@ func (c *Content) getTimeByTag() string {
 	timeTags := c.Doc.Find("time")
 	if timeTags.Size() > 0 {
 		firstTimeTags := timeTags.First()
-		dataTime := firstTimeTags.AttrOr("datetime", "")
-		if dataTime != "" && regexPublishDatePattern.MatchString(dataTime) {
-			return dataTime
+		dateTime := firstTimeTags.AttrOr("datetime", "")
+		if dateTime != "" && regexPublishDatePattern.MatchString(dateTime) {
+			return dateTime
+		}
+
+		if c.Lang != "zh" {
+			if dateTime != "" && regexEnPublishDatePattern1.MatchString(dateTime) {
+				dateTime = fun.NormaliseSpace(dateTime)
+				dateTime = strings.ReplaceAll(dateTime, ",", " ")
+				return dateTime
+			}
+
+			if dateTime != "" && regexEnPublishDatePattern2.MatchString(dateTime) {
+				dateTime = fun.NormaliseSpace(dateTime)
+				dateTime = strings.ReplaceAll(dateTime, ",", " ")
+				return dateTime
+			}
 		}
 	}
 
@@ -479,40 +543,63 @@ func (c *Content) getTimeByMeta() string {
 	if metas.Size() > 0 {
 		metas.Each(func(i int, meta *goquery.Selection) {
 			content := meta.AttrOr("content", "")
-			dateStr := regexPublishDatePattern.FindString(content)
-			if dateStr != "" {
-				name := meta.AttrOr("name", "")
-				property := meta.AttrOr("property", "")
-				name = strings.ReplaceAll(name, "_", "")
-				name = strings.ReplaceAll(name, "-", "")
-				property = strings.ReplaceAll(property, "_", "")
-				property = strings.ReplaceAll(property, "-", "")
 
-				if fun.ContainsAny(property, contentMetaDatetimeDicts...) {
-					dateStr = strings.TrimSpace(dateStr)
-					metaDates = append(metaDates, dateStr)
-				}
+			// 正则表达式组
+			regexPatterns := []*regexp.Regexp{
+				regexPublishDatePattern,
+				regexEnPublishDatePattern1,
+				regexEnPublishDatePattern2,
+			}
 
-				if fun.ContainsAny(name, contentMetaDatetimeDicts...) {
-					dateStr = strings.TrimSpace(dateStr)
-					metaDates = append(metaDates, dateStr)
+			for index, regexPattern := range regexPatterns {
+				dateStr := regexPattern.FindString(content)
+				if dateStr != "" {
+					name := meta.AttrOr("name", "")
+					property := meta.AttrOr("property", "")
+					name = strings.ReplaceAll(name, "_", "")
+					name = strings.ReplaceAll(name, "-", "")
+					property = strings.ReplaceAll(property, "_", "")
+					property = strings.ReplaceAll(property, "-", "")
+
+					if fun.ContainsAny(property, contentMetaDatetimeDicts...) {
+						dateStr = strings.TrimSpace(dateStr)
+						if index > 0 {
+							dateStr = fun.NormaliseSpace(dateStr)
+							dateStr = strings.ReplaceAll(dateStr, ",", " ")
+						}
+						metaDates = append(metaDates, dateStr)
+					}
+
+					if fun.ContainsAny(name, contentMetaDatetimeDicts...) {
+						dateStr = strings.TrimSpace(dateStr)
+						if index > 0 {
+							dateStr = fun.NormaliseSpace(dateStr)
+							dateStr = strings.ReplaceAll(dateStr, ",", " ")
+						}
+						metaDates = append(metaDates, dateStr)
+					}
+
+					break
 				}
 			}
 		})
 	}
 
-	// 多个返回最长的并且包含时间的
 	metaDatesLen := len(metaDates)
 	if metaDatesLen > 0 {
 		// 根据是否有时间进行分组
 		hasTimes := make([]string, 0)
+		noTimes := make([]string, 0)
 		for _, date := range metaDates {
 			if regexTimePattern.MatchString(date) {
+				// 去除非法的尾巴
 				hasTimes = append(hasTimes, date)
+			} else {
+				noTimes = append(noTimes, date)
 			}
 		}
 
-		// 有时间的情况
+		// 有时间的情况, 返回最长的
 		if len(hasTimes) > 0 {
 			if len(hasTimes) == 1 {
 				return hasTimes[0]
@@ -529,6 +616,27 @@ func (c *Content) getTimeByMeta() string {
 			}
 
 			return maxLenDate
+		}
+
+		// 返回最长的
+		if c.Lang != "zh" {
+			if len(noTimes) > 0 {
+				if len(noTimes) == 1 {
+					return noTimes[0]
+				}
+
+				var maxLen int
+				var maxLenDate string
+				for _, date := range noTimes {
+					length := utf8.RuneCountInString(date)
+					if length > maxLen {
+						maxLen = length
+						maxLenDate = date
+					}
+				}
+
+				return maxLenDate
+			}
 		}
 	}
 

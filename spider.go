@@ -56,7 +56,7 @@ func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]stri
 	}
 
 	resp, err := HttpGetResp(urlStr, req, timeout)
-	if resp.Success && err == nil {
+	if resp != nil && err == nil && resp.Success {
 		// 解析 HTML
 		doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 		if docErr == nil {
@@ -117,7 +117,7 @@ func getNewsDoTop(urlStr string, title string, timeout int, top bool) (*extract.
 
 	resp, err := HttpGetResp(urlStr, req, timeout)
 
-	if resp.Success && err == nil {
+	if resp != nil && err == nil && resp.Success {
 		doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 		if docErr == nil {
 			contentDoc := goquery.CloneDocument(doc)

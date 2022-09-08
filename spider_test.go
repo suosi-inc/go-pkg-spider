@@ -176,7 +176,8 @@ func TestGetNews(t *testing.T) {
 		// "http://www.chinagwy.org.cn/content-cat-10/143162.html",
 		// "https://news.52pk.com/xwlm/201912/7366710.shtml",
 		// "https://www.business-standard.com/article/finance/govt-rbi-propose-action-plan-for-facilitating-special-rupee-accounts-122090701260_1.html",
-		"https://www.farmersjournal.ie/51ac-of-farmland-with-full-planning-permission-available-outside-navan-718580",
+		// "https://www.squirepattonboggs.com/en/news/2022/09/squire-patton-boggs-advises-new-wave-group-ab-on-uk-acquisition",
+		"https://www.biospectrumindia.com/news/23/21888/novo-holdings-leads-50-m-investment-in-medgenome.html",
 	}
 
 	for _, urlStr := range urlStrs {
