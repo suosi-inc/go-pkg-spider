@@ -48,6 +48,9 @@ const (
 	// RegexScriptTime Script 中的发布时间
 	RegexScriptTime = `(?i)"[\w_\-]*pub.*"[\t ]{0,4}:[\t ]{0,4}"(((20[1-3]\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\.\d{3})?)(z|Z|[\+-]\d{2}[:]?\d{2})?))"`
 
+	// RegexWxScriptTime 微信 Script 中的发布时间
+	RegexWxScriptTime = `(?i)ct[\t ]{0,4}=[\t ]{0,4}"(1[4-9]\d{8})"`
+
 	// RegexFormatTime3 错误的时间格式, 用于过滤
 	RegexFormatTime3 = `[:分]\d{3}$`
 
@@ -90,6 +93,8 @@ var (
 	regexScriptTitlePattern = regexp.MustCompile(RegexScriptTitle)
 
 	regexScriptTimePattern = regexp.MustCompile(RegexScriptTime)
+
+	regexWxScriptTimePattern = regexp.MustCompile(RegexWxScriptTime)
 
 	regexFormatTime3 = regexp.MustCompile(RegexFormatTime3)
 
@@ -815,6 +820,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	// 从 Meta 中提取相似 <title> 的标题，优先级较高，返回短的那个
 	titleByMeta := c.getTitleByMeta(metaTitle)
 	if titleByMeta != "" {
+		c.titlePos = "meta"
 		return titleByMeta
 	}
 
@@ -1128,6 +1134,15 @@ func (c *Content) getTimeByScript() string {
 			if dateStrs != nil {
 				dateStr := strings.TrimSpace(dateStrs[1])
 				time = dateStr
+				return
+			}
+
+			dateStrs = regexWxScriptTimePattern.FindStringSubmatch(scriptText)
+			if dateStrs != nil {
+				dateStr := strings.TrimSpace(dateStrs[1])
+				dateTs := fun.ToInt(dateStr)
+				time = fun.Date(dateTs)
+				return
 			}
 		})
 
