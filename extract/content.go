@@ -64,7 +64,7 @@ var (
 		"meta[name='twitter:title' i]",
 	}
 
-	contentMetaDatetimeDicts = []string{"publish", "pubdate", "pubtime", "release"}
+	contentMetaDatetimeDicts = []string{"publish", "pubdate", "pubtime", "release", "dctermsdate"}
 
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 
@@ -106,6 +106,8 @@ type News struct {
 	Content string
 	// 正文节点
 	ContentNode *html.Node
+	// 响应毫秒
+	Spend int64
 }
 
 type Content struct {
@@ -160,6 +162,8 @@ func NewContent(doc *goquery.Document, lang string, originTitle string) *Content
 func (c *Content) ExtractNews() *News {
 	news := &News{}
 
+	begin := fun.Timestamp(true)
+
 	// 提取正文结点和正文
 	contentNode := c.getContentNode()
 	if contentNode != nil {
@@ -187,6 +191,8 @@ func (c *Content) ExtractNews() *News {
 			news.TimeLocal = fun.Date(ts)
 		}
 	}
+
+	news.Spend = fun.Timestamp(true) - begin
 
 	return news
 }
@@ -280,6 +286,7 @@ func (c *Content) getTime() string {
 		return metaZhTime
 	}
 
+	// meta En
 	if c.Lang != "zh" {
 		regexEnPatterns := []*regexp.Regexp{
 			regexEnPublishDatePattern1,
@@ -317,7 +324,7 @@ func (c *Content) getTime() string {
 		return contentTime
 	}
 
-	// 特定专属
+	// Lang专属
 	langTime := c.getTimeByLang(bodyText)
 	if langTime != "" {
 		c.timePos = "lang"
@@ -534,23 +541,34 @@ func (c *Content) getTimeByTag() string {
 	if timeTags.Size() > 0 {
 		firstTimeTags := timeTags.First()
 		dateTime := firstTimeTags.AttrOr("datetime", "")
-		if dateTime != "" && regexPublishDatePattern.MatchString(dateTime) {
-			return dateTime
+		if dateTime != "" {
+			find := regexPublishDatePattern.FindString(dateTime)
+			if find != "" {
+				return find
+			}
+
 		}
 
 		if c.Lang != "zh" {
-			if dateTime != "" && regexEnPublishDatePattern1.MatchString(dateTime) {
-				dateTime = fun.NormaliseSpace(dateTime)
-				dateTime = strings.ReplaceAll(dateTime, ",", " ")
-				c.timeEnFormat = true
-				return dateTime
+			if dateTime != "" {
+				find := regexEnPublishDatePattern1.FindString(dateTime)
+				if find != "" {
+					find = fun.NormaliseSpace(find)
+					find = strings.ReplaceAll(find, ",", " ")
+					c.timeEnFormat = true
+					return find
+				}
+
 			}
 
-			if dateTime != "" && regexEnPublishDatePattern2.MatchString(dateTime) {
-				dateTime = fun.NormaliseSpace(dateTime)
-				dateTime = strings.ReplaceAll(dateTime, ",", " ")
-				c.timeEnFormat = true
-				return dateTime
+			if dateTime != "" {
+				find := regexEnPublishDatePattern2.FindString(dateTime)
+				if find != "" {
+					find = fun.NormaliseSpace(find)
+					find = strings.ReplaceAll(find, ",", " ")
+					c.timeEnFormat = true
+					return find
+				}
 			}
 		}
 	}
@@ -569,11 +587,9 @@ func (c *Content) getTimeByMeta(regexPatterns []*regexp.Regexp) string {
 				if dateStr != "" {
 					name := meta.AttrOr("name", "")
 					property := meta.AttrOr("property", "")
-					name = strings.ReplaceAll(name, "_", "")
-					name = strings.ReplaceAll(name, "-", "")
-					property = strings.ReplaceAll(property, "_", "")
-					property = strings.ReplaceAll(property, "-", "")
-
+					replacer := strings.NewReplacer("_", "", "-", "", ".", "")
+					name = replacer.Replace(name)
+					property = replacer.Replace(property)
 					if fun.ContainsAny(property, contentMetaDatetimeDicts...) {
 						dateStr = strings.TrimSpace(dateStr)
 						metaDates = append(metaDates, dateStr)
@@ -659,10 +675,9 @@ func (c *Content) getTimeByMetaEn(regexPatterns []*regexp.Regexp) string {
 				if dateStr != "" {
 					name := meta.AttrOr("name", "")
 					property := meta.AttrOr("property", "")
-					name = strings.ReplaceAll(name, "_", "")
-					name = strings.ReplaceAll(name, "-", "")
-					property = strings.ReplaceAll(property, "_", "")
-					property = strings.ReplaceAll(property, "-", "")
+					replacer := strings.NewReplacer("_", "", "-", "", ".", "")
+					name = replacer.Replace(name)
+					property = replacer.Replace(property)
 
 					if fun.ContainsAny(property, contentMetaDatetimeDicts...) {
 						dateStr = strings.TrimSpace(dateStr)

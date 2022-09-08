@@ -10,6 +10,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/suosi-inc/go-pkg-spider/extract"
 	"github.com/x-funs/go-fun"
 )
 
@@ -162,7 +163,7 @@ func TestGetNews(t *testing.T) {
 		// "https://www.wangan.com/news/7fy78y38c7207bf0",
 		// "http://env.people.com.cn/n1/2022/0901/c1010-32516651.html",
 		// "http://www.changzhou.gov.cn/ns_news/827166202029392",
-		// "https://www.163.com/money/article/HG4TRBL1002580S6.html?clickfrom=w_yw_money",
+		"https://www.163.com/money/article/HG4TRBL1002580S6.html?clickfrom=w_yw_money",
 		// "https://mp.weixin.qq.com/s?__biz=MzUxODkxNTYxMA==&mid=2247484842&idx=1&sn=d9822ee4662523609aee7441066c2a96&chksm=f980d6dfcef75fc93cb1e7942cb16ec82a7fb7ec3c2d857c307766daff667bd63ab1b4941abd&exportkey=AXWfguuAyJjlOJgCHf10io8%3D&acctmode=0&pass_ticket=8eXqj",
 		// "https://www.bbc.com/news/world-asia-62744522",
 		// "https://www.sohu.com/a/581634395_121284943",
@@ -177,12 +178,13 @@ func TestGetNews(t *testing.T) {
 		// "https://news.52pk.com/xwlm/201912/7366710.shtml",
 		// "https://www.business-standard.com/article/finance/govt-rbi-propose-action-plan-for-facilitating-special-rupee-accounts-122090701260_1.html",
 		// "https://www.squirepattonboggs.com/en/news/2022/09/squire-patton-boggs-advises-new-wave-group-ab-on-uk-acquisition",
-		"https://www.deccanchronicle.com/world/asia/020922/myanmar-court-sentences-suu-kyi-to-three-years-of-imprisonment-for-vot.html",
+		// "https://www.thebulletin.be/number-road-deaths-belgium-rises-sharply",
 	}
 
 	for _, urlStr := range urlStrs {
 		if news, resp, err := GetNews(urlStr, "", 10000, 1); err == nil {
 			t.Log(resp.Charset)
+			t.Log(news.Spend)
 			t.Log(news.Title)
 			t.Log(news.TitlePos)
 			t.Log(news.TimeLocal)
@@ -208,5 +210,8 @@ func TestGetNews(t *testing.T) {
 }
 
 func TestDemo(t *testing.T) {
+	a := "2022-05-26 17:00:57 UTC"
+	findString := regexp.MustCompile(extract.RegexPublishDate).FindStringSubmatch(a)
+	t.Log(findString)
 	t.Log(fun.Date(fun.StrToTime("2022-04-10T18:24:00")))
 }
