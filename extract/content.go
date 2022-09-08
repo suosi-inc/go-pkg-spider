@@ -33,6 +33,9 @@ const (
 	// RegexEnPublishDate2 英文格式的正则2, 如 Sep 02 2022 11:40:53 pm
 	RegexEnPublishDate2 = "(?i)((january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[, ]{0,4}(?:(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])(?:st|nd|rd|th)?)[, ]{0,4}(20[1-3]\\d{1})([, ]{0,4}([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:]([0-5][0-9]|[0-9])([:]([0-5][0-9]|[0-9]))?([, ]{0,4}(am|pm))?)?)"
 
+	// RegexEnUsPublishDate 英文美式格式的正则3, 如 8/30/2022 11:11:11
+	RegexEnUsPublishDate = "((0[1-9]|1[0-2]|[1-9])[-/.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[-/.](20[1-3]\\d{1}|[1-3]\\d{1})[ ]{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:]([0-5][0-9]|[0-9])[:]?(([0-5][0-9]|[0-9]))?)?)"
+
 	// RegexTime 仅时间正则
 	RegexTime = "([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?"
 
@@ -87,6 +90,8 @@ var (
 	regexEnPublishDatePattern1 = regexp.MustCompile(RegexEnPublishDate1)
 
 	regexEnPublishDatePattern2 = regexp.MustCompile(RegexEnPublishDate2)
+
+	regexEnUsPublishDatePattern = regexp.MustCompile(RegexEnUsPublishDate)
 
 	regexTimePattern = regexp.MustCompile(RegexTime)
 
@@ -399,6 +404,20 @@ func (c *Content) getTimeByLang(bodyText string) string {
 
 			if len(publishDates) > 0 {
 				c.timeEnFormat = true
+				return c.pickPublishDates(bodyText, publishDates, false)
+			}
+		}
+
+		// 第三种格式, 美式时间, 如 8/30/2022 11:11:11
+		allRegexs = regexEnUsPublishDatePattern.FindAllString(bodyText, -1)
+		if allRegexs != nil {
+			publishDates := make([]string, 0)
+			for _, regex := range allRegexs {
+				dateStr := strings.TrimSpace(regex)
+				publishDates = append(publishDates, dateStr)
+			}
+
+			if len(publishDates) > 0 {
 				return c.pickPublishDates(bodyText, publishDates, false)
 			}
 		}
