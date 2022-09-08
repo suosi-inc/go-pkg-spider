@@ -146,7 +146,7 @@ func getNewsDoTop(urlStr string, title string, timeout int, top bool) (*extract.
 			langRes := Lang(doc, resp.Charset.Charset, false)
 
 			// 正文抽取
-			content := extract.NewContent(contentDoc, langRes.Lang, title)
+			content := extract.NewContent(contentDoc, langRes.Lang, title, urlStr)
 			news := content.ExtractNews()
 
 			return news, resp, nil

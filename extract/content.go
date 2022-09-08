@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"log"
 	"math"
+	"path"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -134,6 +135,8 @@ type Content struct {
 	Doc *goquery.Document
 	// 原始标题, 来自于上级页面
 	OriginTitle string
+	// 原始链接, 来自于上级页面
+	OriginUrl string
 	// 语种
 	Lang string
 
@@ -165,7 +168,7 @@ type CountInfo struct {
 	LeafList []int
 }
 
-func NewContent(doc *goquery.Document, lang string, originTitle string) *Content {
+func NewContent(doc *goquery.Document, lang string, originTitle string, originUrl string) *Content {
 	originDoc := goquery.CloneDocument(doc)
 	doc.Find(ContentRemoveTags).Remove()
 
@@ -177,7 +180,7 @@ func NewContent(doc *goquery.Document, lang string, originTitle string) *Content
 
 	infoMap := make(map[*html.Node]CountInfo, 0)
 
-	return &Content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, Lang: lang, infoMap: infoMap, titleSim: titleSim}
+	return &Content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, OriginUrl: originUrl, Lang: lang, infoMap: infoMap, titleSim: titleSim}
 }
 
 func (c *Content) ExtractNews() *News {
@@ -349,6 +352,12 @@ func (c *Content) getTime() string {
 	if langTime != "" {
 		c.timePos = "lang"
 		return langTime
+	}
+
+	urlTime := c.getTimeByUrl()
+	if urlTime != "" {
+		c.timePos = "url"
+		return urlTime
 	}
 
 	return ""
@@ -1190,6 +1199,22 @@ func (c *Content) getTimeByScript() string {
 
 		if time != "" {
 			return time
+		}
+	}
+
+	return ""
+}
+
+func (c *Content) getTimeByUrl() string {
+	if c.OriginUrl != "" {
+		if linkUrl, err := fun.UrlParse(c.OriginUrl); err == nil {
+			// 内容页 URL path 时间特征统计
+			pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
+			pathClean := pathDirClean(pathDir)
+			dateStr := regexUrlPublishDatePattern.FindString(pathClean)
+			if dateStr != "" {
+				return dateStr
+			}
 		}
 	}
 

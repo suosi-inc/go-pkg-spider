@@ -16,7 +16,7 @@ const (
 	LinkTypeList    LinkType = 2
 	LinkTypeUnknown LinkType = 3
 
-	RegexUrlPublishDate = `20[2-3]\d{1}(0[1-9]|1[0-2]|[1-9])(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])?`
+	RegexUrlPublishDate = `(20[2-3]\d{1}[/]?(0[1-9]|1[0-2]|[1-9])[/]?(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])?)`
 
 	RegexIndexSuffix = `^/index\.(html|shtml|htm|php|asp|aspx|jsp)$`
 
@@ -30,9 +30,10 @@ var (
 	zhEnTitles = []string{"nba", "cba", "5g", "ai", "it", "ipo"}
 
 	regexUrlPublishDatePattern = regexp.MustCompile(RegexUrlPublishDate)
-	regexZhPattern             = regexp.MustCompile(`\p{Han}`)
-	regexEnPattern             = regexp.MustCompile(`[a-zA-Z]`)
-	regexPuncPattern           = regexp.MustCompile(`\pP`)
+
+	regexZhPattern   = regexp.MustCompile(`\p{Han}`)
+	regexEnPattern   = regexp.MustCompile(`[a-zA-Z]`)
+	regexPuncPattern = regexp.MustCompile(`\pP`)
 
 	regexTitleZhBlackPattern = regexp.MustCompile(RegexTitleZhBlack)
 
@@ -348,8 +349,7 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 }
 
 func pathDirClean(pathDir string) string {
-	pathClean := strings.ReplaceAll(pathDir, fun.SLASH, "")
-	pathClean = strings.ReplaceAll(pathClean, fun.DOT, "")
+	pathClean := strings.ReplaceAll(pathDir, fun.DOT, "")
 	pathClean = strings.ReplaceAll(pathClean, fun.DASH, "")
 	pathClean = strings.ReplaceAll(pathClean, fun.UNDERSCORE, "")
 
