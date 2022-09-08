@@ -1,5 +1,5 @@
-// Package extract 新闻要素抽取, 基于标签路径特征融合新闻内容抽取的 CEPF 算法, (吴共庆等)
-// Refer to: http://www.jos.org.cn/jos/article/abstract/4868
+// Package extract 新闻要素抽取, 在 CEPF 算法基础上做了大量的优化
+// Refer to: 基于标签路径特征融合新闻内容抽取的 CEPF 算法 (吴共庆等) http://www.jos.org.cn/jos/article/abstract/4868
 package extract
 
 import (
