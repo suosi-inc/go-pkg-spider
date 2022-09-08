@@ -1213,6 +1213,7 @@ func (c *Content) getTimeByUrl() string {
 			pathClean := pathDirClean(pathDir)
 			dateStr := regexUrlPublishDatePattern.FindString(pathClean)
 			if dateStr != "" {
+				dateStr = strings.ReplaceAll(dateStr, fun.SLASH, "")
 				return dateStr
 			}
 		}

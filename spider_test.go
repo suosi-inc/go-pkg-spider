@@ -180,7 +180,8 @@ func TestGetNews(t *testing.T) {
 		// "https://www.squirepattonboggs.com/en/news/2022/09/squire-patton-boggs-advises-new-wave-group-ab-on-uk-acquisition",
 		// "https://www.thebulletin.be/number-road-deaths-belgium-rises-sharply",
 		// "https://www.dailyexpress.com.my/read/4840/ma63-zero-without-equitable-economic-partnership/",
-		"https://news.cgtn.com/news/2022-08-20/CGTN-documentary-Remote-Killing-released-1cE7t7RD104/index.html",
+		// "https://news.cgtn.com/news/2022-08-20/CGTN-documentary-Remote-Killing-released-1cE7t7RD104/index.html",
+		"https://worldoil.com/news/2022/9/7/oil-boom-falls-flat-in-latin-america-despite-having-a-fifth-of-the-world-s-reserves/",
 	}
 
 	for _, urlStr := range urlStrs {
