@@ -24,15 +24,18 @@ const (
 )
 
 var (
-	zhPuncs   = []string{"，", "。", "；", "：", "？", "！", "（", "）", "“", "”"}
+	zhPuncs = []string{"，", "。", "；", "：", "？", "！", "（", "）", "“", "”"}
+
 	wordLangs = []string{"en", "ru", "ar", "de", "fr", "es", "pt"}
 
 	zhEnTitles = []string{"nba", "cba", "5g", "ai", "it", "ipo"}
 
 	regexUrlPublishDatePattern = regexp.MustCompile(RegexUrlPublishDate)
 
-	regexZhPattern   = regexp.MustCompile(`\p{Han}`)
-	regexEnPattern   = regexp.MustCompile(`[a-zA-Z]`)
+	regexZhPattern = regexp.MustCompile(`\p{Han}`)
+
+	regexEnPattern = regexp.MustCompile(`[a-zA-Z]`)
+
 	regexPuncPattern = regexp.MustCompile(`\pP`)
 
 	regexTitleZhBlackPattern = regexp.MustCompile(RegexTitleZhBlack)

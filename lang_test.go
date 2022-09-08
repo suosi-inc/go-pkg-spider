@@ -58,41 +58,41 @@ func TestLang(t *testing.T) {
 
 	var urlStrs = []string{
 
-		// "https://www.bbc.com",
-		// "https://www.ft.com/",
+		"https://www.bbc.com",
+		"https://www.ft.com/",
 
-		// "https://www.163.com/news/article/HEJGEVFT000189FH.html",
-		// "https://www.163.com",
-		//
-		// "https://english.news.cn",
-		// "https://jp.news.cn",
-		// "https://kr.news.cn",
-		// "https://german.news.cn/",
-		// "https://portuguese.news.cn/",
-		// "https://arabic.news.cn",
-		// "https://french.news.cn",
-		//
-		// "https://mn.cctv.com/",
-		//
-		// "http://government.ru",
-		//
-		// "https://www.gouvernement.fr",
-		//
-		// "http://live.siammedia.org/",
-		// "https://www.manchestereveningnews.co.uk/",
-		//
-		// "https://www.chinadaily.com.cn",
-		// "http://cn.chinadaily.com.cn/",
-		// "http://www.chinadaily.com.cn/chinawatch_fr/index.html",
-		// "https://d1ev.com/",
-		// "https://www.cngold.com.cn/",
-		// "https://china.guidechem.com/",
-		// "https://xdkb.net/",
-		// "https://www.lifeweek.com.cn/",
-		// "http://gxbsrd.gov.cn/",
-		// "https://defence24.com/",
-		// "http://www.gmp.or.kr/",
-		// "http://rdfmj.com/",
+		"https://www.163.com/news/article/HEJGEVFT000189FH.html",
+		"https://www.163.com",
+
+		"https://english.news.cn",
+		"https://jp.news.cn",
+		"https://kr.news.cn",
+		"https://german.news.cn/",
+		"https://portuguese.news.cn/",
+		"https://arabic.news.cn",
+		"https://french.news.cn",
+
+		"https://mn.cctv.com/",
+
+		"http://government.ru",
+
+		"https://www.gouvernement.fr",
+
+		"http://live.siammedia.org/",
+		"https://www.manchestereveningnews.co.uk/",
+
+		"https://www.chinadaily.com.cn",
+		"http://cn.chinadaily.com.cn/",
+		"http://www.chinadaily.com.cn/chinawatch_fr/index.html",
+		"https://d1ev.com/",
+		"https://www.cngold.com.cn/",
+		"https://china.guidechem.com/",
+		"https://xdkb.net/",
+		"https://www.lifeweek.com.cn/",
+		"http://gxbsrd.gov.cn/",
+		"https://defence24.com/",
+		"http://www.gmp.or.kr/",
+		"http://rdfmj.com/",
 		"https://news.xmnn.cn/xmnn/2022/08/09/101067908.shtml",
 	}
 
@@ -105,7 +105,7 @@ func TestLang(t *testing.T) {
 
 		// 语言
 		start := fun.Timestamp(true)
-		langRes := Lang(doc, resp.Charset.Charset, false)
+		langRes := Lang(doc, resp.Charset.Charset, true)
 
 		t.Log(urlStr)
 		t.Log(resp.Charset)
@@ -113,6 +113,13 @@ func TestLang(t *testing.T) {
 		t.Log(fun.Timestamp(true) - start)
 	}
 
+}
+
+func TestLangText(t *testing.T) {
+	start := fun.Timestamp(true)
+	text := "Ein wichtiges Thema in dem Zusammenhang ist die Sicherheit am Arbeitsplatz. Angestellte sollten regelmäßig im Umgang mit Geräten und Arbeitsmaterialien geschult werden. Die Unternehmensführung muss zudem Arbeitsplätze ergonomisch und sicher gestalten, dazu ist sie nach dem Arbeitsschutzgesetz sogar verpflichtet. In bestimmten Betriebsbereichen ist zudem mitunter Schutzkleidung notwendig, die immer zur Verfügung stehen sollte. Sicherheitsdefizite im Unternehmen können schnell schwerwiegende Folgen haben, deswegen sollten Betriebe diesen Bereich keinesfalls vernachlässigen, sondern immer nach der Devise handeln: Safety first!"
+	t.Log(fun.Timestamp(true) - start)
+	t.Log(LangText(text))
 }
 
 func TestUnicode(t *testing.T) {

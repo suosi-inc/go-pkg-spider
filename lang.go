@@ -123,8 +123,13 @@ type LangRes struct {
 	LangPos string
 }
 
-// Lang 探测语种
-func Lang(doc *goquery.Document, charset string, list bool) LangRes {
+// LangText 探测纯文本语种
+func LangText(text string) (string, string) {
+	return langFromText(text)
+}
+
+// Lang 探测 HTML 语种
+func Lang(doc *goquery.Document, charset string, listMode bool) LangRes {
 	var res LangRes
 	var lang string
 
@@ -138,7 +143,7 @@ func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 	}
 
 	// 优先判断Title是否包含中文, 辅助内容排除日韩
-	titleLang, pos := LangFromTitle(doc, list)
+	titleLang, pos := LangFromTitle(doc, listMode)
 	if titleLang != "" {
 		res.Lang = titleLang
 		res.LangPos = pos
@@ -155,7 +160,7 @@ func Lang(doc *goquery.Document, charset string, list bool) LangRes {
 
 	// 当 utf 编码时, lang 为空或 en 可信度比较低, 进行基于内容语种的检测
 	if strings.HasPrefix(charset, "UTF") && (lang == "" || lang == "en") {
-		bodyLang, pos := LangFromUtf8Body(doc, list)
+		bodyLang, pos := LangFromUtf8Body(doc, listMode)
 		if bodyLang != "" {
 			res.Lang = bodyLang
 			res.LangPos = pos
@@ -196,7 +201,7 @@ func LangFromHtml(doc *goquery.Document) string {
 
 	return lang
 }
-func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
+func LangFromTitle(doc *goquery.Document, listMode bool) (string, string) {
 	var lang string
 	var text string
 
@@ -215,7 +220,7 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 			if hanCount >= 2 {
 
 				// 需要抽取内容验证包含有日语韩语, 如(日本語_新華網)
-				bodyText := bodyTextForLang(doc, list)
+				bodyText := bodyTextForLang(doc, listMode)
 
 				// 去除所有符号
 				bodyText = fun.RemoveSign(bodyText)
@@ -261,12 +266,17 @@ func LangFromTitle(doc *goquery.Document, list bool) (string, string) {
 	return lang, ""
 }
 
-func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
-	var lang string
+func LangFromUtf8Body(doc *goquery.Document, listMode bool) (string, string) {
 	var text string
 
 	// 抽取内容
-	text = bodyTextForLang(doc, list)
+	text = bodyTextForLang(doc, listMode)
+
+	return langFromText(text)
+}
+
+func langFromText(text string) (string, string) {
+	var lang string
 
 	// 去除换行(为了保留语义只替换多余的空格)
 	text = fun.RemoveLines(text)
@@ -351,11 +361,11 @@ func LangFromUtf8Body(doc *goquery.Document, list bool) (string, string) {
 	return lang, ""
 }
 
-func bodyTextForLang(doc *goquery.Document, list bool) string {
+func bodyTextForLang(doc *goquery.Document, listMode bool) string {
 	var text string
 
 	// 列表页模式
-	if list {
+	if listMode {
 		// 优先获取网页中最多 64 个 a 标签, 如果没有 a 标签或过少，放弃
 		aTag := doc.Find("a")
 		aTagSize := aTag.Size()
