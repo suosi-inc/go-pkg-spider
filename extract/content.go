@@ -57,7 +57,7 @@ var (
 		"meta[name='twitter:title' i]",
 	}
 
-	contentMetaDatetimeDicts = []string{"publish", "pubdate", "pubtime"}
+	contentMetaDatetimeDicts = []string{"publish", "pubdate", "pubtime", "release"}
 
 	regexPublishDatePattern = regexp.MustCompile(RegexPublishDate)
 
@@ -451,6 +451,8 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 
 				return noTimes[minIndex]
 			}
+
+			// 不会直接返回没有时间的
 		}
 	}
 

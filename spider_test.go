@@ -150,7 +150,7 @@ func TestGetLinkRes(t *testing.T) {
 func TestGetNews(t *testing.T) {
 
 	var urlStrs = []string{
-		"http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
+		// "http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
 		// "https://www.163.com/news/article/HG3DE7AQ000189FH.html",
 		// "http://suosi.com.cn/",
 		// "http://www.cankaoxiaoxi.com/world/20220831/2489267.shtml",
@@ -175,6 +175,8 @@ func TestGetNews(t *testing.T) {
 		// "http://v.china.com.cn/2022-09/06/content_78407150.html",
 		// "http://www.chinagwy.org.cn/content-cat-10/143162.html",
 		// "https://news.52pk.com/xwlm/201912/7366710.shtml",
+		// "https://www.business-standard.com/article/finance/govt-rbi-propose-action-plan-for-facilitating-special-rupee-accounts-122090701260_1.html",
+		"https://www.farmersjournal.ie/51ac-of-farmland-with-full-planning-permission-available-outside-navan-718580",
 	}
 
 	for _, urlStr := range urlStrs {
