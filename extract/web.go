@@ -119,7 +119,6 @@ func WebTitleClean(title string, lang string) string {
 func WebContentTitleClean(title string, lang string) string {
 	// 中文网站, 查找中文网站的分割标记, 找到任意一个, 从尾部循环删除后返回
 	if lang == "zh" {
-
 		for _, split := range titleZhContentSplits {
 			if fun.HasPrefixCase(title, split) {
 				title = fun.RemovePrefix(title, split)

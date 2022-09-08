@@ -19,17 +19,18 @@ const (
 	ContentRemoveTags = "script,noscript,style,iframe,br,link,svg,textarea"
 
 	// RegexPublishDate 完整的发布时间正则
-	RegexPublishDate = "(((20[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+	RegexPublishDate = "(((20[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?[ ]{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 
 	// RegexPublishShortDate 年份缩写发布时间正则
-	RegexPublishShortDate = "(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?\x20{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
+	RegexPublishShortDate = "(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?[ ]{0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 
 	// RegexPublishDateNoYear 不包含年的发布时间(优先级低)
 	RegexPublishDateNoYear = "((0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?)?)"
 
-	// RegexEnPublishDate1 英文格式的正则: 02 Sep 2022 11:40:53 pm
+	// RegexEnPublishDate1 英文格式的正则1, 如 02 Sep 2022 11:40:53 pm
 	RegexEnPublishDate1 = "(?i)((?:(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])(?:st|nd|rd|th)?)[, ]{0,4}(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[, ]{0,4}(20[1-3]\\d{1})([, ]{0,4}([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:]([0-5][0-9]|[0-9])([:]([0-5][0-9]|[0-9]))?([, ]{0,4}(am|pm))?)?)"
 
+	// RegexEnPublishDate2 英文格式的正则2, 如 Sep 02 2022 11:40:53 pm
 	RegexEnPublishDate2 = "(?i)((january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[, ]{0,4}(?:(0[1-9]|[1-2][0-9]|3[0-1]|[1-9])(?:st|nd|rd|th)?)[, ]{0,4}(20[1-3]\\d{1})([, ]{0,4}([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:]([0-5][0-9]|[0-9])([:]([0-5][0-9]|[0-9]))?([, ]{0,4}(am|pm))?)?)"
 
 	// RegexTime 仅时间正则
@@ -38,22 +39,28 @@ const (
 	// RegexZhPublishPrefix 中文的发布时间前缀
 	RegexZhPublishPrefix = "(?i)(发布|创建|出版|发表|编辑)?(时间|日期)"
 
+	// RegexZhPublishDate 中文的固定格式, 如 发布时间: xxx
 	RegexZhPublishDate = RegexZhPublishPrefix + "[\\pP ]{1,8}" + RegexPublishShortDate
 
 	// RegexScriptTitle Script 中的标题
-	RegexScriptTitle = `(?i)"title"\x20*:\x20*"(.*)"`
+	RegexScriptTitle = `(?i)"title"[\t ]{0,4}:[\t ]{0,4}"(.*)"`
 
 	// RegexScriptTime Script 中的发布时间
 	RegexScriptTime = `(?i)"[\w_\-]*pub.*"[\t ]{0,4}:[\t ]{0,4}"(((20[1-3]\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]? {0,2}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\.\d{3})?)(z|Z|[\+-]\d{2}[:]?\d{2})?))"`
 
+	// RegexFormatTime3 错误的时间格式, 用于过滤
 	RegexFormatTime3 = `[:分]\d{3}$`
 
+	// RegexFormatTime4 错误的时间格式, 用于过滤
 	RegexFormatTime4 = `[:分]\d{4}$`
 
+	// RegexZone 错误的时区格式, 用于过滤
 	RegexZone = `(([\+-]\d{2})[:]?\d{2})$`
 
+	// TitleSimZh 中文相似度阈值
 	TitleSimZh = 0.3
 
+	// TitleSimWord 单词相似度阈值
 	TitleSimWord = 0.5
 )
 
@@ -111,18 +118,22 @@ type News struct {
 }
 
 type Content struct {
-	OriginDoc   *goquery.Document
-	Doc         *goquery.Document
+	// 原始 Doc
+	OriginDoc *goquery.Document
+	// Doc
+	Doc *goquery.Document
+	// 原始标题, 来自于上级页面
 	OriginTitle string
-	Lang        string
+	// 语种
+	Lang string
 
 	infoMap      map[*html.Node]CountInfo
 	bodyNode     *html.Node
 	title        string
 	titlePos     string
+	titleSim     float64
 	timePos      string
 	timeEnFormat bool
-	titleSim     float64
 }
 
 type CountInfo struct {
@@ -148,7 +159,7 @@ func NewContent(doc *goquery.Document, lang string, originTitle string) *Content
 	originDoc := goquery.CloneDocument(doc)
 	doc.Find(ContentRemoveTags).Remove()
 
-	// 标题相似度阈值
+	// 标题相似度阈值判定
 	titleSim := TitleSimZh
 	if fun.SliceContains(wordLangs, lang) {
 		titleSim = TitleSimWord
@@ -162,6 +173,7 @@ func NewContent(doc *goquery.Document, lang string, originTitle string) *Content
 func (c *Content) ExtractNews() *News {
 	news := &News{}
 
+	// 开始时间
 	begin := fun.Timestamp(true)
 
 	// 提取正文结点和正文
@@ -197,7 +209,7 @@ func (c *Content) ExtractNews() *News {
 	return news
 }
 
-// formatTime 时间格式化, 尽可能的
+// formatTime 时间格式化清洗(尽可能的)
 func (c *Content) formatTime(time string) string {
 	if !c.timeEnFormat {
 		// 当包含时区信息时格式化空格
@@ -212,7 +224,7 @@ func (c *Content) formatTime(time string) string {
 		}
 	}
 
-	// 尾巴处理
+	// 错误的尾巴处理
 	if fun.Contains(time, ":") && !fun.ContainsAny(time, "时", "点") {
 		time = strings.TrimSuffix(time, "分")
 	}
@@ -230,7 +242,7 @@ func (c *Content) formatContent(contentNode *html.Node) string {
 	n, _ := goquery.NewDocumentFromReader(strings.NewReader(contentHtml))
 	str := n.Text()
 
-	// 最后合并多余的换行符
+	// 最后合并多余的换行
 	lines := fun.SplitTrim(str, fun.LF)
 	if len(lines) > 0 {
 		for i, line := range lines {
@@ -254,10 +266,8 @@ func (c *Content) getContentNode() *html.Node {
 		bodyNode := bodyNodes[0]
 		c.bodyNode = bodyNode
 
-		// 递归遍历计算并统计, 最后找得分最高节点
+		// 递归遍历计算并统计, 最后找得分最高那个节点
 		c.computeInfo(c.bodyNode)
-
-		// c.debug()
 
 		for node := range c.infoMap {
 			if node.Data == "a" || node == bodyNode {
@@ -352,7 +362,7 @@ func (c *Content) getTimeByLang(bodyText string) string {
 			}
 		}
 	} else {
-		// 第一种
+		// 第一种格式
 		allRegexs := regexEnPublishDatePattern1.FindAllString(bodyText, -1)
 		if allRegexs != nil {
 			publishDates := make([]string, 0)
@@ -370,7 +380,7 @@ func (c *Content) getTimeByLang(bodyText string) string {
 			}
 		}
 
-		// 第二种
+		// 第二种格式
 		allRegexs = regexEnPublishDatePattern2.FindAllString(bodyText, -1)
 		if allRegexs != nil {
 			publishDates := make([]string, 0)
@@ -399,7 +409,7 @@ func (c *Content) getTimeByBody(bodyText string) string {
 		return c.pickPublishDates(bodyText, publishDates, false)
 	}
 
-	// 不带年份的匹配, 中文
+	// 不带年份的匹配, 仅处理中文并且必须有时间, 如  22-01-01 01:00
 	if c.Lang == "zh" {
 		publishNoYearDates := regexPublishDateNoYearPattern.FindAllString(bodyText, -1)
 		if publishNoYearDates != nil {
@@ -446,7 +456,7 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 		}
 	}
 
-	// 有时间的情况
+	// 有时间的情况优先
 	if len(hasTimes) > 0 {
 		if len(hasTimes) == 1 {
 			return hasTimes[0]
@@ -529,7 +539,7 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 				return noTimes[minIndex]
 			}
 
-			// 不会直接返回没有时间的
+			// 不会直接返回没有时间的, 因为可靠性低
 		}
 	}
 
@@ -542,16 +552,15 @@ func (c *Content) getTimeByTag() string {
 		firstTimeTags := timeTags.First()
 		dateTime := firstTimeTags.AttrOr("datetime", "")
 		if dateTime != "" {
+			// 先匹配标准格式
 			find := regexPublishDatePattern.FindString(dateTime)
 			if find != "" {
 				return find
 			}
 
-		}
-
-		if c.Lang != "zh" {
-			if dateTime != "" {
-				find := regexEnPublishDatePattern1.FindString(dateTime)
+			// 非英文再匹配其他格式
+			if c.Lang != "zh" {
+				find = regexEnPublishDatePattern1.FindString(dateTime)
 				if find != "" {
 					find = fun.NormaliseSpace(find)
 					find = strings.ReplaceAll(find, ",", " ")
@@ -559,10 +568,7 @@ func (c *Content) getTimeByTag() string {
 					return find
 				}
 
-			}
-
-			if dateTime != "" {
-				find := regexEnPublishDatePattern2.FindString(dateTime)
+				find = regexEnPublishDatePattern2.FindString(dateTime)
 				if find != "" {
 					find = fun.NormaliseSpace(find)
 					find = strings.ReplaceAll(find, ",", " ")
@@ -639,7 +645,7 @@ func (c *Content) getTimeByMeta(regexPatterns []*regexp.Regexp) string {
 			return maxLenDate
 		}
 
-		// 返回最长的
+		// 返回最长的, 非中文情况下才会返回没有时间的
 		if c.Lang != "zh" {
 			if len(noTimes) > 0 {
 				if len(noTimes) == 1 {
@@ -732,7 +738,7 @@ func (c *Content) getTimeByMetaEn(regexPatterns []*regexp.Regexp) string {
 			return maxLenDate
 		}
 
-		// 返回最长的
+		// 返回最长的, 非中文情况下才会返回没有时间的
 		if c.Lang != "zh" {
 			if len(noTimes) > 0 {
 				if len(noTimes) == 1 {
@@ -757,7 +763,7 @@ func (c *Content) getTimeByMetaEn(regexPatterns []*regexp.Regexp) string {
 	return ""
 }
 
-// getTitleByOrigin 获取页面的 H[1-2] 标题, 找出 OriginTitle 最像的
+// getTitleByOrigin 获取页面的 H[1-2] 标题, 找出与 OriginTitle 最像的
 func (c *Content) getTitleByOrigin() string {
 	if !fun.Blank(c.OriginTitle) {
 		headlines := c.Doc.Find("h1,h2")
@@ -793,7 +799,7 @@ func (c *Content) getTitleByOrigin() string {
 func (c *Content) getTitle(contentNode *html.Node) string {
 	var title string
 
-	// 优先使用 originTitle 判定 headline
+	// 优先使用 originTitle 判定页面中的 H1-2
 	title = c.getTitleByOrigin()
 	if title != "" {
 		c.titlePos = "headline"
@@ -856,7 +862,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 			var maxIndex int
 			maxIndex = -1
 
-			// 这里他设置了一个 (i+1) 的权重因子，大意是越靠近后面权重越高
+			// 找相似度最高的
 			for i := 0; i < index; i++ {
 				score := titleSim[i]
 				if score > maxScore {
@@ -898,7 +904,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 	return metaTitle
 }
 
-// getTitleByEditDistance 从正文中找最相似 metaTitle 的片段，最坏的情况，返回页面标题
+// getTitleByEditDistance 从正文中找最相似 metaTitle 的片段
 func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 	max := []float64{0.0}
 	var buf bytes.Buffer
