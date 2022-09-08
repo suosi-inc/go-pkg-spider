@@ -26,23 +26,23 @@ var (
 )
 
 // GetLinkRes 获取页面链接分组
-func GetLinkRes(urlStr string, timeout int, retry int) (*extract.LinkRes, map[string]string, error) {
+func GetLinkRes(urlStr string, timeout int, retry int) (*extract.LinkRes, map[string]string, fun.StringSet, error) {
 	if retry <= 0 {
 		retry = 1
 	}
 
 	for i := 0; i < retry; i++ {
-		res, filters, err := GetLinkResDo(urlStr, timeout)
+		res, filters, subDomains, err := GetLinkResDo(urlStr, timeout)
 		if err == nil {
-			return res, filters, err
+			return res, filters, subDomains, err
 		}
 	}
 
-	return nil, nil, errors.New("ErrorLinkRes")
+	return nil, nil, nil, errors.New("ErrorLinkRes")
 }
 
 // GetLinkResDo 获取页面链接分组
-func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]string, error) {
+func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]string, fun.StringSet, error) {
 	if timeout == 0 {
 		timeout = 10000
 	}
@@ -69,15 +69,24 @@ func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]stri
 			linkTitles, filters := extract.WebLinkTitles(doc, resp.RequestURL, true)
 
 			// 链接分类
-			links, _ := extract.LinkTypes(linkTitles, langRes.Lang, nil)
+			links, subDomains := extract.LinkTypes(linkTitles, langRes.Lang, nil)
 
-			return links, filters, nil
+			return links, filters, subDomains, nil
 		} else {
-			return nil, nil, errors.New("ErrorDocParse")
+			return nil, nil, nil, errors.New("ErrorDocParse")
 		}
 	}
 
-	return nil, nil, errors.New("ErrorRequest")
+	return nil, nil, nil, errors.New("ErrorRequest")
+}
+
+// GetSubdomains 获取subDomain
+func GetSubdomains(domain string, timeout int, retry int) (fun.StringSet, error) {
+	if _, _, subDomains, err := GetLinkRes(domain, timeout, retry); err == nil {
+		return subDomains, nil
+	} else {
+		return nil, err
+	}
 }
 
 // GetNews 获取正文

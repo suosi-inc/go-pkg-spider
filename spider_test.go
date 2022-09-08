@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 	"testing"
 	"unicode/utf8"
 
@@ -87,7 +88,7 @@ func TestCount(t *testing.T) {
 func TestGetLinkRes(t *testing.T) {
 	var urlStrs = []string{
 		// "https://www.1905.com",
-		"https://www.people.com.cn",
+		// "https://www.people.com.cn",
 		// "https://www.36kr.com",
 		// "https://www.163.com",
 		// "https://news.163.com/",
@@ -109,11 +110,17 @@ func TestGetLinkRes(t *testing.T) {
 		// "https://www.gamersky.com/",
 		// "https://www.cdns.com.tw/",
 		// "http://www.163.com/",
+
+		// "https://data.163.com",
+		"https://news.163.com/",
+		// "",
+		// "",
 	}
 
 	for _, urlStr := range urlStrs {
 
-		if linkRes, filters, err := GetLinkRes(urlStr, 10000, 1); err == nil {
+		if linkRes, filters, subDomains, err := GetLinkRes(urlStr, 10000, 1); err == nil {
+			fmt.Println("subDomain:", len(subDomains))
 			fmt.Println("content:", len(linkRes.Content))
 			fmt.Println("list:", len(linkRes.List))
 			fmt.Println("unknown:", len(linkRes.Unknown))
@@ -123,6 +130,11 @@ func TestGetLinkRes(t *testing.T) {
 			for a, title := range filters {
 				i = i + 1
 				fmt.Println(i, "filter:"+a+"\t=>\t"+title)
+			}
+			i = 0
+			for a, title := range subDomains {
+				i = i + 1
+				fmt.Println(i, "subDomain:"+a+"\t=>\t"+strconv.FormatBool(title))
 			}
 			i = 0
 			for a, title := range linkRes.Content {
