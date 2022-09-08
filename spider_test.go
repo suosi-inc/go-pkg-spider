@@ -179,7 +179,7 @@ func TestGetNews(t *testing.T) {
 		// "https://www.business-standard.com/article/finance/govt-rbi-propose-action-plan-for-facilitating-special-rupee-accounts-122090701260_1.html",
 		// "https://www.squirepattonboggs.com/en/news/2022/09/squire-patton-boggs-advises-new-wave-group-ab-on-uk-acquisition",
 		// "https://www.thebulletin.be/number-road-deaths-belgium-rises-sharply",
-		"https://mp.weixin.qq.com/s/iXRZdy9EqK6dDHz9M2FG9A",
+		"https://www.dailyexpress.com.my/read/4840/ma63-zero-without-equitable-economic-partnership/",
 	}
 
 	for _, urlStr := range urlStrs {

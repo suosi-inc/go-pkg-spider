@@ -511,39 +511,62 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 				return noTimes[0]
 			}
 
-			// 判断第一个是不是最长的, 如果最长就直接返回
-			var maxLen int
-			var maxIndex int
-			for i, date := range noTimes {
-				length := utf8.RuneCountInString(date)
-				if length > maxLen {
-					maxLen = length
-					maxIndex = i
+			// 英文时间格式
+			if c.timeEnFormat {
+				// 找最靠近标题的那一个
+				if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
+					titleIndex := strings.Index(bodyText, c.title)
+
+					minDistance := float64(math.MaxInt)
+					var minIndex int
+					for i, date := range noTimes {
+						dateIndex := strings.Index(bodyText, date)
+						abs := math.Abs(float64(dateIndex) - float64(titleIndex))
+						if abs < minDistance {
+							minDistance = abs
+							minIndex = i
+						}
+					}
+
+					return noTimes[minIndex]
 				}
-			}
 
-			if maxIndex == 0 {
+				// 返回第一个
 				return noTimes[0]
-			}
-
-			// 找最靠近标题的那一个
-			if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
-				titleIndex := strings.Index(bodyText, c.title)
-
-				minDistance := float64(math.MaxInt)
-				var minIndex int
+			} else {
+				// 判断第一个是不是最长的, 如果最长就直接返回
+				var maxLen int
+				var maxIndex int
 				for i, date := range noTimes {
-					dateIndex := strings.Index(bodyText, date)
-					abs := math.Abs(float64(dateIndex) - float64(titleIndex))
-					if abs < minDistance {
-						minDistance = abs
-						minIndex = i
+					length := utf8.RuneCountInString(date)
+					if length > maxLen {
+						maxLen = length
+						maxIndex = i
 					}
 				}
 
-				return noTimes[minIndex]
-			}
+				if maxIndex == 0 {
+					return noTimes[0]
+				}
 
+				// 找最靠近标题的那一个
+				if c.title != "" && (c.titlePos == "selector" || c.titlePos == "headline") {
+					titleIndex := strings.Index(bodyText, c.title)
+
+					minDistance := float64(math.MaxInt)
+					var minIndex int
+					for i, date := range noTimes {
+						dateIndex := strings.Index(bodyText, date)
+						abs := math.Abs(float64(dateIndex) - float64(titleIndex))
+						if abs < minDistance {
+							minDistance = abs
+							minIndex = i
+						}
+					}
+
+					return noTimes[minIndex]
+				}
+			}
 			// 不会直接返回没有时间的, 因为可靠性低
 		}
 	}
