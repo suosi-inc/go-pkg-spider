@@ -55,6 +55,8 @@ const (
 	// RegexWxScriptTime 微信 Script 中的发布时间
 	RegexWxScriptTime = `(?i)ct[\t ]{0,4}=[\t ]{0,4}"(1[4-9]\d{8})"`
 
+	RegexContentUrlPublishDate = `(20[2-3]\d{1}[/]?(0[1-9]|1[0-2]|[1-9])[/]?(0[1-9]|[1-2][0-9]|3[0-1]|[1-9]))`
+
 	// RegexFormatTime3 错误的时间格式, 用于过滤
 	RegexFormatTime3 = `[:分]\d{3}$`
 
@@ -101,6 +103,8 @@ var (
 	regexScriptTimePattern = regexp.MustCompile(RegexScriptTime)
 
 	regexWxScriptTimePattern = regexp.MustCompile(RegexWxScriptTime)
+
+	regexContentUrlPublishDatePattern = regexp.MustCompile(RegexContentUrlPublishDate)
 
 	regexFormatTime3 = regexp.MustCompile(RegexFormatTime3)
 
@@ -1211,7 +1215,7 @@ func (c *Content) getTimeByUrl() string {
 			// 内容页 URL path 时间特征统计
 			pathDir := path.Dir(strings.TrimSpace(linkUrl.Path))
 			pathClean := pathDirClean(pathDir)
-			dateStr := regexUrlPublishDatePattern.FindString(pathClean)
+			dateStr := regexContentUrlPublishDatePattern.FindString(pathClean)
 			if dateStr != "" {
 				dateStr = strings.ReplaceAll(dateStr, fun.SLASH, "")
 				return dateStr
