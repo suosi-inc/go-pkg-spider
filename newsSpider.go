@@ -20,7 +20,8 @@ type News struct {
 	depth      uint8
 	seen       map[string]bool
 	isSub      bool
-	data       []NewsData
+	data       []*NewsData
+	dataChan   chan *NewsData
 }
 
 type NewsData struct {
@@ -36,11 +37,12 @@ type NewsData struct {
 
 func NewNews(domain string, depth uint8, isSub bool) *News {
 	return &News{
-		url:   domain,
-		depth: depth,
-		seen:  map[string]bool{},
-		isSub: isSub,
-		data:  []NewsData{},
+		url:      domain,
+		depth:    depth,
+		seen:     map[string]bool{},
+		isSub:    isSub,
+		data:     []*NewsData{},
+		dataChan: make(chan *NewsData),
 	}
 }
 
@@ -121,7 +123,7 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 	return listSlice, contentSlice, nil
 }
 
-func (n *News) GetData() []NewsData {
+func (n *News) GetData() []*NewsData {
 	return n.data
 }
 
@@ -135,9 +137,22 @@ func (n *News) GetContentNews(content map[string]string) {
 			newsData.Title = news.Title
 			newsData.Content = news.Content
 			newsData.Time = news.TimeLocal
-			n.data = append(n.data, newsData)
+			n.data = append(n.data, &newsData)
+
+			n.DataChanPush(&newsData)
 		}
 	}
+}
+
+// DataChanPush 推送data数据
+func (n *News) DataChanPush(data *NewsData) {
+	n.dataChan <- data
+}
+
+// DataChanPull 取出data数据
+func (n *News) DataChanPull() NewsData {
+	data := <-n.dataChan
+	return *data
 }
 
 // GetSubdomains 获取subDomain
