@@ -80,15 +80,6 @@ func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]stri
 	return nil, nil, nil, errors.New("ErrorRequest")
 }
 
-// GetSubdomains 获取subDomain
-func GetSubdomains(domain string, timeout int, retry int) (fun.StringSet, error) {
-	if _, _, subDomains, err := GetLinkRes(domain, timeout, retry); err == nil {
-		return subDomains, nil
-	} else {
-		return nil, err
-	}
-}
-
 // GetNews 获取正文
 func GetNews(urlStr string, title string, timeout int, retry int) (*extract.News, *HttpResp, error) {
 	if retry <= 0 {
