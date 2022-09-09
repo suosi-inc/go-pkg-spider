@@ -2,10 +2,15 @@ package spider
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/x-funs/go-fun"
+)
+
+const (
+	timeOut     = 20000
+	retryTime   = 1
+	retryAlways = 99
 )
 
 type News struct {
@@ -15,89 +20,81 @@ type News struct {
 	depth      uint8
 	seen       map[string]bool
 	isSub      bool
+	data       []NewsData
 }
 
 type NewsData struct {
+	// 链接
+	Url string
 	// 标题
 	Title string
 	// 发布时间
-	TimeLocal string
-	// 时间
 	Time string
 	// 正文纯文本
 	Content string
 }
 
-func (n *News) NewNews(domain string, depth uint8, isSub bool) *News {
+func NewNews(domain string, depth uint8, isSub bool) *News {
 	return &News{
 		url:   domain,
 		depth: depth,
+		seen:  map[string]bool{},
 		isSub: isSub,
+		data:  []NewsData{},
 	}
 }
 
-func (n *News) GetNews() []NewsData {
-	// 获取首页url
-	urlSlice := strings.Split(n.url, "/")
-	domain := urlSlice[0] + "//" + urlSlice[2]
+func (n *News) GetNews(contentHandleFunc func(content map[string]string)) {
+	// 初始化列表页和内容页切片
+	listSlice := []string{}
+	listSliceTemp := []string{}
+	contentSlice := []map[string]string{}
+	subDomainSlice := []string{}
+
+	// 获取首页url和协议
+	scheme, indexUrl := GetIndexUrl(n.url)
 
 	if n.isSub {
-		// 先探测出url主域名的所有子域名
-		// 获取页面链接分组
-		subDomains, err := GetSubdomains(domain, 20000, 1)
+		// 先探测出首页url的所有子域名
+		subDomains, err := GetSubdomains(indexUrl, timeOut, retryAlways)
 		if err != nil {
 			fmt.Println("subDomain extract", err)
 		}
-
-		listSlice := []string{}
-		contentSlice := []map[string]string{}
-		subDomainSlice := []string{}
 
 		for subDomain := range subDomains {
 			subDomainSlice = append(subDomainSlice, subDomain)
 		}
 
-		for i := 0; i < int(n.depth); i++ {
-			listS, contentS, _ := n.GetNewsLinkRes(subDomainSlice, 2000, 1)
-			listSlice = append(listSlice, listS...)
-			contentS = append(contentSlice, contentS...)
-		}
-
+		// 首次获取subDomain页
+		listSliceTemp = subDomainSlice
 	} else {
-		// 直接获取list和content
-		if linkRes, _, subDomains, err := GetLinkRes(domain, 20000, 1); err == nil {
-			fmt.Println("subDomain:", len(subDomains))
-			fmt.Println("content:", len(linkRes.Content))
-			fmt.Println("list:", len(linkRes.List))
-
-			i := 0
-			for a, title := range subDomains {
-				i = i + 1
-				fmt.Println(i, "subDomain:"+a+"\t=>\t"+strconv.FormatBool(title))
-			}
-			i = 0
-			for a, title := range linkRes.Content {
-				i = i + 1
-				fmt.Println(i, "content:"+a+"\t=>\t"+title)
-			}
-			i = 0
-			for a, title := range linkRes.List {
-				i = i + 1
-				fmt.Println(i, "list:"+a+"\t=>\t"+title)
-			}
-		}
+		listSliceTemp = append(listSliceTemp, n.url)
 	}
 
-	return nil
+	// 深度优先循环获取页面列表页和内容页
+	for i := 0; i < int(n.depth); i++ {
+		listS, contentS, _ := n.GetNewsLinkRes(contentHandleFunc, scheme, listSliceTemp, timeOut, retryTime)
+		listSlice = append(listSlice, listS...)
+		contentSlice = append(contentSlice, contentS...)
+
+		// 重置循环列表页
+		if len(listS) == 0 {
+			break
+		}
+		listSliceTemp = listS
+	}
 }
 
 // GetNewsLinkRes 获取news页面链接分组, 仅返回列表页和内容页
-func (n *News) GetNewsLinkRes(urls []string, timeout int, retry int) ([]string, []map[string]string, error) {
+func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string), scheme string, urls []string, timeout int, retry int) ([]string, []map[string]string, error) {
 	listSlice := []string{}
 	contentSlice := []map[string]string{}
 
 	for _, url := range urls {
-		if linkRes, _, _, err := GetLinkRes(url, timeout, retry); err != nil {
+		if !strings.Contains(url, "http") {
+			url = scheme + url
+		}
+		if linkRes, _, _, err := GetLinkRes(url, timeout, retry); err == nil {
 			for l := range linkRes.List {
 				if !n.seen[l] {
 					n.seen[l] = true
@@ -111,6 +108,8 @@ func (n *News) GetNewsLinkRes(urls []string, timeout int, retry int) ([]string, 
 					cc := map[string]string{}
 					cc[c] = v
 					contentSlice = append(contentSlice, cc)
+					// 内容页处理
+					go contentHandleFunc(cc)
 				}
 			}
 
@@ -122,11 +121,38 @@ func (n *News) GetNewsLinkRes(urls []string, timeout int, retry int) ([]string, 
 	return listSlice, contentSlice, nil
 }
 
+func (n *News) GetData() []NewsData {
+	return n.data
+}
+
+// GetContentNews 获取内容页详情数据
+func (n *News) GetContentNews(content map[string]string) {
+	for url, title := range content {
+		fmt.Println(url, title)
+		if news, _, err := GetNews(url, title, timeOut, retryTime); err == nil {
+			newsData := NewsData{}
+			newsData.Url = url
+			newsData.Title = news.Title
+			newsData.Content = news.Content
+			newsData.Time = news.TimeLocal
+			n.data = append(n.data, newsData)
+		}
+	}
+}
+
 // GetSubdomains 获取subDomain
-func GetSubdomains(domain string, timeout int, retry int) (fun.StringSet, error) {
-	if _, _, subDomains, err := GetLinkRes(domain, timeout, retry); err == nil {
+func GetSubdomains(url string, timeout int, retry int) (fun.StringSet, error) {
+	if _, _, subDomains, err := GetLinkRes(url, timeout, retry); err == nil {
 		return subDomains, nil
 	} else {
 		return nil, err
 	}
+}
+
+// GetIndexUrl 获取首页url
+func GetIndexUrl(url string) (string, string) {
+	urlSlice := strings.Split(url, "/")
+	scheme := urlSlice[0] + "//"
+	indexUrl := scheme + urlSlice[2]
+	return scheme, indexUrl
 }
