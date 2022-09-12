@@ -112,7 +112,7 @@ func TestGetLinkRes(t *testing.T) {
 		// "http://www.163.com/",
 
 		// "https://data.163.com",
-		"https://news.163.com/",
+		"https://www.sensetime.com/cn/news-index",
 		// "",
 		// "",
 	}
@@ -193,7 +193,7 @@ func TestGetNews(t *testing.T) {
 		// "https://www.thebulletin.be/number-road-deaths-belgium-rises-sharply",
 		// "https://www.dailyexpress.com.my/read/4840/ma63-zero-without-equitable-economic-partnership/",
 		// "https://news.cgtn.com/news/2022-08-20/CGTN-documentary-Remote-Killing-released-1cE7t7RD104/index.html",
-		"https://worldoil.com/news/2022/9/7/oil-boom-falls-flat-in-latin-america-despite-having-a-fifth-of-the-world-s-reserves/",
+		"http://www.wenming.cn/wmsjzx/dfcz/ln/202206/t20220610_6401128.shtml",
 	}
 
 	for _, urlStr := range urlStrs {

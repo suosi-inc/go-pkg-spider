@@ -22,10 +22,10 @@ const (
 	// RegexPublishDate 完整的发布时间正则
 	RegexPublishDate = "(((20[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?[ ]{0,3}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 
-	// RegexPublishShortDate 年份缩写发布时间正则
+	// RegexPublishShortDate 年份缩写发布时间正则, 如 22-09-02 11:11:11
 	RegexPublishShortDate = "(((20[1-3]\\d{1}|[1-3]\\d{1})[-/年.])(0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?[ ]{0,3}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?((\\.\\d{3})?)(z|Z|[\\+-]\\d{2}[:]?\\d{2})?)?)"
 
-	// RegexPublishDateNoYear 不包含年的发布时间(优先级低)
+	// RegexPublishDateNoYear 不包含年的发布时间(优先级低), 09-02
 	RegexPublishDateNoYear = "((0[1-9]|1[0-2]|[1-9])[-/月.](0[1-9]|[1-2][0-9]|3[0-1]|[1-9])[日Tt]?[ ]{0,3}(([0-9]|[0-1][0-9]|2[0-3]|[1-9])[:点时]([0-5][0-9]|[0-9])[:分]?(([0-5][0-9]|[0-9])[秒]?)?)?)"
 
 	// RegexEnPublishDate1 英文格式的正则1, 如 02 Sep 2022 11:40:53 pm
@@ -446,7 +446,7 @@ func (c *Content) getTimeByBody(bodyText string) string {
 		return c.pickPublishDates(bodyText, publishDates, false)
 	}
 
-	// 不带年份的匹配, 仅处理中文并且必须有时间, 如  22-01-01 01:00
+	// 不带年份的匹配, 仅处理中文并且必须有时间, 如  01-01 01:00
 	if c.Lang == "zh" {
 		publishNoYearDates := regexPublishDateNoYearPattern.FindAllString(bodyText, -1)
 		if publishNoYearDates != nil {

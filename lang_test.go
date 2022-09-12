@@ -117,7 +117,7 @@ func TestLang(t *testing.T) {
 
 func TestLangText(t *testing.T) {
 	start := fun.Timestamp(true)
-	text := "Ein wichtiges Thema in dem Zusammenhang ist die Sicherheit am Arbeitsplatz. Angestellte sollten regelmäßig im Umgang mit Geräten und Arbeitsmaterialien geschult werden. Die Unternehmensführung muss zudem Arbeitsplätze ergonomisch und sicher gestalten, dazu ist sie nach dem Arbeitsschutzgesetz sogar verpflichtet. In bestimmten Betriebsbereichen ist zudem mitunter Schutzkleidung notwendig, die immer zur Verfügung stehen sollte. Sicherheitsdefizite im Unternehmen können schnell schwerwiegende Folgen haben, deswegen sollten Betriebe diesen Bereich keinesfalls vernachlässigen, sondern immer nach der Devise handeln: Safety first!"
+	text := "中文"
 	t.Log(fun.Timestamp(true) - start)
 	t.Log(LangText(text))
 }
