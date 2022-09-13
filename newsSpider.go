@@ -14,27 +14,26 @@ const (
 )
 
 type News struct {
-	url        string
-	subDomains []string
-	contents   []string
-	depth      uint8
-	seen       map[string]bool
-	isSub      bool
-	data       []*NewsData
-	dataChan   chan *NewsData
+	url        string          // 根链接
+	subDomains []string        // 子域名
+	depth      uint8           // 采集页面深度
+	seen       map[string]bool // 是否已采集
+	isSub      bool            // 是否采集子域名
+	data       []*NewsData     // newsData切片
+	DataChan   chan *NewsData  // newsData通道共享
 }
 
 type NewsData struct {
-	// 链接
-	Url string
-	// 标题
-	Title string
-	// 发布时间
-	Time string
-	// 正文纯文本
-	Content string
+	Url string // 链接
+
+	Title string // 标题
+
+	Time string // 发布时间
+
+	Content string // 正文纯文本
 }
 
+// NewNews 初始化newsSpider
 func NewNews(domain string, depth uint8, isSub bool) *News {
 	return &News{
 		url:      domain,
@@ -42,10 +41,11 @@ func NewNews(domain string, depth uint8, isSub bool) *News {
 		seen:     map[string]bool{},
 		isSub:    isSub,
 		data:     []*NewsData{},
-		dataChan: make(chan *NewsData),
+		DataChan: make(chan *NewsData),
 	}
 }
 
+// GetNews 开始获取news
 func (n *News) GetNews(contentHandleFunc func(content map[string]string)) {
 	// 初始化列表页和内容页切片
 	listSlice := []string{}
@@ -104,14 +104,51 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 				}
 			}
 
+			// linkRes.Content = map[string]string{
+			// 	"http://yoga.com/1":  "666",
+			// 	"http://yoga.com/2":  "666",
+			// 	"http://yoga.com/3":  "666",
+			// 	"http://yoga.com/4":  "666",
+			// 	"http://yoga.com/5":  "666",
+			// 	"http://yoga.com/6":  "666",
+			// 	"http://yoga.com/7":  "666",
+			// 	"http://yoga.com/8":  "666",
+			// 	"http://yoga.com/9":  "666",
+			// 	"http://yoga.com/10": "666",
+			// 	"http://yoga.com/11": "666",
+			// 	"http://yoga.com/12": "666",
+			// 	"http://yoga.com/13": "666",
+			// 	"http://yoga.com/14": "666",
+			// 	"http://yoga.com/15": "666",
+			// 	"http://yoga.com/16": "666",
+			// 	"http://yoga.com/17": "666",
+			// 	"http://yoga.com/18": "666",
+			// 	"http://yoga.com/19": "666",
+			// 	"http://yoga.com/20": "666",
+			// 	"http://yoga.com/21": "666",
+			// 	"http://yoga.com/22": "666",
+			// 	"http://yoga.com/23": "666",
+			// 	"http://yoga.com/24": "666",
+			// 	"http://yoga.com/25": "666",
+			// 	"http://yoga.com/26": "666",
+			// 	"http://yoga.com/27": "666",
+			// 	"http://yoga.com/28": "666",
+			// 	"http://yoga.com/29": "666",
+			// 	"http://yoga.com/30": "666",
+			// }
+
 			for c, v := range linkRes.Content {
+				fmt.Println("handle news:", c)
 				if !n.seen[c] {
 					n.seen[c] = true
 					cc := map[string]string{}
 					cc[c] = v
 					contentSlice = append(contentSlice, cc)
 					// 内容页处理
-					go contentHandleFunc(cc)
+					// go contentHandleFunc(cc)
+					contentHandleFunc(cc)
+				} else {
+					fmt.Println("same news")
 				}
 			}
 
@@ -123,6 +160,7 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 	return listSlice, contentSlice, nil
 }
 
+// GetData　通过内存来通信
 func (n *News) GetData() []*NewsData {
 	return n.data
 }
@@ -140,19 +178,33 @@ func (n *News) GetContentNews(content map[string]string) {
 			n.data = append(n.data, &newsData)
 
 			n.DataChanPush(&newsData)
+		} else {
+			fmt.Println("getContentNews err:" + err.Error())
 		}
+	}
+}
+
+// PrintContentNews 打印内容页
+func (n *News) PrintContentNews(content map[string]string) {
+	for url, title := range content {
+		fmt.Println("print news:", url, title)
 	}
 }
 
 // DataChanPush 推送data数据
 func (n *News) DataChanPush(data *NewsData) {
-	n.dataChan <- data
+	n.DataChan <- data
 }
 
 // DataChanPull 取出data数据
 func (n *News) DataChanPull() NewsData {
-	data := <-n.dataChan
+	data := <-n.DataChan
 	return *data
+}
+
+// Close 关闭dataChan
+func (n *News) Close() {
+	close(n.DataChan)
 }
 
 // GetSubdomains 获取subDomain
