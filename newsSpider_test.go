@@ -2,11 +2,9 @@ package spider
 
 import (
 	"testing"
-	"time"
 )
 
 func TestNews_GetNews(t *testing.T) {
-
 	// n := NewNews("https://eastday.com/", 2, true)
 	n := NewNews("http://yoka.com/", 1, false)
 	// n := NewNews("http://www.cankaoxiaoxi.com/", 1, false)
@@ -16,33 +14,27 @@ func TestNews_GetNews(t *testing.T) {
 
 	go goFunc(n, t)
 
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case data := <-n.DataChan:
-	// 			t.Log("dataChan:", data)
-	// 			t.Log("\n")
-	// 		case <-time.After(time.Second):
-	// 			t.Log("time select")
-	// 		default:
-	// 			t.Log("default")
-	// 		}
-	// 	}
-	// }()
+	n.Wg.Wait()
 
 	// t.Log(n.GetData())
+
+	t.Log("crawl finish")
 }
 
 func goFunc(n *News, t *testing.T) {
 	for {
 		select {
-		case data := <-n.DataChan:
-			t.Log("dataChan:", data)
-			t.Log("\n")
-		case <-time.After(time.Second):
-			t.Log("time select")
-		default:
-			t.Log("default")
+		case data, ok := <-n.DataChan:
+			if !ok {
+				t.Log("dataChan closed")
+				return
+			}
+
+			t.Log("dataChan:", *data)
+			// case <-time.After(time.Second):
+			// 	t.Log("time select")
+			// default:
+			// t.Log("default")
 		}
 	}
 }

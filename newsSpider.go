@@ -3,6 +3,8 @@ package spider
 import (
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/x-funs/go-fun"
 )
@@ -21,15 +23,13 @@ type News struct {
 	isSub      bool            // 是否采集子域名
 	data       []*NewsData     // newsData切片
 	DataChan   chan *NewsData  // newsData通道共享
+	Wg         sync.WaitGroup
 }
 
 type NewsData struct {
-	Url string // 链接
-
-	Title string // 标题
-
-	Time string // 发布时间
-
+	Url     string // 链接
+	Title   string // 标题
+	Time    string // 发布时间
 	Content string // 正文纯文本
 }
 
@@ -46,7 +46,7 @@ func NewNews(domain string, depth uint8, isSub bool) *News {
 }
 
 // GetNews 开始获取news
-func (n *News) GetNews(contentHandleFunc func(content map[string]string)) {
+func (n *News) GetNews(contentHandleFunc func(content map[string]string, isLastContent bool)) {
 	// 初始化列表页和内容页切片
 	listSlice := []string{}
 	listSliceTemp := []string{}
@@ -75,7 +75,11 @@ func (n *News) GetNews(contentHandleFunc func(content map[string]string)) {
 
 	// 深度优先循环获取页面列表页和内容页
 	for i := 0; i < int(n.depth); i++ {
-		listS, contentS, _ := n.GetNewsLinkRes(contentHandleFunc, scheme, listSliceTemp, timeOut, retryTime)
+		isLastDepth := false
+		if i == int(n.depth)-1 {
+			isLastDepth = true
+		}
+		listS, contentS, _ := n.GetNewsLinkRes(contentHandleFunc, scheme, listSliceTemp, timeOut, retryTime, isLastDepth)
 		listSlice = append(listSlice, listS...)
 		contentSlice = append(contentSlice, contentS...)
 
@@ -88,7 +92,7 @@ func (n *News) GetNews(contentHandleFunc func(content map[string]string)) {
 }
 
 // GetNewsLinkRes 获取news页面链接分组, 仅返回列表页和内容页
-func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string), scheme string, urls []string, timeout int, retry int) ([]string, []map[string]string, error) {
+func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string, isLastContent bool), scheme string, urls []string, timeout int, retry int, isLastDepth bool) ([]string, []map[string]string, error) {
 	listSlice := []string{}
 	contentSlice := []map[string]string{}
 
@@ -96,6 +100,7 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 		if !strings.Contains(url, "http") {
 			url = scheme + url
 		}
+
 		if linkRes, _, _, err := GetLinkRes(url, timeout, retry); err == nil {
 			for l := range linkRes.List {
 				if !n.seen[l] {
@@ -104,49 +109,29 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 				}
 			}
 
-			// linkRes.Content = map[string]string{
-			// 	"http://yoga.com/1":  "666",
-			// 	"http://yoga.com/2":  "666",
-			// 	"http://yoga.com/3":  "666",
-			// 	"http://yoga.com/4":  "666",
-			// 	"http://yoga.com/5":  "666",
-			// 	"http://yoga.com/6":  "666",
-			// 	"http://yoga.com/7":  "666",
-			// 	"http://yoga.com/8":  "666",
-			// 	"http://yoga.com/9":  "666",
-			// 	"http://yoga.com/10": "666",
-			// 	"http://yoga.com/11": "666",
-			// 	"http://yoga.com/12": "666",
-			// 	"http://yoga.com/13": "666",
-			// 	"http://yoga.com/14": "666",
-			// 	"http://yoga.com/15": "666",
-			// 	"http://yoga.com/16": "666",
-			// 	"http://yoga.com/17": "666",
-			// 	"http://yoga.com/18": "666",
-			// 	"http://yoga.com/19": "666",
-			// 	"http://yoga.com/20": "666",
-			// 	"http://yoga.com/21": "666",
-			// 	"http://yoga.com/22": "666",
-			// 	"http://yoga.com/23": "666",
-			// 	"http://yoga.com/24": "666",
-			// 	"http://yoga.com/25": "666",
-			// 	"http://yoga.com/26": "666",
-			// 	"http://yoga.com/27": "666",
-			// 	"http://yoga.com/28": "666",
-			// 	"http://yoga.com/29": "666",
-			// 	"http://yoga.com/30": "666",
-			// }
+			isLastContent := false
+			count := 0
 
 			for c, v := range linkRes.Content {
+				count++
 				fmt.Println("handle news:", c)
 				if !n.seen[c] {
+					fmt.Println("seen news:", c)
 					n.seen[c] = true
 					cc := map[string]string{}
 					cc[c] = v
 					contentSlice = append(contentSlice, cc)
+
 					// 内容页处理
-					// go contentHandleFunc(cc)
-					contentHandleFunc(cc)
+					if isLastDepth {
+						if count == len(linkRes.Content) {
+							isLastContent = true
+						}
+					}
+
+					n.Wg.Add(1)
+					go contentHandleFunc(cc, isLastContent)
+					// contentHandleFunc(cc)
 				} else {
 					fmt.Println("same news")
 				}
@@ -166,7 +151,11 @@ func (n *News) GetData() []*NewsData {
 }
 
 // GetContentNews 获取内容页详情数据
-func (n *News) GetContentNews(content map[string]string) {
+func (n *News) GetContentNews(content map[string]string, isLastContent bool) {
+	defer n.Wg.Done()
+
+	time.Sleep(time.Duration(fun.RandomInt(10, 100)) * time.Millisecond)
+
 	for url, title := range content {
 		fmt.Println(url, title)
 		if news, _, err := GetNews(url, title, timeOut, retryTime); err == nil {
@@ -182,10 +171,19 @@ func (n *News) GetContentNews(content map[string]string) {
 			fmt.Println("getContentNews err:" + err.Error())
 		}
 	}
+
+	if isLastContent {
+		time.Sleep(10 * time.Second)
+		n.Close()
+	}
+
 }
 
 // PrintContentNews 打印内容页
 func (n *News) PrintContentNews(content map[string]string) {
+	defer n.Wg.Done()
+
+	time.Sleep(1 * time.Second)
 	for url, title := range content {
 		fmt.Println("print news:", url, title)
 	}
