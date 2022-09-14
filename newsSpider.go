@@ -139,12 +139,11 @@ func (n *News) GetData() []*NewsData {
 // GetContentNews 获取内容页详情数据
 func (n *News) GetContentNews(content map[string]string) {
 	defer n.Wg.Done()
-	defer fmt.Println("wg done 1")
 
 	time.Sleep(time.Duration(fun.RandomInt(10, 100)) * time.Millisecond)
 
 	for url, title := range content {
-		fmt.Println(url, title)
+		// fmt.Println(url, title)
 		if news, _, err := GetNews(url, title, timeOut, retryTime); err == nil {
 			newsData := NewsData{}
 			newsData.Url = url
