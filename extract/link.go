@@ -77,6 +77,7 @@ func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*
 				subDomains[hostname] = true
 			}
 
+			// 无规则自动模式
 			if rules == nil {
 				linkType := LinkIsContentByTitle(linkUrl, title, lang)
 				switch linkType {
@@ -104,10 +105,17 @@ func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*
 					linkRes.Unknown[link] = title
 				}
 			} else {
+				// 有规则匹配模式
 				if LinkIsContentByRegex(linkUrl, rules) {
 					linkRes.Content[link] = title
 				} else {
-					linkRes.List[link] = title
+					// 无 path 或者默认 path, 应当由 domain 处理
+					pathDir := strings.TrimSpace(linkUrl.Path)
+					if pathDir == "" || pathDir == fun.SLASH || regexIndexSuffixPattern.MatchString(pathDir) {
+						linkRes.None[link] = title
+					} else {
+						linkRes.List[link] = title
+					}
 				}
 			}
 		}
