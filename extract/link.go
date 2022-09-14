@@ -348,9 +348,9 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 		title = regexPuncPattern.ReplaceAllString(title, "")
 
 		titleLen := utf8.RuneCountInString(title)
-		if titleLen >= 10 {
+		if titleLen >= 8 {
 			return LinkTypeContent
-		} else if titleLen < 10 {
+		} else if titleLen < 8 {
 			// TODO 其他规则
 			return LinkTypeList
 		}
