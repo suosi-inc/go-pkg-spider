@@ -11,19 +11,18 @@ import (
 
 const (
 	timeOut     = 20000
-	retryTime   = 1
+	retryTime   = 2
 	retryAlways = 99
 )
 
 type News struct {
-	url        string          // 根链接
-	subDomains []string        // 子域名
-	depth      uint8           // 采集页面深度
-	seen       map[string]bool // 是否已采集
-	isSub      bool            // 是否采集子域名
-	data       []*NewsData     // newsData切片
-	DataChan   chan *NewsData  // newsData通道共享
-	Wg         sync.WaitGroup
+	url      string          // 根链接
+	depth    uint8           // 采集页面深度
+	seen     map[string]bool // 是否已采集
+	isSub    bool            // 是否采集子域名
+	data     []*NewsData     // newsData切片
+	DataChan chan *NewsData  // newsData通道共享
+	Wg       *sync.WaitGroup // 同步等待组
 }
 
 type NewsData struct {
@@ -34,19 +33,20 @@ type NewsData struct {
 }
 
 // NewNews 初始化newsSpider
-func NewNews(domain string, depth uint8, isSub bool) *News {
+func NewNews(url string, depth uint8, isSub bool) *News {
 	return &News{
-		url:      domain,
+		url:      url,
 		depth:    depth,
 		seen:     map[string]bool{},
 		isSub:    isSub,
 		data:     []*NewsData{},
 		DataChan: make(chan *NewsData),
+		Wg:       &sync.WaitGroup{},
 	}
 }
 
 // GetNews 开始获取news
-func (n *News) GetNews(contentHandleFunc func(content map[string]string, isLastContent bool)) {
+func (n *News) GetNews(contentHandleFunc func(content map[string]string)) {
 	// 初始化列表页和内容页切片
 	listSlice := []string{}
 	listSliceTemp := []string{}
@@ -75,11 +75,7 @@ func (n *News) GetNews(contentHandleFunc func(content map[string]string, isLastC
 
 	// 深度优先循环获取页面列表页和内容页
 	for i := 0; i < int(n.depth); i++ {
-		isLastDepth := false
-		if i == int(n.depth)-1 {
-			isLastDepth = true
-		}
-		listS, contentS, _ := n.GetNewsLinkRes(contentHandleFunc, scheme, listSliceTemp, timeOut, retryTime, isLastDepth)
+		listS, contentS, _ := n.GetNewsLinkRes(contentHandleFunc, scheme, listSliceTemp, timeOut, retryTime)
 		listSlice = append(listSlice, listS...)
 		contentSlice = append(contentSlice, contentS...)
 
@@ -92,7 +88,7 @@ func (n *News) GetNews(contentHandleFunc func(content map[string]string, isLastC
 }
 
 // GetNewsLinkRes 获取news页面链接分组, 仅返回列表页和内容页
-func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string, isLastContent bool), scheme string, urls []string, timeout int, retry int, isLastDepth bool) ([]string, []map[string]string, error) {
+func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string), scheme string, urls []string, timeout int, retry int) ([]string, []map[string]string, error) {
 	listSlice := []string{}
 	contentSlice := []map[string]string{}
 
@@ -109,11 +105,7 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string, 
 				}
 			}
 
-			isLastContent := false
-			count := 0
-
 			for c, v := range linkRes.Content {
-				count++
 				fmt.Println("handle news:", c)
 				if !n.seen[c] {
 					fmt.Println("seen news:", c)
@@ -122,15 +114,9 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string, 
 					cc[c] = v
 					contentSlice = append(contentSlice, cc)
 
-					// 内容页处理
-					if isLastDepth {
-						if count == len(linkRes.Content) {
-							isLastContent = true
-						}
-					}
-
 					n.Wg.Add(1)
-					go contentHandleFunc(cc, isLastContent)
+					fmt.Println("wg add 1")
+					go contentHandleFunc(cc)
 					// contentHandleFunc(cc)
 				} else {
 					fmt.Println("same news")
@@ -151,8 +137,9 @@ func (n *News) GetData() []*NewsData {
 }
 
 // GetContentNews 获取内容页详情数据
-func (n *News) GetContentNews(content map[string]string, isLastContent bool) {
+func (n *News) GetContentNews(content map[string]string) {
 	defer n.Wg.Done()
+	defer fmt.Println("wg done 1")
 
 	time.Sleep(time.Duration(fun.RandomInt(10, 100)) * time.Millisecond)
 
@@ -171,12 +158,7 @@ func (n *News) GetContentNews(content map[string]string, isLastContent bool) {
 			fmt.Println("getContentNews err:" + err.Error())
 		}
 	}
-
-	if isLastContent {
-		time.Sleep(10 * time.Second)
-		n.Close()
-	}
-
+	return
 }
 
 // PrintContentNews 打印内容页
@@ -220,4 +202,18 @@ func GetIndexUrl(url string) (string, string) {
 	scheme := urlSlice[0] + "//"
 	indexUrl := scheme + urlSlice[2]
 	return scheme, indexUrl
+}
+
+// GetHost 获取host
+func GetHost(url string) string {
+	urlSlice := strings.Split(url, "/")
+	return urlSlice[2]
+}
+
+// HandleUrl 处理成带协议的url
+func HandleUrl(url string) string {
+	if !strings.Contains(url, "http") {
+		return "https://" + url
+	}
+	return url
 }
