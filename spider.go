@@ -31,14 +31,14 @@ type LinkData struct {
 	SubDomains map[string]bool
 }
 
-// GetLinkData 获取页面链接分组
+// GetLinkData 获取页面链接数据
 func GetLinkData(urlStr string, strictDomain bool, timeout int, retry int) (*LinkData, error) {
 	if retry <= 0 {
 		retry = 1
 	}
 
 	for i := 0; i < retry; i++ {
-		linkData, err := GetLinkDataDo(urlStr, strictDomain, nil, timeout)
+		linkData, err := GetLinkDataDo(urlStr, strictDomain, nil, nil, timeout)
 		if err == nil {
 			return linkData, err
 		}
@@ -47,14 +47,46 @@ func GetLinkData(urlStr string, strictDomain bool, timeout int, retry int) (*Lin
 	return nil, errors.New("ErrorLinkRes")
 }
 
-// GetLinkDataWithRule 获取页面链接分组
+// GetLinkDataWithReq 获取页面链接数据
+func GetLinkDataWithReq(urlStr string, strictDomain bool, req *HttpReq, timeout int, retry int) (*LinkData, error) {
+	if retry <= 0 {
+		retry = 1
+	}
+
+	for i := 0; i < retry; i++ {
+		linkData, err := GetLinkDataDo(urlStr, strictDomain, nil, req, timeout)
+		if err == nil {
+			return linkData, err
+		}
+	}
+
+	return nil, errors.New("ErrorLinkRes")
+}
+
+// GetLinkDataWithReqAndRule 获取页面链接数据
+func GetLinkDataWithReqAndRule(urlStr string, strictDomain bool, rules extract.LinkTypeRule, req *HttpReq, timeout int, retry int) (*LinkData, error) {
+	if retry <= 0 {
+		retry = 1
+	}
+
+	for i := 0; i < retry; i++ {
+		linkData, err := GetLinkDataDo(urlStr, strictDomain, rules, req, timeout)
+		if err == nil {
+			return linkData, err
+		}
+	}
+
+	return nil, errors.New("ErrorLinkRes")
+}
+
+// GetLinkDataWithRule 获取页面链接数据
 func GetLinkDataWithRule(urlStr string, strictDomain bool, rules extract.LinkTypeRule, timeout int, retry int) (*LinkData, error) {
 	if retry <= 0 {
 		retry = 1
 	}
 
 	for i := 0; i < retry; i++ {
-		linkData, err := GetLinkDataDo(urlStr, strictDomain, rules, timeout)
+		linkData, err := GetLinkDataDo(urlStr, strictDomain, rules, nil, timeout)
 		if err == nil {
 			return linkData, err
 		}
@@ -63,18 +95,20 @@ func GetLinkDataWithRule(urlStr string, strictDomain bool, rules extract.LinkTyp
 	return nil, errors.New("ErrorLinkRes")
 }
 
-// GetLinkDataDo 获取页面链接分组
-func GetLinkDataDo(urlStr string, strictDomain bool, rules extract.LinkTypeRule, timeout int) (*LinkData, error) {
+// GetLinkDataDo 获取页面链接数据
+func GetLinkDataDo(urlStr string, strictDomain bool, rules extract.LinkTypeRule, req *HttpReq, timeout int) (*LinkData, error) {
 	if timeout == 0 {
 		timeout = 10000
 	}
 
-	req := &HttpReq{
-		HttpReq: &fun.HttpReq{
-			MaxContentLength: HttpDefaultMaxContentLength,
-			MaxRedirect:      3,
-		},
-		ForceTextContentType: true,
+	if req == nil {
+		req = &HttpReq{
+			HttpReq: &fun.HttpReq{
+				MaxContentLength: HttpDefaultMaxContentLength,
+				MaxRedirect:      3,
+			},
+			ForceTextContentType: true,
+		}
 	}
 
 	resp, err := HttpGetResp(urlStr, req, timeout)
@@ -108,14 +142,14 @@ func GetLinkDataDo(urlStr string, strictDomain bool, rules extract.LinkTypeRule,
 	return nil, errors.New("ErrorRequest")
 }
 
-// GetNews 获取正文
+// GetNews 获取链接新闻数据
 func GetNews(urlStr string, title string, timeout int, retry int) (*extract.News, *HttpResp, error) {
 	if retry <= 0 {
 		retry = 1
 	}
 
 	for i := 0; i < retry; i++ {
-		news, resp, err := GetNewsDo(urlStr, title, timeout)
+		news, resp, err := GetNewsDo(urlStr, title, nil, timeout)
 		if err == nil {
 			return news, resp, nil
 		}
@@ -124,23 +158,41 @@ func GetNews(urlStr string, title string, timeout int, retry int) (*extract.News
 	return nil, nil, errors.New("ErrorRequest")
 }
 
-// GetNewsDo 获取正文
-func GetNewsDo(urlStr string, title string, timeout int) (*extract.News, *HttpResp, error) {
-	return getNewsDoTop(urlStr, title, timeout, true)
+// GetNewsWithReq 获取链接新闻数据
+func GetNewsWithReq(urlStr string, title string, req *HttpReq, timeout int, retry int) (*extract.News, *HttpResp, error) {
+	if retry <= 0 {
+		retry = 1
+	}
+
+	for i := 0; i < retry; i++ {
+		news, resp, err := GetNewsDo(urlStr, title, req, timeout)
+		if err == nil {
+			return news, resp, nil
+		}
+	}
+
+	return nil, nil, errors.New("ErrorRequest")
 }
 
-// getNewsDoTop 获取正文
-func getNewsDoTop(urlStr string, title string, timeout int, top bool) (*extract.News, *HttpResp, error) {
+// GetNewsDo 获取链接新闻数据
+func GetNewsDo(urlStr string, title string, req *HttpReq, timeout int) (*extract.News, *HttpResp, error) {
+	return getNewsDoTop(urlStr, title, req, timeout, true)
+}
+
+// getNewsDoTop 获取链接新闻数据
+func getNewsDoTop(urlStr string, title string, req *HttpReq, timeout int, top bool) (*extract.News, *HttpResp, error) {
 	if timeout == 0 {
 		timeout = HttpDefaultTimeOut
 	}
 
-	req := &HttpReq{
-		HttpReq: &fun.HttpReq{
-			MaxContentLength: HttpDefaultMaxContentLength,
-			MaxRedirect:      2,
-		},
-		ForceTextContentType: true,
+	if req == nil {
+		req = &HttpReq{
+			HttpReq: &fun.HttpReq{
+				MaxContentLength: HttpDefaultMaxContentLength,
+				MaxRedirect:      2,
+			},
+			ForceTextContentType: true,
+		}
 	}
 
 	resp, err := HttpGetResp(urlStr, req, timeout)
@@ -163,7 +215,7 @@ func getNewsDoTop(urlStr string, title string, timeout int, top bool) (*extract.
 							refreshHostname := r.Hostname()
 							refreshTopDomain := extract.DomainTop(refreshHostname)
 							if refreshTopDomain != "" && refreshTopDomain == requestTopDomain {
-								return getNewsDoTop(refreshUrl, title, timeout, false)
+								return getNewsDoTop(refreshUrl, title, req, timeout, false)
 							}
 						}
 					}
