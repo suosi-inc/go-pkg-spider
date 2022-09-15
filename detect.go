@@ -110,10 +110,9 @@ func DetectDomainDo(domain string, isTop bool, timeout int) (*DomainRes, error) 
 
 		resp, err := HttpGetResp(urlStr, req, timeout)
 
-		domainRes.StatusCode = resp.StatusCode
-
-		if resp.Success && err == nil {
+		if resp != nil && err == nil && resp.Success {
 			domainRes.Domain = domain
+			domainRes.StatusCode = resp.StatusCode
 
 			// 如果发生 HTTP 跳转, 则重新设置 homeDomain, 判断跳转后是否是同一个主域名, 如果域名改变则记录并返回错误
 			domainRes.HomeDomain = homeDomain
@@ -218,7 +217,9 @@ func DetectDomainDo(domain string, isTop bool, timeout int) (*DomainRes, error) 
 				return domainRes, errors.New("ErrorDocParse")
 			}
 		} else {
-			return domainRes, err
+			if resp != nil {
+				domainRes.StatusCode = resp.StatusCode
+			}
 		}
 	}
 
@@ -274,7 +275,7 @@ func DetectFriendDomainDo(domain string, timeout int) (map[string]string, error)
 
 		resp, err := HttpGetResp(urlStr, req, timeout)
 
-		if resp.Success && err == nil {
+		if resp != nil && err == nil && resp.Success {
 
 			doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 			if docErr == nil {

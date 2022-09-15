@@ -85,7 +85,7 @@ func TestCount(t *testing.T) {
 	fmt.Println(utf8.RuneCountInString("https://khmers.cn/2022/05/23/%e6%b4%aa%e6%a3%ae%e6%80%bb%e7%90%86%ef%bc%9a%e6%9f%ac%e5%9f%94%e5%af%a8%e7%b4%af%e8%ae%a1%e8%8e%b7%e5%be%97%e8%b6%85%e8%bf%875200%e4%b8%87%e5%89%82%e6%96%b0%e5%86%a0%e7%96%ab%e8%8b%97%ef%bc%8c/"))
 }
 
-func TestGetLinkRes(t *testing.T) {
+func TestGetLinkData(t *testing.T) {
 	var urlStrs = []string{
 		// "https://www.1905.com",
 		// "https://www.people.com.cn",
@@ -114,12 +114,12 @@ func TestGetLinkRes(t *testing.T) {
 		// "https://data.163.com",
 		// "https://www.sensetime.com/cn/news-index",
 		// "",
-		"https://www.business-standard.com/markets",
+		"https://www.sis.gov.eg/section/7413/7410?lang=zh-cn",
 	}
 
 	for _, urlStr := range urlStrs {
 
-		if linkData, err := GetLinkData(urlStr, true, 10000, 1); err == nil {
+		if linkData, err := GetLinkData(urlStr, false, 10000, 1); err == nil {
 			fmt.Println("subDomain:", len(linkData.SubDomains))
 			fmt.Println("content:", len(linkData.LinkRes.Content))
 			fmt.Println("list:", len(linkData.LinkRes.List))
@@ -193,7 +193,7 @@ func TestGetNews(t *testing.T) {
 		// "https://www.thebulletin.be/number-road-deaths-belgium-rises-sharply",
 		// "https://www.dailyexpress.com.my/read/4840/ma63-zero-without-equitable-economic-partnership/",
 		// "https://news.cgtn.com/news/2022-08-20/CGTN-documentary-Remote-Killing-released-1cE7t7RD104/index.html",
-		"https://www.business-standard.com/podcast/markets/what-is-holding-india-back-from-joining-global-bond-indices-122091500075_1.html",
+		"https://observerbd.com/news.php?id=383996",
 	}
 
 	for _, urlStr := range urlStrs {
