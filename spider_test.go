@@ -112,47 +112,47 @@ func TestGetLinkRes(t *testing.T) {
 		// "http://www.163.com/",
 
 		// "https://data.163.com",
-		"https://www.sensetime.com/cn/news-index",
+		// "https://www.sensetime.com/cn/news-index",
 		// "",
-		// "",
+		"https://www.business-standard.com/markets",
 	}
 
 	for _, urlStr := range urlStrs {
 
-		if linkRes, filters, subDomains, err := GetLinkRes(urlStr, 10000, 1); err == nil {
-			fmt.Println("subDomain:", len(subDomains))
-			fmt.Println("content:", len(linkRes.Content))
-			fmt.Println("list:", len(linkRes.List))
-			fmt.Println("unknown:", len(linkRes.Unknown))
-			fmt.Println("none:", len(linkRes.None))
+		if linkData, err := GetLinkData(urlStr, true, 10000, 1); err == nil {
+			fmt.Println("subDomain:", len(linkData.SubDomains))
+			fmt.Println("content:", len(linkData.LinkRes.Content))
+			fmt.Println("list:", len(linkData.LinkRes.List))
+			fmt.Println("unknown:", len(linkData.LinkRes.Unknown))
+			fmt.Println("none:", len(linkData.LinkRes.None))
 
 			i := 0
-			for a, title := range filters {
+			for a, title := range linkData.Filters {
 				i = i + 1
 				fmt.Println(i, "filter:"+a+"\t=>\t"+title)
 			}
 			i = 0
-			for a, title := range subDomains {
+			for a, title := range linkData.SubDomains {
 				i = i + 1
 				fmt.Println(i, "subDomain:"+a+"\t=>\t"+strconv.FormatBool(title))
 			}
 			i = 0
-			for a, title := range linkRes.Content {
+			for a, title := range linkData.LinkRes.Content {
 				i = i + 1
 				fmt.Println(i, "content:"+a+"\t=>\t"+title)
 			}
 			i = 0
-			for a, title := range linkRes.Unknown {
+			for a, title := range linkData.LinkRes.Unknown {
 				i = i + 1
 				fmt.Println(i, "unknown:"+a+"\t=>\t"+title)
 			}
 			i = 0
-			for a, title := range linkRes.List {
+			for a, title := range linkData.LinkRes.List {
 				i = i + 1
 				fmt.Println(i, "list:"+a+"\t=>\t"+title)
 			}
 			i = 0
-			for a, title := range linkRes.None {
+			for a, title := range linkData.LinkRes.None {
 				i = i + 1
 				fmt.Println(i, "none:"+a+"\t=>\t"+title)
 			}
@@ -193,7 +193,7 @@ func TestGetNews(t *testing.T) {
 		// "https://www.thebulletin.be/number-road-deaths-belgium-rises-sharply",
 		// "https://www.dailyexpress.com.my/read/4840/ma63-zero-without-equitable-economic-partnership/",
 		// "https://news.cgtn.com/news/2022-08-20/CGTN-documentary-Remote-Killing-released-1cE7t7RD104/index.html",
-		"http://www.wenming.cn/wmsjzx/dfcz/ln/202206/t20220610_6401128.shtml",
+		"https://www.business-standard.com/podcast/markets/what-is-holding-india-back-from-joining-global-bond-indices-122091500075_1.html",
 	}
 
 	for _, urlStr := range urlStrs {

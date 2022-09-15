@@ -41,6 +41,16 @@ var (
 	regexTitleZhBlackPattern = regexp.MustCompile(RegexTitleZhBlack)
 
 	regexIndexSuffixPattern = regexp.MustCompile(RegexIndexSuffix)
+
+	zhTitleBlackLists = []string{
+		"关于我们",
+		"联系我们",
+		"友情链接",
+		"网站地图",
+		"诚聘英才",
+		"网站声明",
+		"隐私政策",
+	}
 )
 
 type LinkType int
@@ -55,7 +65,7 @@ type LinkRes struct {
 }
 
 // LinkTypes 返回链接分类结果
-func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*LinkRes, fun.StringSet) {
+func LinkTypes(linkTitles map[string]string, lang string, rules LinkTypeRule) (*LinkRes, map[string]bool) {
 	linkRes := &LinkRes{
 		Content: make(map[string]string),
 		List:    make(map[string]string),
@@ -140,6 +150,13 @@ func linkClean(linkRes *LinkRes, lang string) *LinkRes {
 				if regexTitleZhBlackPattern.MatchString(title) {
 					linkRes.None[link] = title
 					delete(linkRes.Content, link)
+				}
+			}
+
+			for link, title := range linkRes.List {
+				if fun.SliceContains(zhTitleBlackLists, title) {
+					linkRes.None[link] = title
+					delete(linkRes.List, link)
 				}
 			}
 		}
@@ -323,7 +340,6 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 
 	} else if fun.SliceContains(wordLangs, lang) {
 		// 英语等单词类的语种
-
 		// 去掉所有标点
 		title = regexPuncPattern.ReplaceAllString(title, "")
 

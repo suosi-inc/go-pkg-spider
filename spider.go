@@ -25,24 +25,46 @@ var (
 	regexMetaRefreshPattern = regexp.MustCompile(RegexMetaRefresh)
 )
 
-// GetLinkRes 获取页面链接分组
-func GetLinkRes(urlStr string, timeout int, retry int) (*extract.LinkRes, map[string]string, fun.StringSet, error) {
+type LinkData struct {
+	LinkRes    *extract.LinkRes
+	Filters    map[string]string
+	SubDomains map[string]bool
+}
+
+// GetLinkData 获取页面链接分组
+func GetLinkData(urlStr string, strictDomain bool, timeout int, retry int) (*LinkData, error) {
 	if retry <= 0 {
 		retry = 1
 	}
 
 	for i := 0; i < retry; i++ {
-		res, filters, subDomains, err := GetLinkResDo(urlStr, timeout)
+		linkData, err := GetLinkDataDo(urlStr, strictDomain, nil, timeout)
 		if err == nil {
-			return res, filters, subDomains, err
+			return linkData, err
 		}
 	}
 
-	return nil, nil, nil, errors.New("ErrorLinkRes")
+	return nil, errors.New("ErrorLinkRes")
 }
 
-// GetLinkResDo 获取页面链接分组
-func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]string, fun.StringSet, error) {
+// GetLinkDataWithRule 获取页面链接分组
+func GetLinkDataWithRule(urlStr string, strictDomain bool, rules extract.LinkTypeRule, timeout int, retry int) (*LinkData, error) {
+	if retry <= 0 {
+		retry = 1
+	}
+
+	for i := 0; i < retry; i++ {
+		linkData, err := GetLinkDataDo(urlStr, strictDomain, rules, timeout)
+		if err == nil {
+			return linkData, err
+		}
+	}
+
+	return nil, errors.New("ErrorLinkRes")
+}
+
+// GetLinkDataDo 获取页面链接分组
+func GetLinkDataDo(urlStr string, strictDomain bool, rules extract.LinkTypeRule, timeout int) (*LinkData, error) {
 	if timeout == 0 {
 		timeout = 10000
 	}
@@ -60,24 +82,30 @@ func GetLinkResDo(urlStr string, timeout int) (*extract.LinkRes, map[string]stri
 		// 解析 HTML
 		doc, docErr := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 		if docErr == nil {
+			linkData := &LinkData{}
+
 			doc.Find(DefaultDocRemoveTags).Remove()
 
 			// 语言
 			langRes := Lang(doc, resp.Charset.Charset, true)
 
 			// 站内链接
-			linkTitles, filters := extract.WebLinkTitles(doc, resp.RequestURL, true)
+			linkTitles, filters := extract.WebLinkTitles(doc, resp.RequestURL, strictDomain)
 
 			// 链接分类
-			links, subDomains := extract.LinkTypes(linkTitles, langRes.Lang, nil)
+			linkRes, subDomains := extract.LinkTypes(linkTitles, langRes.Lang, rules)
 
-			return links, filters, subDomains, nil
+			linkData.LinkRes = linkRes
+			linkData.Filters = filters
+			linkData.SubDomains = subDomains
+
+			return linkData, nil
 		} else {
-			return nil, nil, nil, errors.New("ErrorDocParse")
+			return nil, errors.New("ErrorDocParse")
 		}
 	}
 
-	return nil, nil, nil, errors.New("ErrorRequest")
+	return nil, errors.New("ErrorRequest")
 }
 
 // GetNews 获取正文

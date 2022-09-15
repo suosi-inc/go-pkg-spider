@@ -97,15 +97,15 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 			url = scheme + url
 		}
 
-		if linkRes, _, _, err := GetLinkRes(url, timeout, retry); err == nil {
-			for l := range linkRes.List {
+		if linkData, err := GetLinkData(url, true, timeout, retry); err == nil {
+			for l := range linkData.LinkRes.List {
 				if !n.seen[l] {
 					n.seen[l] = true
 					listSlice = append(listSlice, l)
 				}
 			}
 
-			for c, v := range linkRes.Content {
+			for c, v := range linkData.LinkRes.Content {
 				fmt.Println("handle news:", c)
 				if !n.seen[c] {
 					fmt.Println("seen news:", c)
@@ -187,9 +187,9 @@ func (n *News) Close() {
 }
 
 // GetSubdomains 获取subDomain
-func GetSubdomains(url string, timeout int, retry int) (fun.StringSet, error) {
-	if _, _, subDomains, err := GetLinkRes(url, timeout, retry); err == nil {
-		return subDomains, nil
+func GetSubdomains(url string, timeout int, retry int) (map[string]bool, error) {
+	if linkData, err := GetLinkData(url, true, timeout, retry); err == nil {
+		return linkData.SubDomains, nil
 	} else {
 		return nil, err
 	}
