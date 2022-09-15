@@ -2,7 +2,9 @@ package spider
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -177,7 +179,7 @@ func TestGetNews(t *testing.T) {
 		// "http://www.changzhou.gov.cn/ns_news/827166202029392",
 		// "https://www.163.com/money/article/HG4TRBL1002580S6.html?clickfrom=w_yw_money",
 		// "https://mp.weixin.qq.com/s?__biz=MzUxODkxNTYxMA==&mid=2247484842&idx=1&sn=d9822ee4662523609aee7441066c2a96&chksm=f980d6dfcef75fc93cb1e7942cb16ec82a7fb7ec3c2d857c307766daff667bd63ab1b4941abd&exportkey=AXWfguuAyJjlOJgCHf10io8%3D&acctmode=0&pass_ticket=8eXqj",
-		// "https://www.bbc.com/news/world-asia-62744522",
+		"https://www.bbc.com/news/world-asia-62744522",
 		// "https://www.sohu.com/a/581634395_121284943",
 		// "https://edition.cnn.com/2022/01/30/europe/lithuania-took-on-china-intl-cmd/index.html",
 		// "https://www.36kr.com/p/1897541916043649",
@@ -193,11 +195,61 @@ func TestGetNews(t *testing.T) {
 		// "https://www.thebulletin.be/number-road-deaths-belgium-rises-sharply",
 		// "https://www.dailyexpress.com.my/read/4840/ma63-zero-without-equitable-economic-partnership/",
 		// "https://news.cgtn.com/news/2022-08-20/CGTN-documentary-Remote-Killing-released-1cE7t7RD104/index.html",
-		"https://observerbd.com/news.php?id=383996",
+		// "https://observerbd.com/news.php?id=383996",
 	}
 
 	for _, urlStr := range urlStrs {
 		if news, resp, err := GetNews(urlStr, "", 10000, 1); err == nil {
+			t.Log(resp.Charset)
+			t.Log(news.Spend)
+			t.Log(news.Title)
+			t.Log(news.TitlePos)
+			t.Log(news.TimeLocal)
+			t.Log(news.Time)
+			t.Log(news.TimePos)
+			t.Log(news.Content)
+
+			if news.ContentNode != nil {
+				// 内容 html 节点
+				node := goquery.NewDocumentFromNode(news.ContentNode)
+				contentHtml, _ := node.Html()
+				t.Log(fun.NormaliseLine(contentHtml))
+
+				// 内容 html 节点清理, 仅保留 p img 标签
+				p := bluemonday.NewPolicy()
+				p.AllowElements("p")
+				p.AllowImages()
+				html := p.Sanitize(contentHtml)
+				t.Log(fun.NormaliseLine(html))
+			}
+		}
+	}
+}
+
+func TestGetNewsWithReq(t *testing.T) {
+	transport := &http.Transport{
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+		DisableKeepAlives: true,
+	}
+	proxyString := "http://username:password@host:port"
+	proxy, _ := url.Parse(proxyString)
+	transport.Proxy = http.ProxyURL(proxy)
+
+	req := &HttpReq{
+		HttpReq: &fun.HttpReq{
+			MaxContentLength: HttpDefaultMaxContentLength,
+			MaxRedirect:      2,
+			Transport:        transport,
+		},
+		ForceTextContentType: true,
+	}
+
+	var urlStrs = []string{
+		"https://www.bbc.com/news/world-asia-62744522",
+	}
+
+	for _, urlStr := range urlStrs {
+		if news, resp, err := GetNewsWithReq(urlStr, "", req, 10000, 1); err == nil {
 			t.Log(resp.Charset)
 			t.Log(news.Spend)
 			t.Log(news.Title)
