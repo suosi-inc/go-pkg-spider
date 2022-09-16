@@ -130,6 +130,8 @@ type News struct {
 	ContentNode *html.Node
 	// 响应毫秒
 	Spend int64
+	// 语种
+	Lang string
 }
 
 type Content struct {
@@ -222,6 +224,7 @@ func (c *Content) ExtractNews() *News {
 	}
 
 	news.Spend = fun.Timestamp(true) - begin
+	news.Lang = c.Lang
 
 	return news
 }

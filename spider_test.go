@@ -201,6 +201,7 @@ func TestGetNews(t *testing.T) {
 	for _, urlStr := range urlStrs {
 		if news, resp, err := GetNews(urlStr, "", 10000, 1); err == nil {
 			t.Log(resp.Charset)
+			t.Log(news.Lang)
 			t.Log(news.Spend)
 			t.Log(news.Title)
 			t.Log(news.TitlePos)
