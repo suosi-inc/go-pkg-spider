@@ -25,8 +25,6 @@ func TestNews_GetNews(t *testing.T) {
 	n.Close()
 	t.Log("close chan")
 
-	// t.Log(n.GetData())
-
 	t.Log("crawl finish")
 }
 
@@ -77,14 +75,11 @@ func TestNews_GetNews2(t *testing.T) {
 	// n.GetNews(n.PrintContentNews)
 
 	go goFunc(n, t)
-	// goFunc(n, t)
 
 	n.Wg.Wait()
 
 	n.Close()
 	t.Log("close chan")
-
-	// t.Log(n.GetData())
 
 	t.Log("crawl finish")
 }
