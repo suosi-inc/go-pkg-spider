@@ -41,16 +41,6 @@ var (
 	regexTitleZhBlackPattern = regexp.MustCompile(RegexTitleZhBlack)
 
 	regexIndexSuffixPattern = regexp.MustCompile(RegexIndexSuffix)
-
-	zhTitleBlackLists = []string{
-		"关于我们",
-		"联系我们",
-		"友情链接",
-		"网站地图",
-		"诚聘英才",
-		"网站声明",
-		"隐私政策",
-	}
 )
 
 type LinkType int
@@ -150,13 +140,6 @@ func linkClean(linkRes *LinkRes, lang string) *LinkRes {
 				if regexTitleZhBlackPattern.MatchString(title) {
 					linkRes.None[link] = title
 					delete(linkRes.Content, link)
-				}
-			}
-
-			for link, title := range linkRes.List {
-				if fun.SliceContains(zhTitleBlackLists, title) {
-					linkRes.None[link] = title
-					delete(linkRes.List, link)
 				}
 			}
 		}

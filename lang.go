@@ -250,7 +250,7 @@ func LangFromTitle(doc *goquery.Document, listMode bool) (string, string) {
 					koCount := len(ko)
 					koRate := float64(koCount) / float64(bodyTextCount)
 
-					// 日语出现比例
+					// 韩语出现比例
 					if koRate > 0.2 {
 						lang = "ko"
 						return lang, LangPosTitleZh
