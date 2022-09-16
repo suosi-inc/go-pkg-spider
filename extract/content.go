@@ -55,6 +55,7 @@ const (
 	// RegexWxScriptTime 微信 Script 中的发布时间
 	RegexWxScriptTime = `(?i)ct[\t ]{0,4}=[\t ]{0,4}"(1[4-9]\d{8})"`
 
+	// RegexContentUrlPublishDate 内容页URL中隐藏的时间
 	RegexContentUrlPublishDate = `(20[2-3]\d{1}[/]?(0[1-9]|1[0-2]|[1-9])[/]?(0[1-9]|[1-2][0-9]|3[0-1]|[1-9]))`
 
 	// RegexFormatTime3 错误的时间格式, 用于过滤
