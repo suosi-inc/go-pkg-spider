@@ -56,9 +56,7 @@ func TestNews_GetNews2(t *testing.T) {
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 		DisableKeepAlives: true,
 	}
-	// proxyString := "http://username:password@host:port"
-	proxyString := "http://squid:SuosiSquid147!$&@180.167.238.140:44910"
-	// proxyString := "http://squid:SuosiSquid147!$&@10.10.16.139:44910"
+	proxyString := "http://username:password@host:port"
 	proxy, _ := url.Parse(proxyString)
 	transport.Proxy = http.ProxyURL(proxy)
 
