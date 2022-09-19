@@ -109,16 +109,15 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 			}
 
 			for c, v := range linkData.LinkRes.Content {
-				fmt.Println("handle news:", c)
+				// fmt.Println("handle news:", c)
 				if !n.seen[c] {
-					fmt.Println("seen news:", c)
+					// fmt.Println("seen news:", c)
 					n.seen[c] = true
 					cc := map[string]string{}
 					cc[c] = v
 					contentSlice = append(contentSlice, cc)
 
 					n.Wg.Add(1)
-					fmt.Println("wg add 1")
 					go contentHandleFunc(cc)
 					// contentHandleFunc(cc)
 				} else {
