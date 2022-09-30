@@ -334,6 +334,7 @@ func LinkIsContentByTitle(linkUrl *url.URL, title string, lang string) LinkType 
 			// 按照空格切分计算长度
 			words := fun.SplitTrim(title, fun.SPACE)
 
+			// 大于等于5个单词
 			if len(words) >= 5 {
 				return LinkTypeContent
 			} else {
