@@ -20,8 +20,8 @@ type News struct {
 	depth    uint8           // 采集页面深度
 	seen     map[string]bool // 是否已采集
 	isSub    bool            // 是否采集子域名
-	data     []*NewsData     // newsData切片
-	DataChan chan *NewsData  // newsData通道共享
+	data     []*NewsData     // newsData 切片
+	DataChan chan *NewsData  // newsData 通道共享
 	Wg       *sync.WaitGroup // 同步等待组
 	Req      *HttpReq        // 请求体
 }
@@ -34,7 +34,7 @@ type NewsData struct {
 	Lang    string // 语种
 }
 
-// NewNews 初始化newsSpider
+// NewNews 初始化
 func NewNews(url string, req *HttpReq, depth uint8, isSub bool) *News {
 	return &News{
 		url:      url,
@@ -51,10 +51,10 @@ func NewNews(url string, req *HttpReq, depth uint8, isSub bool) *News {
 // GetNews 开始获取news
 func (n *News) GetNews(contentHandleFunc func(content map[string]string)) {
 	// 初始化列表页和内容页切片
-	listSlice := []string{}
-	listSliceTemp := []string{}
-	contentSlice := []map[string]string{}
-	subDomainSlice := []string{}
+	var listSlice []string
+	var listSliceTemp []string
+	var contentSlice []map[string]string
+	var subDomainSlice []string
 
 	// 获取首页url和协议
 	scheme, indexUrl := GetIndexUrl(n.url)
@@ -109,9 +109,7 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 			}
 
 			for c, v := range linkData.LinkRes.Content {
-				// fmt.Println("handle news:", c)
 				if !n.seen[c] {
-					// fmt.Println("seen news:", c)
 					n.seen[c] = true
 					cc := map[string]string{}
 					cc[c] = v
@@ -119,7 +117,6 @@ func (n *News) GetNewsLinkRes(contentHandleFunc func(content map[string]string),
 
 					n.Wg.Add(1)
 					go contentHandleFunc(cc)
-					// contentHandleFunc(cc)
 				} else {
 					fmt.Println("same news")
 				}
@@ -145,7 +142,6 @@ func (n *News) GetContentNews(content map[string]string) {
 	time.Sleep(time.Duration(fun.RandomInt(10, 100)) * time.Millisecond)
 
 	for url, title := range content {
-		// fmt.Println(url, title)
 		if news, _, err := GetNews(url, title, timeOut, retryTime); err == nil {
 			newsData := NewsData{}
 			newsData.Url = url
@@ -204,18 +200,4 @@ func GetIndexUrl(url string) (string, string) {
 	scheme := urlSlice[0] + "//"
 	indexUrl := scheme + urlSlice[2]
 	return scheme, indexUrl
-}
-
-// GetHost 获取host
-func GetHost(url string) string {
-	urlSlice := strings.Split(url, "/")
-	return urlSlice[2]
-}
-
-// HandleUrl 处理成带协议的url
-func HandleUrl(url string) string {
-	if !strings.Contains(url, "http") {
-		return "https://" + url
-	}
-	return url
 }
