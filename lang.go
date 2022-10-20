@@ -11,6 +11,18 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
+const (
+	LangPosCharset = "charset"
+	LangPosHtmlTag = "html"
+	LangPosBody    = "body"
+	LangPosLingua  = "lingua"
+	LangPosTitleZh = "title"
+	BodyChunkSize  = 2048
+	BodyMinSize    = 64
+
+	RegexLangHtml = "^(?i)([a-z]{2}|[a-z]{2}\\-[a-z]+)$"
+)
+
 var (
 	CharsetLangMap = map[string]string{
 		"GBK":         "zh",
@@ -92,23 +104,7 @@ var (
 		"portuguese": "pt",
 		"english":    "en",
 	}
-)
 
-const (
-	LangPosCharset = "charset"
-	LangPosHtmlTag = "html"
-	LangPosBody    = "body"
-	LangPosLingua  = "lingua"
-	LangPosTitleZh = "title"
-	BodyChunkSize  = 2048
-	BodyMinSize    = 64
-)
-
-const (
-	RegexLangHtml = "^(?i)([a-z]{2}|[a-z]{2}\\-[a-z]+)$"
-)
-
-var (
 	regexLangHtmlPattern = regexp.MustCompile(RegexLangHtml)
 	regexPuncsPattern    = regexp.MustCompile(`[\pP\pS]`)
 	regexEnPattern       = regexp.MustCompile(`[a-zA-Z]`)
