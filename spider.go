@@ -3,7 +3,6 @@ package spider
 import (
 	"bytes"
 	"errors"
-	"log"
 	"regexp"
 	"strings"
 
@@ -38,16 +37,18 @@ func GetLinkData(urlStr string, strictDomain bool, timeout int, retry int) (*Lin
 		retry = 1
 	}
 
+	errs := make([]string, 0)
+
 	for i := 0; i < retry; i++ {
 		linkData, err := GetLinkDataDo(urlStr, strictDomain, nil, nil, timeout)
 		if err == nil {
 			return linkData, err
 		} else {
-			log.Println(err.Error())
+			errs = append(errs, err.Error())
 		}
 	}
 
-	return nil, errors.New("ErrorLinkRes")
+	return nil, errors.New("ErrorLinkRes" + fun.ToString(errs))
 }
 
 // GetLinkDataWithReq 获取页面链接数据
