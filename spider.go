@@ -41,8 +41,9 @@ func GetLinkData(urlStr string, strictDomain bool, timeout int, retry int) (*Lin
 	for i := 0; i < retry; i++ {
 		linkData, err := GetLinkDataDo(urlStr, strictDomain, nil, nil, timeout)
 		if err == nil {
-			log.Println(err.Error())
 			return linkData, err
+		} else {
+			log.Println(err.Error())
 		}
 	}
 
