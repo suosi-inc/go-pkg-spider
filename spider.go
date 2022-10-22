@@ -57,14 +57,18 @@ func GetLinkDataWithReq(urlStr string, strictDomain bool, req *HttpReq, timeout 
 		retry = 1
 	}
 
+	errs := make([]string, 0)
+
 	for i := 0; i < retry; i++ {
 		linkData, err := GetLinkDataDo(urlStr, strictDomain, nil, req, timeout)
 		if err == nil {
 			return linkData, err
+		} else {
+			errs = append(errs, err.Error())
 		}
 	}
 
-	return nil, errors.New("ErrorLinkRes")
+	return nil, errors.New("ErrorLinkRes" + fun.ToString(errs))
 }
 
 // GetLinkDataWithReqAndRule 获取页面链接数据
@@ -73,14 +77,18 @@ func GetLinkDataWithReqAndRule(urlStr string, strictDomain bool, rules extract.L
 		retry = 1
 	}
 
+	errs := make([]string, 0)
+
 	for i := 0; i < retry; i++ {
 		linkData, err := GetLinkDataDo(urlStr, strictDomain, rules, req, timeout)
 		if err == nil {
 			return linkData, err
+		} else {
+			errs = append(errs, err.Error())
 		}
 	}
 
-	return nil, errors.New("ErrorLinkRes")
+	return nil, errors.New("ErrorLinkRes" + fun.ToString(errs))
 }
 
 // GetLinkDataWithRule 获取页面链接数据
@@ -89,14 +97,18 @@ func GetLinkDataWithRule(urlStr string, strictDomain bool, rules extract.LinkTyp
 		retry = 1
 	}
 
+	errs := make([]string, 0)
+
 	for i := 0; i < retry; i++ {
 		linkData, err := GetLinkDataDo(urlStr, strictDomain, rules, nil, timeout)
 		if err == nil {
 			return linkData, err
+		} else {
+			errs = append(errs, err.Error())
 		}
 	}
 
-	return nil, errors.New("ErrorLinkRes")
+	return nil, errors.New("ErrorLinkRes" + fun.ToString(errs))
 }
 
 // GetLinkDataDo 获取页面链接数据
@@ -152,14 +164,18 @@ func GetNews(urlStr string, title string, timeout int, retry int) (*extract.News
 		retry = 1
 	}
 
+	errs := make([]string, 0)
+
 	for i := 0; i < retry; i++ {
 		news, resp, err := GetNewsDo(urlStr, title, nil, timeout)
 		if err == nil {
 			return news, resp, nil
+		} else {
+			errs = append(errs, err.Error())
 		}
 	}
 
-	return nil, nil, errors.New("ErrorRequest")
+	return nil, nil, errors.New("ErrorRequest" + fun.ToString(errs))
 }
 
 // GetNewsWithReq 获取链接新闻数据
@@ -168,14 +184,18 @@ func GetNewsWithReq(urlStr string, title string, req *HttpReq, timeout int, retr
 		retry = 1
 	}
 
+	errs := make([]string, 0)
+
 	for i := 0; i < retry; i++ {
 		news, resp, err := GetNewsDo(urlStr, title, req, timeout)
 		if err == nil {
 			return news, resp, nil
+		} else {
+			errs = append(errs, err.Error())
 		}
 	}
 
-	return nil, nil, errors.New("ErrorRequest")
+	return nil, nil, errors.New("ErrorRequest" + fun.ToString(errs))
 }
 
 // GetNewsDo 获取链接新闻数据
