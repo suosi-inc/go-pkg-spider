@@ -22,7 +22,7 @@ type News struct {
 	TimeOut     int               // 请求响应时间
 	Wg          *sync.WaitGroup   // 同步等待组
 	Req         *HttpReq          // 请求体
-	Ctx         any               // 任务详情上下文
+	Ctx         any               // 任务详情上下文，传入ProcessFunc函数中
 }
 
 // 新闻内容结构体
@@ -55,9 +55,11 @@ func NewNews(url string, req *HttpReq, depth uint8, isSub bool, pf func(...any),
 // GetNews 开始采集
 func (n *News) GetNews(linksHandleFunc func(*LinkData)) {
 	// 初始化列表页和内容页切片
-	var listSlice []string
-	var listSliceTemp []string
-	var subDomainSlice []string
+	var (
+		listSlice      []string
+		listSliceTemp  []string
+		subDomainSlice []string
+	)
 
 	// 获取首页url和协议
 	scheme, indexUrl := GetIndexUrl(n.url)
@@ -79,7 +81,6 @@ func (n *News) GetNews(linksHandleFunc func(*LinkData)) {
 	for i := 0; i < int(n.depth); i++ {
 		listS, _ := n.GetNewsLinkRes(linksHandleFunc, scheme, listSliceTemp, n.TimeOut, n.RetryTime)
 		listSlice = append(listSlice, listS...)
-		// contentSlice = append(contentSlice, contentS...)
 
 		// 重置循环列表页
 		if len(listS) == 0 {

@@ -10,14 +10,19 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
+var (
+	newUrl     = "http://www.cankaoxiaoxi.com/"
+	overseaUrl = "https://www.bbc.com/news"
+)
+
 func TestNews_GetLinkRes_Noctx(t *testing.T) {
-	n := NewNews("http://www.cankaoxiaoxi.com/", nil, 2, false, processLink, nil)
+	n := NewNews(newUrl, nil, 2, false, processLink, nil)
 	n.GetLinkRes()
 }
 
 func TestNews_GetLinkRes(t *testing.T) {
 	ctx := "getLinkRes"
-	n := NewNews("http://www.cankaoxiaoxi.com/", nil, 2, false, processLink, ctx)
+	n := NewNews(newUrl, nil, 2, false, processLink, ctx)
 	n.GetLinkRes()
 }
 
@@ -30,7 +35,7 @@ func processLink(data ...any) {
 
 func TestNews_GetContentNews(t *testing.T) {
 	ctx := "getContentNews"
-	n := NewNews("http://www.cankaoxiaoxi.com/", nil, 1, false, processContent, ctx)
+	n := NewNews(newUrl, nil, 1, false, processContent, ctx)
 	n.GetContentNews()
 }
 
@@ -58,6 +63,6 @@ func TestNews_GetNewsWithProxy(t *testing.T) {
 	}
 
 	ctx := "getNewsWithProxy"
-	n := NewNews("https://www.bbc.com/news", req, 1, false, processContent, ctx)
+	n := NewNews(overseaUrl, req, 1, false, processContent, ctx)
 	n.GetContentNews()
 }
