@@ -6,8 +6,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/pemistahl/lingua-go"
 	"github.com/suosi-inc/go-pkg-spider/extract"
+	"github.com/suosi-inc/lingua-go"
 	"github.com/x-funs/go-fun"
 )
 

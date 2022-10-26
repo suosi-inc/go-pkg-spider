@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/pemistahl/lingua-go"
+	"github.com/suosi-inc/lingua-go"
 	"github.com/x-funs/go-fun"
 )
 
