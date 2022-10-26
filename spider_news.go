@@ -10,11 +10,11 @@ import (
 )
 
 // 新闻采集器结构体
-type News struct {
-	url         string            // 根链接
-	depth       uint8             // 采集页面深度
-	seen        map[string]bool   // 是否已采集
-	isSub       bool              // 是否采集子域名
+type NewsSpider struct {
+	Url         string            // 根链接
+	Depth       uint8             // 采集页面深度
+	Seen        map[string]bool   // 是否已采集
+	IsSub       bool              // 是否采集子域名
 	LinkChan    chan *LinkData    // LinkData 通道共享
 	ContentChan chan *NewsContent // NewsContent 通道共享
 	ProcessFunc func(...any)      // 处理函数
@@ -34,13 +34,18 @@ type NewsContent struct {
 	Lang    string // 语种
 }
 
-// NewNews 初始化
-func NewNews(url string, req *HttpReq, depth uint8, isSub bool, pf func(...any), ctx any) *News {
-	return &News{
-		url:         url,
-		depth:       depth,
-		seen:        map[string]bool{},
-		isSub:       isSub,
+// 原型链接口
+type Prototype interface {
+	Clone() Prototype
+}
+
+// NewNewsSpider 初始化
+func NewNewsSpider(url string, req *HttpReq, depth uint8, isSub bool, pf func(...any), ctx any) *NewsSpider {
+	return &NewsSpider{
+		Url:         url,
+		Depth:       depth,
+		Seen:        map[string]bool{},
+		IsSub:       isSub,
 		LinkChan:    make(chan *LinkData),
 		ContentChan: make(chan *NewsContent),
 		ProcessFunc: pf,
@@ -52,8 +57,21 @@ func NewNews(url string, req *HttpReq, depth uint8, isSub bool, pf func(...any),
 	}
 }
 
+// 原型链结构体拷贝
+func (n *NewsSpider) Clone() Prototype {
+	nc := *n
+
+	// 拷贝时需重置chan和wg等字段
+	nc.Seen = map[string]bool{}
+	nc.LinkChan = make(chan *LinkData)
+	nc.ContentChan = make(chan *NewsContent)
+	nc.Wg = &sync.WaitGroup{}
+
+	return &nc
+}
+
 // GetNews 开始采集
-func (n *News) GetNews(linksHandleFunc func(*LinkData)) {
+func (n *NewsSpider) GetNews(linksHandleFunc func(*LinkData)) {
 	// 初始化列表页和内容页切片
 	var (
 		listSlice      []string
@@ -62,12 +80,12 @@ func (n *News) GetNews(linksHandleFunc func(*LinkData)) {
 	)
 
 	// 获取首页url和协议
-	scheme, indexUrl := GetIndexUrl(n.url)
+	scheme, indexUrl := GetIndexUrl(n.Url)
 
 	// 首次添加当前页
-	listSliceTemp = append(listSliceTemp, n.url)
+	listSliceTemp = append(listSliceTemp, n.Url)
 
-	if n.isSub {
+	if n.IsSub {
 		// 先探测出首页url的所有子域名
 		subDomains, _ := GetSubdomains(indexUrl, n.Req, n.TimeOut, n.RetryTime*100)
 
@@ -78,7 +96,7 @@ func (n *News) GetNews(linksHandleFunc func(*LinkData)) {
 	}
 
 	// 深度优先循环遍历获取页面列表页和内容页
-	for i := 0; i < int(n.depth); i++ {
+	for i := 0; i < int(n.Depth); i++ {
 		listS, _ := n.GetNewsLinkRes(linksHandleFunc, scheme, listSliceTemp, n.TimeOut, n.RetryTime)
 		listSlice = append(listSlice, listS...)
 
@@ -91,7 +109,7 @@ func (n *News) GetNews(linksHandleFunc func(*LinkData)) {
 }
 
 // GetNewsLinkRes 获取news页面链接分组, 仅返回列表页和内容页
-func (n *News) GetNewsLinkRes(linksHandleFunc func(*LinkData), scheme string, urls []string, timeout int, retry int) ([]string, error) {
+func (n *NewsSpider) GetNewsLinkRes(linksHandleFunc func(*LinkData), scheme string, urls []string, timeout int, retry int) ([]string, error) {
 	listSlice := []string{}
 
 	for _, url := range urls {
@@ -101,8 +119,8 @@ func (n *News) GetNewsLinkRes(linksHandleFunc func(*LinkData), scheme string, ur
 
 		if linkData, err := GetLinkDataWithReq(url, true, n.Req, timeout, retry); err == nil {
 			for l := range linkData.LinkRes.List {
-				if !n.seen[l] {
-					n.seen[l] = true
+				if !n.Seen[l] {
+					n.Seen[l] = true
 					listSlice = append(listSlice, l)
 				}
 			}
@@ -119,7 +137,7 @@ func (n *News) GetNewsLinkRes(linksHandleFunc func(*LinkData), scheme string, ur
 }
 
 // CrawlLinkRes 直接推送列表页内容页
-func (n *News) CrawlLinkRes(l *LinkData) {
+func (n *NewsSpider) CrawlLinkRes(l *LinkData) {
 	defer n.Wg.Done()
 	defer n.sleep()
 
@@ -127,13 +145,13 @@ func (n *News) CrawlLinkRes(l *LinkData) {
 }
 
 // GetContentNews 解析内容页详情数据
-func (n *News) CrawlContentNews(l *LinkData) {
+func (n *NewsSpider) CrawlContentNews(l *LinkData) {
 	defer n.Wg.Done()
 	defer n.sleep()
 
 	for c, v := range l.LinkRes.Content {
-		if !n.seen[c] {
-			n.seen[c] = true
+		if !n.Seen[c] {
+			n.Seen[c] = true
 			cc := map[string]string{}
 			cc[c] = v
 
@@ -144,7 +162,7 @@ func (n *News) CrawlContentNews(l *LinkData) {
 }
 
 // ReqContentNews 获取内容页详情数据
-func (n *News) ReqContentNews(content map[string]string) {
+func (n *NewsSpider) ReqContentNews(content map[string]string) {
 	defer n.Wg.Done()
 
 	time.Sleep(time.Duration(fun.RandomInt(10, 100)) * time.Millisecond)
@@ -164,28 +182,28 @@ func (n *News) ReqContentNews(content map[string]string) {
 }
 
 // PushLinks 推送links数据
-func (n *News) PushLinks(data *LinkData) {
+func (n *NewsSpider) PushLinks(data *LinkData) {
 	n.LinkChan <- data
 }
 
 // PushContentNews 推送详情页数据
-func (n *News) PushContentNews(data *NewsContent) {
+func (n *NewsSpider) PushContentNews(data *NewsContent) {
 	n.ContentChan <- data
 }
 
 // Wait wg阻塞等待退出
-func (n *News) Wait() {
+func (n *NewsSpider) Wait() {
 	n.Wg.Wait()
 }
 
 // Close 关闭Chan
-func (n *News) Close() {
+func (n *NewsSpider) Close() {
 	close(n.LinkChan)
 	close(n.ContentChan)
 }
 
 // process 处理chan data函数
-func (n *News) process(processFunc func(...any)) {
+func (n *NewsSpider) process(processFunc func(...any)) {
 	for {
 		select {
 		case data, ok := <-n.LinkChan:
@@ -203,7 +221,7 @@ func (n *News) process(processFunc func(...any)) {
 }
 
 // GetLinkRes 回调获取LinkRes数据
-func (n *News) GetLinkRes() {
+func (n *NewsSpider) GetLinkRes() {
 	n.GetNews(n.CrawlLinkRes)
 
 	go n.process(n.ProcessFunc)
@@ -213,7 +231,7 @@ func (n *News) GetLinkRes() {
 }
 
 // GetContentNews 回调获取内容页数据
-func (n *News) GetContentNews() {
+func (n *NewsSpider) GetContentNews() {
 	n.GetNews(n.CrawlContentNews)
 
 	go n.process(n.ProcessFunc)
@@ -240,8 +258,8 @@ func GetIndexUrl(url string) (string, string) {
 }
 
 // sleep depth只有一层时，需要等待几秒，避免wg done后直接退出，导致select来不及取出数据
-func (n *News) sleep() {
-	if n.depth == 1 {
+func (n *NewsSpider) sleep() {
+	if n.Depth == 1 {
 		time.Sleep(2 * time.Second)
 	}
 }
