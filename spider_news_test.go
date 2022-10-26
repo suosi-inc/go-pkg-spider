@@ -2,6 +2,7 @@ package spider
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
@@ -9,47 +10,41 @@ import (
 	"github.com/x-funs/go-fun"
 )
 
-func TestNews_GetNews(t *testing.T) {
-	// n := NewNews("https://eastday.com/", 2, true)
-	n := NewNews("http://yoka.com/", nil, 1, false)
-	// n := NewNews("http://www.cankaoxiaoxi.com/", 3, true)
+var (
+	newUrl     = "http://www.cankaoxiaoxi.com/"
+	overseaUrl = "https://www.bbc.com/news"
+)
 
-	n.GetNews(n.GetContentNews)
-	// n.GetNews(n.PrintContentNews)
-
-	go goFunc(n, t)
-	// goFunc(n, t)
-
-	n.Wg.Wait()
-
-	n.Close()
-	t.Log("close chan")
-
-	t.Log("crawl finish")
+func TestNews_GetLinkRes_Noctx(t *testing.T) {
+	n := NewNews(newUrl, nil, 2, false, processLink, nil)
+	n.GetLinkRes()
 }
 
-func goFunc(n *News, t *testing.T) {
-	for {
-		select {
-		case data, ok := <-n.DataChan:
-			if !ok {
-				t.Log("dataChan closed")
-				return
-			}
+func TestNews_GetLinkRes(t *testing.T) {
+	ctx := "getLinkRes"
+	n := NewNews(newUrl, nil, 2, false, processLink, ctx)
+	n.GetLinkRes()
+}
 
-			t.Log("dataChan:", (*data).Title, (*data).Lang)
-			// case <-time.After(10 * time.Second):
-			// 	t.Log("time select*****************")
-			// 	return
-
-			// default:
-			// 	time.Sleep(1 * time.Second)
-			// 	t.Log("default")
-		}
+func processLink(data ...any) {
+	dd := data[0].(*LinkData)
+	for i := range dd.LinkRes.List {
+		fmt.Println(data[1], i)
 	}
 }
 
-func TestNews_GetNews2(t *testing.T) {
+func TestNews_GetContentNews(t *testing.T) {
+	ctx := "getContentNews"
+	n := NewNews(newUrl, nil, 1, false, processContent, ctx)
+	n.GetContentNews()
+}
+
+func processContent(data ...any) {
+	dd := data[0].(*NewsContent)
+	fmt.Println(data[1], dd.Title, dd.Lang)
+}
+
+func TestNews_GetNewsWithProxy(t *testing.T) {
 	transport := &http.Transport{
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 		DisableKeepAlives: true,
@@ -67,19 +62,7 @@ func TestNews_GetNews2(t *testing.T) {
 		ForceTextContentType: true,
 	}
 
-	// n := NewNews("https://eastday.com/", 2, true)
-	n := NewNews("http://yoka.com/", req, 1, false)
-	// n := NewNews("http://www.cankaoxiaoxi.com/", 3, true)
-
-	n.GetNews(n.GetContentNews)
-	// n.GetNews(n.PrintContentNews)
-
-	go goFunc(n, t)
-
-	n.Wg.Wait()
-
-	n.Close()
-	t.Log("close chan")
-
-	t.Log("crawl finish")
+	ctx := "getNewsWithProxy"
+	n := NewNews(overseaUrl, req, 1, false, processContent, ctx)
+	n.GetContentNews()
 }
