@@ -117,17 +117,17 @@ var (
 type News struct {
 	// 标题
 	Title string
-	// 标题依据
+	// 标题提取依据
 	TitlePos string
 	// 发布时间
 	TimeLocal string
 	// 时间
 	Time string
-	// 时间依据
+	// 时间提取依据
 	TimePos string
 	// 正文纯文本
 	Content string
-	// 正文节点
+	// 正文 Node 节点
 	ContentNode *html.Node
 	// 响应毫秒
 	Spend int64
