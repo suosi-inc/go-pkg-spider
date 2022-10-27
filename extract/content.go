@@ -135,7 +135,7 @@ type News struct {
 	Lang string
 }
 
-type Content struct {
+type content struct {
 	// 原始 Doc
 	OriginDoc *goquery.Document
 	// Doc
@@ -147,7 +147,7 @@ type Content struct {
 	// 语种
 	Lang string
 
-	infoMap      map[*html.Node]CountInfo
+	infoMap      map[*html.Node]countInfo
 	bodyNode     *html.Node
 	title        string
 	titlePos     string
@@ -156,7 +156,7 @@ type Content struct {
 	timeEnFormat bool
 }
 
-type CountInfo struct {
+type countInfo struct {
 	// 文本长度, 如 <p> 标签的文本
 	TextCount int
 	// 带有链接的文本长度, 如 <a> 标签中的文本
@@ -175,7 +175,7 @@ type CountInfo struct {
 	LeafList []int
 }
 
-func NewContent(doc *goquery.Document, lang string, originTitle string, originUrl string) *Content {
+func NewContent(doc *goquery.Document, lang string, originTitle string, originUrl string) *content {
 	originDoc := goquery.CloneDocument(doc)
 	doc.Find(ContentRemoveTags).Remove()
 
@@ -185,12 +185,12 @@ func NewContent(doc *goquery.Document, lang string, originTitle string, originUr
 		titleSim = TitleSimWord
 	}
 
-	infoMap := make(map[*html.Node]CountInfo, 0)
+	infoMap := make(map[*html.Node]countInfo, 0)
 
-	return &Content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, OriginUrl: originUrl, Lang: lang, infoMap: infoMap, titleSim: titleSim}
+	return &content{OriginDoc: originDoc, Doc: doc, OriginTitle: originTitle, OriginUrl: originUrl, Lang: lang, infoMap: infoMap, titleSim: titleSim}
 }
 
-func (c *Content) ExtractNews() *News {
+func (c *content) ExtractNews() *News {
 	news := &News{}
 
 	// 开始时间
@@ -231,7 +231,7 @@ func (c *Content) ExtractNews() *News {
 }
 
 // formatTime 时间格式化清洗(尽可能的)
-func (c *Content) formatTime(time string) string {
+func (c *content) formatTime(time string) string {
 	if !c.timeEnFormat {
 		// 当包含时区信息时格式化空格
 		if fun.ContainsAny(time, "T", "t", "Z", "z") {
@@ -253,7 +253,7 @@ func (c *Content) formatTime(time string) string {
 }
 
 // formatContent 正文格式化, 处理 <p> 的换行, 最终将多个换行符和空格均合并为一个
-func (c *Content) formatContent(contentNode *html.Node) string {
+func (c *content) formatContent(contentNode *html.Node) string {
 	// 先提取 HTML
 	node := goquery.NewDocumentFromNode(contentNode)
 	contentHtml, _ := node.Html()
@@ -277,7 +277,7 @@ func (c *Content) formatContent(contentNode *html.Node) string {
 	return str
 }
 
-func (c *Content) getContentNode() *html.Node {
+func (c *content) getContentNode() *html.Node {
 	var maxScore float64
 	var contentNode *html.Node
 
@@ -306,7 +306,7 @@ func (c *Content) getContentNode() *html.Node {
 	return contentNode
 }
 
-func (c *Content) getTime() string {
+func (c *content) getTime() string {
 	// meta
 	regexZhPatterns := []*regexp.Regexp{
 		regexPublishDatePattern,
@@ -371,7 +371,7 @@ func (c *Content) getTime() string {
 	return ""
 }
 
-func (c *Content) getTimeByLang(bodyText string) string {
+func (c *content) getTimeByLang(bodyText string) string {
 	if c.Lang == "zh" {
 		allRegexs := regexZhPublishDatePattern.FindAllString(bodyText, -1)
 
@@ -443,7 +443,7 @@ func (c *Content) getTimeByLang(bodyText string) string {
 	return ""
 }
 
-func (c *Content) getTimeByBody(bodyText string) string {
+func (c *content) getTimeByBody(bodyText string) string {
 	// 带有年份的完整匹配
 	publishDates := regexPublishShortDatePattern.FindAllString(bodyText, -1)
 	if (publishDates) != nil {
@@ -473,7 +473,7 @@ func (c *Content) getTimeByBody(bodyText string) string {
 	return ""
 }
 
-func (c *Content) pickPublishDates(bodyText string, publishDates []string, requireTime bool) string {
+func (c *content) pickPublishDates(bodyText string, publishDates []string, requireTime bool) string {
 	// 根据是否有时间进行分组
 	hasTimes := make([]string, 0)
 	noTimes := make([]string, 0)
@@ -589,7 +589,7 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 	return ""
 }
 
-func (c *Content) getTimeByTag() string {
+func (c *content) getTimeByTag() string {
 	timeTags := c.Doc.Find("time")
 	if timeTags.Size() > 0 {
 		firstTimeTags := timeTags.First()
@@ -625,7 +625,7 @@ func (c *Content) getTimeByTag() string {
 	return ""
 }
 
-func (c *Content) getTimeByMeta(regexPatterns []*regexp.Regexp) string {
+func (c *content) getTimeByMeta(regexPatterns []*regexp.Regexp) string {
 	metaDates := make([]string, 0)
 	metas := c.Doc.Find("meta")
 	if metas.Size() > 0 {
@@ -713,7 +713,7 @@ func (c *Content) getTimeByMeta(regexPatterns []*regexp.Regexp) string {
 	return ""
 }
 
-func (c *Content) getTimeByMetaEn(regexPatterns []*regexp.Regexp) string {
+func (c *content) getTimeByMetaEn(regexPatterns []*regexp.Regexp) string {
 	metaDates := make([]string, 0)
 	metas := c.Doc.Find("meta")
 	if metas.Size() > 0 {
@@ -807,7 +807,7 @@ func (c *Content) getTimeByMetaEn(regexPatterns []*regexp.Regexp) string {
 }
 
 // getTitleByOrigin 获取页面的 H[1-2] 标题, 找出与 OriginTitle 最像的
-func (c *Content) getTitleByOrigin() string {
+func (c *content) getTitleByOrigin() string {
 	if !fun.Blank(c.OriginTitle) {
 		headlines := c.Doc.Find("h1,h2")
 		if headlines.Size() > 0 {
@@ -839,7 +839,7 @@ func (c *Content) getTitleByOrigin() string {
 	return ""
 }
 
-func (c *Content) getTitle(contentNode *html.Node) string {
+func (c *content) getTitle(contentNode *html.Node) string {
 	var title string
 
 	// 优先使用 originTitle 判定页面中的 H1-2
@@ -947,7 +947,7 @@ func (c *Content) getTitle(contentNode *html.Node) string {
 }
 
 // getTitleByEditDistance 从正文中找最相似 metaTitle 的片段
-func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
+func (c *content) getTitleByEditDistance(originMetaTitle string) string {
 	max := []float64{0.0}
 	var buf bytes.Buffer
 
@@ -982,7 +982,7 @@ func (c *Content) getTitleByEditDistance(originMetaTitle string) string {
 	return ""
 }
 
-func (c *Content) getTitleByMeta(metaTitle string) string {
+func (c *content) getTitleByMeta(metaTitle string) string {
 	var titles []string
 	for _, metaSelector := range contentMetaTitleSelectors {
 		title := strings.TrimSpace(c.Doc.Find(metaSelector).AttrOr("content", ""))
@@ -1015,9 +1015,9 @@ func (c *Content) getTitleByMeta(metaTitle string) string {
 	return ""
 }
 
-func (c *Content) computeInfo(node *html.Node) CountInfo {
+func (c *content) computeInfo(node *html.Node) countInfo {
 	if node.Type == html.ElementNode {
-		countInfo := CountInfo{}
+		countInfo := countInfo{}
 		for child := node.FirstChild; child != nil; child = child.NextSibling {
 			childCountInfo := c.computeInfo(child)
 			countInfo.TextCount += childCountInfo.TextCount
@@ -1049,7 +1049,7 @@ func (c *Content) computeInfo(node *html.Node) CountInfo {
 
 		return countInfo
 	} else if node.Type == html.TextNode {
-		countInfo := CountInfo{}
+		countInfo := countInfo{}
 
 		text := fun.NormaliseSpace(node.Data)
 		textLen := utf8.RuneCountInString(text)
@@ -1058,11 +1058,11 @@ func (c *Content) computeInfo(node *html.Node) CountInfo {
 
 		return countInfo
 	} else {
-		return CountInfo{}
+		return countInfo{}
 	}
 }
 
-func (c *Content) computeScore(node *html.Node) float64 {
+func (c *content) computeScore(node *html.Node) float64 {
 	countInfo := c.infoMap[node]
 	value := c.computeVar(countInfo.LeafList) + 1
 	value = math.Sqrt(value)
@@ -1074,7 +1074,7 @@ func (c *Content) computeScore(node *html.Node) float64 {
 	return score
 }
 
-func (c *Content) computeVar(leafList []int) float64 {
+func (c *content) computeVar(leafList []int) float64 {
 	leafLen := len(leafList)
 
 	if leafLen == 0 {
@@ -1101,7 +1101,7 @@ func (c *Content) computeVar(leafList []int) float64 {
 	return sum
 }
 
-func (c *Content) normaliseText(s *goquery.Selection) string {
+func (c *content) normaliseText(s *goquery.Selection) string {
 	var buf bytes.Buffer
 
 	var f func(*html.Node)
@@ -1124,7 +1124,7 @@ func (c *Content) normaliseText(s *goquery.Selection) string {
 	return buf.String()
 }
 
-func (c *Content) Debug() {
+func (c *content) Debug() {
 	for node, info := range c.infoMap {
 		if node.Data == "div" {
 			for _, a := range node.Attr {
@@ -1137,7 +1137,7 @@ func (c *Content) Debug() {
 	}
 }
 
-func (c *Content) getTitleByScript(metaTitle string) string {
+func (c *content) getTitleByScript(metaTitle string) string {
 	scripts := c.OriginDoc.Find("script")
 	if scripts.Size() > 0 {
 		var title string
@@ -1162,7 +1162,7 @@ func (c *Content) getTitleByScript(metaTitle string) string {
 	return ""
 }
 
-func (c *Content) getTimeByScript() string {
+func (c *content) getTimeByScript() string {
 	scripts := c.OriginDoc.Find("script")
 	if scripts.Size() > 0 {
 		var time string
@@ -1192,7 +1192,7 @@ func (c *Content) getTimeByScript() string {
 	return ""
 }
 
-func (c *Content) getTimeByUrl() string {
+func (c *content) getTimeByUrl() string {
 	if c.OriginUrl != "" {
 		if linkUrl, err := fun.UrlParse(c.OriginUrl); err == nil {
 			// 内容页 URL path 时间特征统计
