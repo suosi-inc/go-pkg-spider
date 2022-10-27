@@ -42,6 +42,7 @@ func processLink(data ...any) {
 
 	if newsData.Error == nil {
 		fmt.Println(newsData.ListUrl)
+		fmt.Println(newsData.Depth)
 		for i := range newsData.LinkRes.List {
 			fmt.Println(data[1], i)
 		}

@@ -36,7 +36,8 @@ type NewsContent struct {
 // 新闻LinkData总数据
 type NewsData struct {
 	*LinkData
-	ListUrl string // ListUrl列表页溯源
+	Depth   uint8  // 采集深度溯源
+	ListUrl string // 列表页溯源
 	Error   error
 }
 
@@ -137,7 +138,7 @@ func (n *NewsSpider) GetNews(linksHandleFunc func(*NewsData)) {
 
 	// 深度优先循环遍历获取页面列表页和内容页
 	for i := 0; i < int(n.Depth); i++ {
-		listS, _ := n.GetNewsLinkRes(linksHandleFunc, scheme, listSliceTemp, n.TimeOut, n.RetryTime)
+		listS, _ := n.GetNewsLinkRes(linksHandleFunc, scheme, listSliceTemp, uint8(i+1), n.TimeOut, n.RetryTime)
 		listSlice = append(listSlice, listS...)
 
 		// 重置循环列表页
@@ -149,7 +150,7 @@ func (n *NewsSpider) GetNews(linksHandleFunc func(*NewsData)) {
 }
 
 // GetNewsLinkRes 获取news页面链接分组, 仅返回列表页和内容页
-func (n *NewsSpider) GetNewsLinkRes(linksHandleFunc func(*NewsData), scheme string, urls []string, timeout int, retry int) ([]string, error) {
+func (n *NewsSpider) GetNewsLinkRes(linksHandleFunc func(*NewsData), scheme string, urls []string, depth uint8, timeout int, retry int) ([]string, error) {
 	listSlice := []string{}
 
 	for _, url := range urls {
@@ -165,14 +166,14 @@ func (n *NewsSpider) GetNewsLinkRes(linksHandleFunc func(*NewsData), scheme stri
 				}
 			}
 
-			newsData := &NewsData{linkData, url, nil}
+			newsData := &NewsData{linkData, depth, url, nil}
 
 			n.wg.Add(1)
 			go linksHandleFunc(newsData)
 
 		} else {
 			// 报错空的LinkData也需要push
-			newsData := &NewsData{nil, url, err}
+			newsData := &NewsData{nil, depth, url, err}
 
 			n.wg.Add(1)
 			go linksHandleFunc(newsData)
