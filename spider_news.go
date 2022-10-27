@@ -1,7 +1,6 @@
 package spider
 
 import (
-	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -13,14 +12,14 @@ import (
 type NewsSpider struct {
 	Url         string            // 根链接
 	Depth       uint8             // 采集页面深度
-	Seen        map[string]bool   // 是否已采集
+	seen        map[string]bool   // 是否已采集
 	IsSub       bool              // 是否采集子域名
-	LinkChan    chan *NewsData    // NewsData 通道共享
-	ContentChan chan *NewsContent // NewsContent 通道共享
+	linkChan    chan *NewsData    // NewsData 通道共享
+	contentChan chan *NewsContent // NewsContent 通道共享
 	ProcessFunc func(...any)      // 处理函数
 	RetryTime   int               // 请求重试次数
 	TimeOut     int               // 请求响应时间
-	Wg          *sync.WaitGroup   // 同步等待组
+	wg          *sync.WaitGroup   // 同步等待组
 	Req         *HttpReq          // 请求体
 	Ctx         any               // 任务详情上下文，传入ProcessFunc函数中
 }
@@ -38,7 +37,11 @@ type NewsContent struct {
 type NewsData struct {
 	*LinkData
 	ListUrl string // ListUrl列表页溯源
+	Error   error
 }
+
+// 自定义配置函数
+type Option func(*NewsSpider)
 
 // 原型链接口
 type Prototype interface {
@@ -46,20 +49,51 @@ type Prototype interface {
 }
 
 // NewNewsSpider 初始化
-func NewNewsSpider(url string, req *HttpReq, depth uint8, isSub bool, pf func(...any), ctx any) *NewsSpider {
-	return &NewsSpider{
+func NewNewsSpider(url string, depth uint8, pf func(...any), ctx any, options ...Option) *NewsSpider {
+	n := &NewsSpider{
 		Url:         url,
 		Depth:       depth,
-		Seen:        map[string]bool{},
-		IsSub:       isSub,
-		LinkChan:    make(chan *NewsData),
-		ContentChan: make(chan *NewsContent),
+		seen:        map[string]bool{},
+		IsSub:       false,
+		linkChan:    make(chan *NewsData),
+		contentChan: make(chan *NewsContent),
 		ProcessFunc: pf,
 		RetryTime:   2,
 		TimeOut:     20000,
-		Wg:          &sync.WaitGroup{},
-		Req:         req,
+		wg:          &sync.WaitGroup{},
+		Req:         nil,
 		Ctx:         ctx,
+	}
+
+	// 函数式选项模式
+	for _, option := range options {
+		option(n)
+	}
+
+	return n
+}
+
+func WithRetryTime(retryTime int) Option {
+	return func(n *NewsSpider) {
+		n.RetryTime = retryTime
+	}
+}
+
+func WithTimeOut(timeout int) Option {
+	return func(n *NewsSpider) {
+		n.TimeOut = timeout
+	}
+}
+
+func WithReq(req *HttpReq) Option {
+	return func(n *NewsSpider) {
+		n.Req = req
+	}
+}
+
+func WithIsSub(isSub bool) Option {
+	return func(n *NewsSpider) {
+		n.IsSub = isSub
 	}
 }
 
@@ -68,10 +102,10 @@ func (n *NewsSpider) Clone() Prototype {
 	nc := *n
 
 	// 拷贝时需重置chan和wg等字段
-	nc.Seen = map[string]bool{}
-	nc.LinkChan = make(chan *NewsData)
-	nc.ContentChan = make(chan *NewsContent)
-	nc.Wg = &sync.WaitGroup{}
+	nc.seen = map[string]bool{}
+	nc.linkChan = make(chan *NewsData)
+	nc.contentChan = make(chan *NewsContent)
+	nc.wg = &sync.WaitGroup{}
 
 	return &nc
 }
@@ -125,19 +159,25 @@ func (n *NewsSpider) GetNewsLinkRes(linksHandleFunc func(*NewsData), scheme stri
 
 		if linkData, err := GetLinkDataWithReq(url, true, n.Req, timeout, retry); err == nil {
 			for l := range linkData.LinkRes.List {
-				if !n.Seen[l] {
-					n.Seen[l] = true
+				if !n.seen[l] {
+					n.seen[l] = true
 					listSlice = append(listSlice, l)
 				}
 			}
 
-			newsData := &NewsData{linkData, url}
+			newsData := &NewsData{linkData, url, nil}
 
-			n.Wg.Add(1)
+			n.wg.Add(1)
 			go linksHandleFunc(newsData)
 
 		} else {
-			return nil, errors.New("GetNewsLinkRes Err")
+			// 报错空的LinkData也需要push
+			newsData := &NewsData{nil, url, err}
+
+			n.wg.Add(1)
+			go linksHandleFunc(newsData)
+
+			// return nil, errors.New("GetNewsLinkRes Err")
 		}
 	}
 
@@ -146,7 +186,7 @@ func (n *NewsSpider) GetNewsLinkRes(linksHandleFunc func(*NewsData), scheme stri
 
 // CrawlLinkRes 直接推送列表页内容页
 func (n *NewsSpider) CrawlLinkRes(l *NewsData) {
-	defer n.Wg.Done()
+	defer n.wg.Done()
 	defer n.sleep()
 
 	n.PushLinks(l)
@@ -154,24 +194,27 @@ func (n *NewsSpider) CrawlLinkRes(l *NewsData) {
 
 // GetContentNews 解析内容页详情数据
 func (n *NewsSpider) CrawlContentNews(l *NewsData) {
-	defer n.Wg.Done()
+	defer n.wg.Done()
 	defer n.sleep()
 
-	for c, v := range l.LinkRes.Content {
-		if !n.Seen[c] {
-			n.Seen[c] = true
-			cc := map[string]string{}
-			cc[c] = v
+	if l.Error == nil {
+		for c, v := range l.LinkRes.Content {
+			if !n.seen[c] {
+				n.seen[c] = true
+				cc := map[string]string{}
+				cc[c] = v
 
-			n.Wg.Add(1)
-			go n.ReqContentNews(cc)
+				n.wg.Add(1)
+				go n.ReqContentNews(cc)
+			}
 		}
 	}
+
 }
 
 // ReqContentNews 获取内容页详情数据
 func (n *NewsSpider) ReqContentNews(content map[string]string) {
-	defer n.Wg.Done()
+	defer n.wg.Done()
 
 	time.Sleep(time.Duration(fun.RandomInt(10, 100)) * time.Millisecond)
 
@@ -191,35 +234,35 @@ func (n *NewsSpider) ReqContentNews(content map[string]string) {
 
 // PushLinks 推送links数据
 func (n *NewsSpider) PushLinks(data *NewsData) {
-	n.LinkChan <- data
+	n.linkChan <- data
 }
 
 // PushContentNews 推送详情页数据
 func (n *NewsSpider) PushContentNews(data *NewsContent) {
-	n.ContentChan <- data
+	n.contentChan <- data
 }
 
 // Wait wg阻塞等待退出
 func (n *NewsSpider) Wait() {
-	n.Wg.Wait()
+	n.wg.Wait()
 }
 
 // Close 关闭Chan
 func (n *NewsSpider) Close() {
-	close(n.LinkChan)
-	close(n.ContentChan)
+	close(n.linkChan)
+	close(n.contentChan)
 }
 
 // process 处理chan data函数
 func (n *NewsSpider) process(processFunc func(...any)) {
 	for {
 		select {
-		case data, ok := <-n.LinkChan:
+		case data, ok := <-n.linkChan:
 			if !ok {
 				return
 			}
 			processFunc(data, n.Ctx)
-		case data, ok := <-n.ContentChan:
+		case data, ok := <-n.contentChan:
 			if !ok {
 				return
 			}

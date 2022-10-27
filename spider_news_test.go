@@ -16,19 +16,21 @@ var (
 )
 
 func TestNews_GetLinkRes_Noctx(t *testing.T) {
-	n := NewNewsSpider(newUrl, nil, 2, false, processLink, nil)
+	n := NewNewsSpider(newUrl, 2, processLink, nil, WithRetryTime(1), WithTimeOut(10000))
 	n.GetLinkRes()
 }
 
 func TestNews_GetLinkRes(t *testing.T) {
 	ctx := "getLinkRes"
-	n := NewNewsSpider(newUrl, nil, 2, false, processLink, ctx)
+	n := NewNewsSpider(newUrl, 2, processLink, ctx, WithRetryTime(1), WithTimeOut(15000))
+	n.RetryTime = 1
+	n.Depth = 3
 	n.GetLinkRes()
 }
 
 func TestNews_GetLinkRes_Clone(t *testing.T) {
 	ctx := "getLinkRes"
-	n := NewNewsSpider(newUrl, nil, 2, false, processLink, ctx)
+	n := NewNewsSpider(newUrl, 2, processLink, ctx)
 
 	nc := n.Clone().(*NewsSpider)
 	nc.Ctx = "getLinkRes_Clone"
@@ -36,17 +38,19 @@ func TestNews_GetLinkRes_Clone(t *testing.T) {
 }
 
 func processLink(data ...any) {
-	dd := data[0].(*NewsData)
+	newsData := data[0].(*NewsData)
 
-	fmt.Println(dd.ListUrl)
-	for i := range dd.LinkRes.List {
-		fmt.Println(data[1], i)
+	if newsData.Error == nil {
+		fmt.Println(newsData.ListUrl)
+		for i := range newsData.LinkRes.List {
+			fmt.Println(data[1], i)
+		}
 	}
 }
 
 func TestNews_GetContentNews(t *testing.T) {
 	ctx := "getContentNews"
-	n := NewNewsSpider(newUrl, nil, 1, false, processContent, ctx)
+	n := NewNewsSpider(newUrl, 1, processContent, ctx)
 	n.GetContentNews()
 }
 
@@ -74,6 +78,6 @@ func TestNews_GetNewsWithProxy(t *testing.T) {
 	}
 
 	ctx := "getNewsWithProxy"
-	n := NewNewsSpider(overseaUrl, req, 1, false, processContent, ctx)
+	n := NewNewsSpider(overseaUrl, 1, processContent, ctx, WithReq(req))
 	n.GetContentNews()
 }
