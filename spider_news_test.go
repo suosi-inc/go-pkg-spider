@@ -36,7 +36,9 @@ func TestNews_GetLinkRes_Clone(t *testing.T) {
 }
 
 func processLink(data ...any) {
-	dd := data[0].(*LinkData)
+	dd := data[0].(*NewsData)
+
+	fmt.Println(dd.ListUrl)
 	for i := range dd.LinkRes.List {
 		fmt.Println(data[1], i)
 	}
