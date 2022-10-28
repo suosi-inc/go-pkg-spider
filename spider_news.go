@@ -188,7 +188,7 @@ func (n *NewsSpider) GetNewsLinkRes(linksHandleFunc func(*NewsData), scheme stri
 // CrawlLinkRes 直接推送列表页内容页
 func (n *NewsSpider) CrawlLinkRes(l *NewsData) {
 	defer n.wg.Done()
-	defer n.sleep()
+	// defer n.sleep()
 
 	n.PushLinks(l)
 }
@@ -196,7 +196,7 @@ func (n *NewsSpider) CrawlLinkRes(l *NewsData) {
 // GetContentNews 解析内容页详情数据
 func (n *NewsSpider) CrawlContentNews(l *NewsData) {
 	defer n.wg.Done()
-	defer n.sleep()
+	// defer n.sleep()
 
 	if l.Error == nil {
 		for c, v := range l.LinkRes.Content {
@@ -210,7 +210,6 @@ func (n *NewsSpider) CrawlContentNews(l *NewsData) {
 			}
 		}
 	}
-
 }
 
 // ReqContentNews 获取内容页详情数据

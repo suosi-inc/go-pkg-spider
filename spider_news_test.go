@@ -51,7 +51,7 @@ func processLink(data ...any) {
 
 func TestNews_GetContentNews(t *testing.T) {
 	ctx := "getContentNews"
-	n := NewNewsSpider(newUrl, 1, processContent, ctx)
+	n := NewNewsSpider(newUrl, 2, processContent, ctx)
 	n.GetContentNews()
 }
 
