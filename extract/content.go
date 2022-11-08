@@ -575,7 +575,8 @@ func (c *Content) pickPublishDates(bodyText string, publishDates []string, requi
 				var maxIndex int
 				for i, date := range noTimes {
 					timestamp := fun.StrToTime(date)
-					if timestamp > maxTimestamp {
+					timestampLimit := fun.Timestamp() + 86400
+					if timestamp < timestampLimit && timestamp > maxTimestamp {
 						maxIndex = i
 					}
 				}
