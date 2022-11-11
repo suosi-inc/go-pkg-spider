@@ -18,8 +18,8 @@ github.com/suosi-inc/chardet v0.1.0 h1:AmAXYaZKPAXCpwthMeQG/ABwYreonxjP/BCbhOa7j
 github.com/suosi-inc/chardet v0.1.0/go.mod h1:dhKdJO4yQeuLYMyu1QFjoNITgMJ/zyLhs4zwIUnQTKI=
 github.com/suosi-inc/lingua-go v1.0.51 h1:+IhIKGPwLWVTxayQSEnMdTaSCUs2GWS0qVwafGSR0wQ=
 github.com/suosi-inc/lingua-go v1.0.51/go.mod h1:XDS0K21fYH99TkkUs71HxmJH03SEhPoc+RPi531aaX0=
-github.com/x-funs/go-fun v0.77.0 h1:hpj1bF5DAaJqSft/+HPbstk/O05LGiOQl2PLCoCTQW0=
-github.com/x-funs/go-fun v0.77.0/go.mod h1:748QizKd83Impm7SSV0Ra9ppHyZKXdgaXln57CfK0QQ=
+github.com/x-funs/go-fun v0.78.0 h1:nOFAkydtSzApu8mid3Qo9QKkBKQPn+TH9LU79zwPUTA=
+github.com/x-funs/go-fun v0.78.0/go.mod h1:748QizKd83Impm7SSV0Ra9ppHyZKXdgaXln57CfK0QQ=
 golang.org/x/net v0.0.0-20210916014120-12bc252f5db8/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b h1:ZmngSVLe/wycRns9MKikG9OWIEjGcGAkacif7oYQaUY=
 golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b/go.mod h1:YDH+HFinaLZZlnHAfSS6ZXJJ9M9t4Dl22yv3iI2vPwk=
