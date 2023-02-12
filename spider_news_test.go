@@ -12,6 +12,7 @@ import (
 
 var (
 	newUrl     = "http://www.cankaoxiaoxi.com/"
+	newUrl_domain     = "cankaoxiaoxi.com"
 	overseaUrl = "https://www.bbc.com/news"
 )
 
@@ -22,9 +23,9 @@ func TestNews_GetLinkRes_Noctx(t *testing.T) {
 
 func TestNews_GetLinkRes(t *testing.T) {
 	ctx := "getLinkRes"
-	n := NewNewsSpider(newUrl, 2, processLink, ctx, WithRetryTime(1), WithTimeOut(15000))
+	n := NewNewsSpider(newUrl, 2, processLink, ctx, WithRetryTime(1), WithTimeOut(10000))
 	n.RetryTime = 1
-	n.Depth = 3
+	n.Depth = 2
 	n.GetLinkRes()
 }
 
@@ -51,7 +52,7 @@ func processLink(data ...any) {
 
 func TestNews_GetContentNews(t *testing.T) {
 	ctx := "getContentNews"
-	n := NewNewsSpider(newUrl, 2, processContent, ctx)
+	n := NewNewsSpider(newUrl, 1, processContent, ctx)
 	n.GetContentNews()
 }
 
@@ -74,6 +75,9 @@ func TestNews_GetNewsWithProxy(t *testing.T) {
 			MaxContentLength: HttpDefaultMaxContentLength,
 			MaxRedirect:      2,
 			Transport:        transport,
+			Headers: map[string]string{
+				"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
+			},
 		},
 		ForceTextContentType: true,
 	}

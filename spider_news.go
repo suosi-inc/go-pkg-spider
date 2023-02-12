@@ -303,6 +303,10 @@ func GetSubdomains(url string, req *HttpReq, timeout int, retry int) (map[string
 // GetIndexUrl 获取首页url
 func GetIndexUrl(url string) (string, string) {
 	urlSlice := strings.Split(url, "/")
+	if len(urlSlice) == 1 {
+		// domain
+		return "https", "https://www." + url
+	}
 	scheme := urlSlice[0] + "//"
 	indexUrl := scheme + urlSlice[2]
 	return scheme, indexUrl
