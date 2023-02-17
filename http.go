@@ -34,9 +34,6 @@ type HttpReq struct {
 	// 禁止自动探测字符集和转换字符集
 	DisableCharset bool
 
-	// 禁止自动探测语种
-	DisableLang bool
-
 	// 强制 ContentType 为文本类型
 	ForceTextContentType bool
 }
