@@ -4,13 +4,13 @@
 
 <p align="center">go-pkg-spider 期望实现一个相对智能、无需规则维护的通用新闻网站采集工具库。</p>
 
-## 快速预览
+# 快速预览
 
 前往 [go-pkg-spider-gui](https://github.com/suosi-inc/go-pkg-spider-gui) 下载支持 Windows、MacOS Gui 客户端，进行快速功能预览。
 
-## 功能介绍
+# 功能介绍
 
-### Http 客户端
+## Http 客户端
 
 Http 客户端在 go-fun 中的 `fun.HttpGet` 相关函数进行了一些扩展，增加了以下功能：
 
@@ -19,7 +19,7 @@ Http 客户端在 go-fun 中的 `fun.HttpGet` 相关函数进行了一些扩展�
 
 最终转换为 UTF-8
 
-### 网页语种自动探测
+## 网页语种自动探测
 
 集成了 n-gram model [lingua-go](https://github.com/pemistahl/lingua-go)，但是移除了很多语种和语料（因为完整包很大）
 
@@ -31,12 +31,12 @@ Http 客户端在 go-fun 中的 `fun.HttpGet` 相关函数进行了一些扩展�
 
 
 
-### 域名自动探测
+## 域名自动探测
 
-### 网页链接分类提取
+## 网页链接分类提取
 
 
-### 网页新闻三要素提取
+## 网页新闻三要素提取
 
 新闻最重要的三要素包含：标题、发布时间、正文。其中发布时间对精准度要求高，标题和正文更追求完整性。
 
