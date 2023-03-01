@@ -4,11 +4,17 @@
 
 <p align="center">go-pkg-spider 期望实现一个相对智能、无需规则维护的通用新闻网站采集工具库。</p>
 
-# 快速预览
+# 预览
 
 前往 [go-pkg-spider-gui](https://github.com/suosi-inc/go-pkg-spider-gui) 下载支持 Windows、MacOS Gui 客户端，进行快速功能预览。
 
-# 功能介绍
+# 使用
+
+```shell
+go get -u github.com/suosi-inc/go-pkg-spider
+```
+
+# 介绍
 
 ## Http 客户端
 
@@ -53,7 +59,7 @@ Http 客户端在 go-fun 中的 `fun.HttpGet` 相关函数进行了一些扩展�
 
 本项目新闻要素提取部分实现了 CEPF 算法的 Golang 版本，并在此基础上做了大量优化，内置了一些通用规则，更精细的控制了标题和发布时间的提取，支持多语种新闻网站的要素提取。
 
-新闻要素提取结果结构体：
+### 新闻要素提取结果定义
 
 ```
 type News struct {
