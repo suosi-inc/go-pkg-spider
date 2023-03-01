@@ -121,15 +121,15 @@ type News struct {
 	TitlePos string
 	// 发布时间
 	TimeLocal string
-	// 时间
+	// 原始时间
 	Time string
-	// 时间提取依据
+	// 发布时间时间提取依据
 	TimePos string
 	// 正文纯文本
 	Content string
 	// 正文 Node 节点
 	ContentNode *html.Node
-	// 响应毫秒
+	// 提取用时（毫秒）
 	Spend int64
 	// 语种
 	Lang string
