@@ -6,7 +6,7 @@
 
 # 预览
 
-前往 [go-pkg-spider-gui](https://github.com/suosi-inc/go-pkg-spider-gui) 下载支持 Windows、MacOS Gui 客户端，进行功能预览。
+前往 [go-pkg-spider-gui](https://github.com/suosi-inc/go-pkg-spider-gui) 下载支持 Windows、MacOS、Linux GUI 客户端，进行功能预览。
 
 # 使用
 
@@ -175,6 +175,8 @@ type News struct {
 	Lang string
 }
 ```
+
+可根据 `ContentNode *html.Node` 来重新定义需要清洗保留的标签。
 
 ### 示例
 
