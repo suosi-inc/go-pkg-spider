@@ -12,23 +12,40 @@ import (
 )
 
 type DomainRes struct {
-	Domain       string
-	HomeDomain   string
-	Scheme       string
-	Charset      CharsetRes
-	Lang         LangRes
-	Country      string
-	Province     string
-	Category     string
-	Title        string
-	TitleClean   string
-	Description  string
-	Icp          string
-	State        bool
-	StatusCode   int
+	// 域名
+	Domain string
+	// 主页域名
+	HomeDomain string
+	// 协议
+	Scheme string
+	// 字符集
+	Charset CharsetRes
+	// 语种
+	Lang LangRes
+	// 国家
+	Country string
+	// 省份
+	Province string
+	// 分类
+	Category string
+	// 标题
+	Title string
+	// 标题
+	TitleClean string
+	// 描述
+	Description string
+	// ICP
+	Icp string
+	// 状态
+	State bool
+	// 状态码
+	StatusCode int
+	// 内容页链接数量
 	ContentCount int
-	ListCount    int
-	SubDomains   map[string]bool
+	// 列表页链接数量
+	ListCount int
+	// 子域名列表
+	SubDomains map[string]bool
 }
 
 // DetectDomain 域名探测
