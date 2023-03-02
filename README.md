@@ -2,7 +2,7 @@
   go-pkg-spider
 </h1>
 
-<p align="center">go-pkg-spider 是一个相对智能、无需规则维护的通用新闻网站数据提取工具库。</p>
+<p align="center">一个 Golang 实现的相对智能、无需规则维护的通用新闻网站数据提取工具库。</p>
 
 # 预览
 
