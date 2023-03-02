@@ -134,7 +134,7 @@ type LinkRes struct {
 }
 ```
 
-## 网页新闻三要素提取
+## 网页新闻提取
 
 新闻最重要的三要素：标题、发布时间、正文。其中发布时间对精准度要求高，标题和正文更追求完整性。
 
@@ -150,6 +150,7 @@ type LinkRes struct {
 其中：`WebCollector/ContentExtractor` 是 [基于标签路径特征融合新闻内容抽取的 CEPF 算法](http://www.jos.org.cn/jos/article/abstract/4868) 的 Java 实现版本。
 
 go-pkg-spider 实现了 CEPF 算法的 Golang 版本，在此基础上做了大量优化，内置了一些通用规则，更精细的控制了标题和发布时间的提取与转换，并支持多语种新闻网站的要素提取。
+
 
 ### 新闻要素提取结果定义
 
@@ -177,6 +178,12 @@ type News struct {
 ```
 
 可根据 `ContentNode *html.Node` 来重新定义需要清洗保留的标签。
+
+### 效果
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="https://raw.githubusercontent.com/suosi-inc/go-pkg-spider-gui/main/images/zh/content.png" width="800" style="max-width: 100%" />
+</p>
 
 ### 示例
 
