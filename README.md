@@ -2,7 +2,7 @@
   go-pkg-spider
 </h1>
 
-<p align="center">go-pkg-spider 是一个相对智能、无需规则维护的通用新闻网站采集工具库。</p>
+<p align="center">go-pkg-spider 是一个相对智能、无需规则维护的通用新闻网站数据提取工具库。</p>
 
 # 预览
 
@@ -140,7 +140,7 @@ type LinkRes struct {
 
 体验下来，业内最强大的是： [diffbot](https://www.diffbot.com/) 公司，猜测它可能是基于网页视觉+深度学习来实现。
 
-有不少新闻正文提取的开源的方案，大都是基于规则或统计方法实现。如：
+有不少新闻正文提取或新闻正文抽取的开源的方案，大都是基于规则或统计方法实现。如：
 
 * Python: [GeneralNewsExtractor](https://github.com/GeneralNewsExtractor/GeneralNewsExtractor)
 * Java: [WebCollector/ContentExtractor](https://github.com/CrawlScript/WebCollector)
@@ -202,5 +202,10 @@ news := content.ExtractNews()
 
 - **<big>`GetNews(urlStr string, title string, timeout int, retry int) (*extract.News, *HttpResp, error)`</big>** 获取链接新闻数据
 
+# 免责声明
 
+本项目是一个数据提取工具库，不是爬虫框架或采集软件，仅用于技术交流，源码中请求目标网站的相关代码仅为功能测试需要。
 
+请在符合法律法规和相关规定的情况下使用本项目，禁止使用本项目进行任何非法、侵权或者违反公序良俗的行为。
+
+使用本项目造成的直接或间接的风险由用户自行承担。
