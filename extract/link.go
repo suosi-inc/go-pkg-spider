@@ -48,10 +48,14 @@ type LinkType int
 type LinkTypeRule map[string][]string
 
 type LinkRes struct {
+	// 内容页
 	Content map[string]string
-	List    map[string]string
+	// 列表页
+	List map[string]string
+	// 未知链接
 	Unknown map[string]string
-	None    map[string]string
+	// 过滤链接
+	None map[string]string
 }
 
 // LinkTypes 返回链接分类结果
