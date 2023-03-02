@@ -140,7 +140,7 @@ type LinkRes struct {
 
 体验下来，业内最强大的是： [diffbot](https://www.diffbot.com/) 公司，猜测它可能是基于网页视觉+深度学习来实现。
 
-有不少新闻正文抽取的开源的方案，大都是基于规则或统计方法实现。如：
+有不少新闻正文提取的开源的方案，大都是基于规则或统计方法实现。如：
 
 * Python: [GeneralNewsExtractor](https://github.com/GeneralNewsExtractor/GeneralNewsExtractor)
 * Java: [WebCollector/ContentExtractor](https://github.com/CrawlScript/WebCollector)
@@ -191,10 +191,10 @@ doc.Find(spider.DefaultDocRemoveTags).Remove()
 // 语种
 langRes := Lang(doc, resp.Charset.Charset, false)
 
-// 新闻抽取
+// 新闻提取
 content := extract.NewContent(contentDoc, langRes.Lang, listTitle, urlStr)
 
-// 新闻抽取结果
+// 新闻提取结果
 news := content.ExtractNews()
 ```
 
