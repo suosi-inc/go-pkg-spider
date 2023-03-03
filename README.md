@@ -6,7 +6,7 @@
 
 # 预览
 
-前往 [go-pkg-spider-gui](https://github.com/suosi-inc/go-pkg-spider-gui) 下载支持 Windows、MacOS、Linux GUI 客户端，进行功能预览。
+前往 [go-pkg-spider-gui Releases](https://github.com/suosi-inc/go-pkg-spider-gui/releases) 下载支持 Windows、MacOS GUI 客户端，进行功能预览。
 
 # 使用
 
