@@ -64,7 +64,12 @@ func DetectDomain(domain string, timeout int, retry int) (*DomainRes, error) {
 		}
 	}
 
-	domainRes := &DomainRes{}
+	var charset CharsetRes
+	var lang LangRes
+	domainRes := &DomainRes{
+		Charset: charset,
+		Lang:    lang,
+	}
 	return domainRes, errors.New("ErrorDomainDetect")
 }
 
@@ -84,7 +89,12 @@ func DetectSubDomain(domain string, timeout int, retry int) (*DomainRes, error) 
 		}
 	}
 
-	domainRes := &DomainRes{}
+	var charset CharsetRes
+	var lang LangRes
+	domainRes := &DomainRes{
+		Charset: charset,
+		Lang:    lang,
+	}
 	return domainRes, errors.New("ErrorDomainDetect")
 }
 
