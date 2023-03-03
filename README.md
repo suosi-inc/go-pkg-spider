@@ -8,6 +8,10 @@
 
 前往 [go-pkg-spider-gui Releases](https://github.com/suosi-inc/go-pkg-spider-gui/releases) 下载支持 Windows、MacOS GUI 客户端，进行功能预览。
 
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="https://raw.githubusercontent.com/suosi-inc/go-pkg-spider-gui/main/images/zh/win10.png" width="800" style="max-width: 100%" />
+</p>
+
 # 使用
 
 ```shell
