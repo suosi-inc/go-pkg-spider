@@ -1,12 +1,22 @@
-<h1 align="center">
-  go-pkg-spider
-</h1>
+```
+                            __                          _     __         
+   ____ _____        ____  / /______ _      _________  (_)___/ /__  _____
+  / __ `/ __ \______/ __ \/ //_/ __ `/_____/ ___/ __ \/ / __  / _ \/ ___/
+ / /_/ / /_/ /_____/ /_/ / ,< / /_/ /_____(__  ) /_/ / / /_/ /  __/ /    
+ \__, /\____/     / .___/_/|_|\__, /     /____/ .___/_/\__,_/\___/_/     
+/____/           /_/         /____/          /_/                         
 
-<p align="center">一个 Golang 实现的相对智能、无需规则维护的通用新闻网站数据提取工具库。</p>
+```
+
+一个 Golang 实现的相对智能、无需规则维护的通用新闻网站数据提取工具库。
 
 # 预览
 
-前往 [go-pkg-spider-gui](https://github.com/suosi-inc/go-pkg-spider-gui) 下载支持 Windows、MacOS、Linux GUI 客户端，进行功能预览。
+前往 [go-pkg-spider-gui Releases](https://github.com/suosi-inc/go-pkg-spider-gui/releases) 下载支持 Windows、MacOS GUI 客户端，进行体验。
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="https://raw.githubusercontent.com/suosi-inc/go-pkg-spider-gui/main/images/zh/win10.png" width="800" style="max-width: 100%" />
+</p>
 
 # 使用
 
@@ -213,7 +223,7 @@ news := content.ExtractNews()
 
 # 免责声明
 
-本项目是一个数据提取工具库，不是爬虫框架或采集软件，仅用于技术交流，源码中请求目标网站的相关代码仅为功能测试需要。
+本项目是一个数据提取工具库，不是爬虫框架或采集软件，只限于技术交流，源码中请求目标网站的相关代码仅为功能测试需要。
 
 请在符合法律法规和相关规定的情况下使用本项目，禁止使用本项目进行任何非法、侵权或者违反公序良俗的行为。
 
