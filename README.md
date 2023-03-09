@@ -10,6 +10,8 @@
 
 一个 Golang 实现的相对智能、无需规则维护的通用新闻网站数据提取工具库。
 
+A news website data extraction tool library implemented in Golang with relatively intelligent and no rules.
+
 # 预览
 
 前往 [go-pkg-spider-gui Releases](https://github.com/suosi-inc/go-pkg-spider-gui/releases) 下载支持 Windows、MacOS GUI 客户端，进行体验。
