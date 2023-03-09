@@ -8,7 +8,7 @@
 
 ```
 
-一个 Golang 实现的相对智能、无需规则维护的通用新闻网站数据提取工具库。含域名探测、网页编码语种识别、网页链接分类提取、新闻要素提取以及正文抽取等组件。
+一个 Golang 实现的相对智能、无需规则维护的通用新闻网站数据提取工具库。含域名探测、网页编码语种识别、网页链接分类提取、网页新闻要素抽取以及新闻正文抽取等组件。
 
 A news website data extraction tool library implemented in Golang with relatively intelligent and no rules. It includes components such as domain detection, webpage encoding and language detection, webpage link classification and extraction, news element extraction, and content extraction.
 
