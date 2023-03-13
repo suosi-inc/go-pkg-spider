@@ -29,6 +29,7 @@ var (
 )
 
 type HttpReq struct {
+	// 嵌入 fun.HttpReq
 	*fun.HttpReq
 
 	// 禁止自动探测字符集和转换字符集
