@@ -28,7 +28,7 @@ go get -u github.com/suosi-inc/go-pkg-spider
 
 ## Http 客户端
 
-Http 客户端在 go-fun 中的 `fun.HttpGet` 相关函数进行了一些扩展，增加了以下功能：
+Http 客户端对 go-fun 中的 `fun.HttpGet` 相关函数进行了一些扩展，增加了以下功能：
 
 * 自动识别字符集和转换字符集，统一转换为 UTF-8
 * 响应文本类型限制
