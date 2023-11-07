@@ -18,8 +18,6 @@ github.com/suosi-inc/chardet v0.1.0 h1:AmAXYaZKPAXCpwthMeQG/ABwYreonxjP/BCbhOa7j
 github.com/suosi-inc/chardet v0.1.0/go.mod h1:dhKdJO4yQeuLYMyu1QFjoNITgMJ/zyLhs4zwIUnQTKI=
 github.com/suosi-inc/lingua-go v1.0.51 h1:+IhIKGPwLWVTxayQSEnMdTaSCUs2GWS0qVwafGSR0wQ=
 github.com/suosi-inc/lingua-go v1.0.51/go.mod h1:XDS0K21fYH99TkkUs71HxmJH03SEhPoc+RPi531aaX0=
-github.com/x-funs/go-fun v0.87.0 h1:7xI6ro5Fq1EpvF8rG+II3Oqr+MazgMueD8iJg/FJhaU=
-github.com/x-funs/go-fun v0.87.0/go.mod h1:fYbm5aJU4EbzJkUQlodJUphsmjWgJ70iGvZNMakMSw4=
 github.com/x-funs/go-fun v0.92.0 h1:7d3ksQaSehKZr/uAe1DSs+oL5hNKiAX9A1Fw6Lg3tj8=
 github.com/x-funs/go-fun v0.92.0/go.mod h1:fYbm5aJU4EbzJkUQlodJUphsmjWgJ70iGvZNMakMSw4=
 golang.org/x/net v0.0.0-20210916014120-12bc252f5db8/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
