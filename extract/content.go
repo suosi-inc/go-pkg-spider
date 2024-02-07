@@ -175,8 +175,9 @@ type countInfo struct {
 	LeafList []int
 }
 
-func NewContent(doc *goquery.Document, lang string, originTitle string, originUrl string) *Content {
-	originDoc := goquery.CloneDocument(doc)
+func NewContent(docOrg *goquery.Document, lang string, originTitle string, originUrl string) *Content {
+	originDoc := goquery.CloneDocument(docOrg)
+	doc := goquery.CloneDocument(docOrg)
 	doc.Find(ContentRemoveTags).Remove()
 
 	// 标题相似度阈值判定
