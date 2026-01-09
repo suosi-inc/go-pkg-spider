@@ -166,7 +166,7 @@ func TestGetNews(t *testing.T) {
 
 	var urlStrs = []string{
 		// "http://www.cankaoxiaoxi.com/finance/20220831/2489264.shtml",
-		// "https://www.163.com/news/article/HG3DE7AQ000189FH.html",
+		"https://www.163.com/news/article/HG3DE7AQ000189FH.html",
 		// "http://suosi.com.cn/",
 		// "http://www.cankaoxiaoxi.com/world/20220831/2489267.shtml",
 		// "http://www.cankaoxiaoxi.com/photo/20220901/2489404.shtml",
@@ -176,7 +176,7 @@ func TestGetNews(t *testing.T) {
 		// "https://www.wangan.com/p/7fy78317feb66b37",
 		// "https://www.wangan.com/news/7fy78y38c7207bf0",
 		// "http://env.people.com.cn/n1/2022/0901/c1010-32516651.html",
-		"http://com.gd.gov.cn/go/article.php?typeid=40&contentId=23262",
+		//"http://com.gd.gov.cn/go/article.php?typeid=40&contentId=23262",
 		// "http://www.changzhou.gov.cn/ns_news/827166202029392",
 		// "https://www.163.com/money/article/HG4TRBL1002580S6.html?clickfrom=w_yw_money",
 		// "https://mp.weixin.qq.com/s?__biz=MzUxODkxNTYxMA==&mid=2247484842&idx=1&sn=d9822ee4662523609aee7441066c2a96&chksm=f980d6dfcef75fc93cb1e7942cb16ec82a7fb7ec3c2d857c307766daff667bd63ab1b4941abd&exportkey=AXWfguuAyJjlOJgCHf10io8%3D&acctmode=0&pass_ticket=8eXqj",
